@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { MapContainer, TileLayer, Marker, Popup, CircleMarker} from 'react-leaflet'
+import { MapContainer, TileLayer, Popup, CircleMarker, FeatureGroup} from 'react-leaflet'
+import { EditControl } from "react-leaflet-draw";
 import './index.css';
 import {ArgovisNav} from './nav.js'
 
@@ -18,8 +19,7 @@ class Argovis extends React.Component {
        	},
        	points: [],
        	url: ''
-      };
-      this.url = ''
+      }
     }
 
     toggle(tog){
@@ -48,6 +48,10 @@ class Argovis extends React.Component {
 	    }
     }
 
+    onPolyCreate(payload){
+    	console.log(payload['layer'].getLatLngs())
+    }
+
 	render(){
 		console.log('render ahoy')
 		const datasetToggles = Object.keys(this.state.datasetToggles).map(toggle => {
@@ -61,7 +65,7 @@ class Argovis extends React.Component {
 
 		let url = this.formURL()
 		const APIquery = async () => {
-			if(url != this.state.url){
+			if(url !== this.state.url){
 				console.log(url)
 				const response = await fetch(url);
 				const res = await response.json();
@@ -102,6 +106,21 @@ class Argovis extends React.Component {
 						    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 						    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 						  />
+						  <FeatureGroup>
+						    <EditControl
+						      position='topleft'
+						      onEdited={this._onEditPath}
+						      onCreated={this.onPolyCreate}
+						      onDeleted={this._onDeleted}
+						      draw={{
+                                rectangle: false,
+                                circle: false,
+                                polyline: false,
+                                circlemarker: false,
+                                marker: false,
+						      }}
+						    />
+						  </FeatureGroup>
 						  {this.state.points}
 						</MapContainer>
 					</div>
