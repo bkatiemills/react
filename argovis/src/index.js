@@ -32,7 +32,6 @@ class Argovis extends React.Component {
 
     formURL(){
     	let rootURL = 'https://argovis-api.colorado.edu/argo?startDate=2020-01-01T00:00:00Z&endDate=2020-01-11T00:00:00Z&compression=minimal'
-    	console.log(this.state.polygon)
     	if(this.state.polygon.length > 0){
     		rootURL += '&polygon=' + '[' + this.state.polygon.map(x => '['+x[0]+','+x[1]+']').join(',') + ']'
     	}
@@ -62,7 +61,6 @@ class Argovis extends React.Component {
     }
 
     onPolyCreate(payload){
-    	console.log('create', payload)
     	this.fetchPolygon(payload.layer.getLatLngs()[0])
     }
 
@@ -71,8 +69,7 @@ class Argovis extends React.Component {
     }
 
     onPolyEdit(payload){
-    	console.log('edit', payload)
-    	//payload.layers.eachLayer(layer => this.fetchPolygon(layer.getLatLngs()[0]))
+    	payload.layers.eachLayer(layer => this.fetchPolygon(layer.getLatLngs()[0]))
     }
 
     onDrawStop(payload){
@@ -101,7 +98,6 @@ class Argovis extends React.Component {
 				console.log(url)
 				const response = await fetch(url);
 				const res = await response.json();
-				console.log(res)
 				let points = []
 				if(res.hasOwnProperty('code') || res[0].hasOwnProperty('code')){
 					console.log(res)
