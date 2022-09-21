@@ -18,8 +18,10 @@ class Argovis extends React.Component {
        		'Tropical Cyclones':    false
        	},
        	points: [],
+       	polygon: [], // [[lon0, lat0], [lon1, lat1], ..., [lonn,latn], [lon0,lat0]]
        	url: ''
       }
+      this.fgRef = React.createRef()
     }
 
     toggle(tog){
@@ -30,6 +32,10 @@ class Argovis extends React.Component {
 
     formURL(){
     	let rootURL = 'https://argovis-api.colorado.edu/argo?startDate=2020-01-01T00:00:00Z&endDate=2020-01-11T00:00:00Z&compression=minimal'
+    	console.log(this.state.polygon)
+    	if(this.state.polygon.length > 0){
+    		rootURL += '&polygon=' + '[' + this.state.polygon.map(x => '['+x[0]+','+x[1]+']').join(',') + ']'
+    	}
     	if(this.state.datasetToggles['Argo BGC']){
     		rootURL += '&source=argo_bgc'
     	}
@@ -48,8 +54,34 @@ class Argovis extends React.Component {
 	    }
     }
 
+    fetchPolygon(coords){
+    	// coords == array of {lng: xx, lat: xx}, such as returned by getLatLngs
+    	let vertexes = coords.map(x => [x.lng, x.lat])
+    	vertexes.push(vertexes[0])
+    	this.setState({polygon: vertexes})    	
+    }
+
     onPolyCreate(payload){
-    	console.log(payload['layer'].getLatLngs())
+    	console.log('create', payload)
+    	this.fetchPolygon(payload.layer.getLatLngs()[0])
+    }
+
+    onPolyDelete(payload){
+    	this.setState({polygon: []})
+    }
+
+    onPolyEdit(payload){
+    	console.log('edit', payload)
+    	//payload.layers.eachLayer(layer => this.fetchPolygon(layer.getLatLngs()[0]))
+    }
+
+    onDrawStop(payload){
+    	// if there's already a polygon, get rid of it.
+    	if(Object.keys(this.fgRef.current._layers).length > 1){
+    		let layerID = Object.keys(this.fgRef.current._layers)[0]
+    		let layer = this.fgRef.current._layers[layerID]
+    		this.fgRef.current.removeLayer(layer)
+    	}
     }
 
 	render(){
@@ -69,16 +101,24 @@ class Argovis extends React.Component {
 				console.log(url)
 				const response = await fetch(url);
 				const res = await response.json();
-				let points = res.map(point => {return(
-				  <CircleMarker key={point[0]} center={[point[2], point[1]]} radius={1} color={this.chooseColor(point[4])}>
-				    <Popup>
-				      ID: {point[0]} <br />
-				      Long / Lat: {point[1]} / {point[2]} <br />
-				      Date: {point[3]} <br />
-				      Data Sources: {point[4]}
-				    </Popup>
-				  </CircleMarker>
-				)})
+				console.log(res)
+				let points = []
+				if(res.hasOwnProperty('code') || res[0].hasOwnProperty('code')){
+					console.log(res)
+				}
+				else {
+					points = res.map(point => {return(
+					  <CircleMarker key={point[0]} center={[point[2], point[1]]} radius={1} color={this.chooseColor(point[4])}>
+					    <Popup>
+					      ID: {point[0]} <br />
+					      Long / Lat: {point[1]} / {point[2]} <br />
+					      Date: {point[3]} <br />
+					      Data Sources: {point[4]}
+					    </Popup>
+					  </CircleMarker>
+					)})
+					
+				}
 				this.setState({url: url, points: points})
 			}
 		}
@@ -86,7 +126,7 @@ class Argovis extends React.Component {
 
 		return(
 			<div>
-				<ArgovisNav></ArgovisNav>
+				<ArgovisNav/>
 
 				<div className='row'>
 					
@@ -106,12 +146,13 @@ class Argovis extends React.Component {
 						    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 						    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 						  />
-						  <FeatureGroup>
+						  <FeatureGroup ref={this.fgRef}>
 						    <EditControl
 						      position='topleft'
-						      onEdited={this._onEditPath}
-						      onCreated={this.onPolyCreate}
-						      onDeleted={this._onDeleted}
+						      onEdited={p => this.onPolyEdit.bind(this,p)()}
+						      onCreated={p => this.onPolyCreate.bind(this,p)()}
+						      onDeleted={p => this.onPolyDelete.bind(this,p)()}
+						      onDrawStop={p => this.onDrawStop.bind(this,p)()}
 						      draw={{
                                 rectangle: false,
                                 circle: false,
