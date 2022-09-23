@@ -23,13 +23,23 @@ class Argovis extends React.Component {
        	},
        	drifterWMO: '',
        	drifterPlatform: '',
-       	endDate: '2020-01-02T00:00:00Z',
-       	points: [[],[],[],[]], // index order argo, cchdo, drifters, tcs
+       	endDate: ['2020-01-02', '2020-01-02T00:00:00Z'],
+       	points: {
+       		'argo': [],
+       		'cchdo': [],
+       		'drifters': [],
+       		'tc': []
+       	},
        	polygon: [], // [[lon0, lat0], [lon1, lat1], ..., [lonn,latn], [lon0,lat0]]
-       	startDate: '2020-01-01T00:00:00Z',
+       	startDate: ['2020-01-01', '2020-01-01T00:00:00Z'],
        	suppressRender: false,
        	tcName: '',
-       	urls: [[],[],[],[]] // index order argo, cchdo, drifters, tcs
+       	urls: {
+       		'argo': [],
+       		'cchdo': [],
+       		'drifters': [],
+       		'tc': []
+       	}
       }
       this.fgRef = React.createRef()
       this.apiPrefix = 'https://argovis-api.colorado.edu/'
@@ -59,8 +69,7 @@ class Argovis extends React.Component {
 	    	d = new Date(v.target.valueAsNumber).toISOString().replace('.000Z', 'Z')
 	    }
 	    let s = {...this.state}
-	    s[date] = d
-	    s['suppressRender'] = true
+	    s[date] = [d.slice(0,10),d]
 	    this.setState(s)
     }
 
@@ -71,28 +80,17 @@ class Argovis extends React.Component {
     	this.setState(s)
     }
 
-    formURL(){
-    	let rootURL = 'https://argovis-api.colorado.edu/argo?startDate=2020-01-01T00:00:00Z&endDate=2020-01-11T00:00:00Z&compression=minimal'
-    	if(this.state.polygon.length > 0){
-    		rootURL += '&polygon=[' + this.state.polygon.map(x => '['+x[0]+','+x[1]+']').join(',') + ']'
-    	}
-    	if(this.state.datasetToggles['Argo BGC']){
-    		rootURL += '&source=argo_bgc'
-    	}
-    	return rootURL
-    }
-
     generateTemporoSpatialURL(route){
     	//returns the api root, compression, time and space filters common to all endpoint queries
 
     	let url = this.apiPrefix + route + '?compression=minimal'
 
     	if(this.state.startDate !== ''){
-    		url += '&startDate=' + this.state.startDate
+    		url += '&startDate=' + this.state.startDate[1]
     	}
 
     	if(this.state.endDate !== ''){
-    		url += '&endDate=' + this.state.endDate
+    		url += '&endDate=' + this.state.endDate[1]
     	}  
 
     	if(this.state.polygon.length>0){
@@ -194,8 +192,17 @@ class Argovis extends React.Component {
     	else if(datasources.includes('argo_deep')){
     		return 'blue'
     	}
-    	else{
+    	else if(datasources.includes('argo_core')){
 	    	return 'yellow'
+	    }
+	    else if(datasources.includes('drifters')){
+	    	return 'black'
+	    }
+	    else if(datasources.includes('cchdo')){
+	    	return 'grey'
+	    }
+	    else if(datasources.includes('tc')){
+	    	return 'red'
 	    }
     }
 
@@ -227,25 +234,60 @@ class Argovis extends React.Component {
     	}
     }
 
+    circlefy(points){
+		if(points.hasOwnProperty('code') || points[0].hasOwnProperty('code')){
+			console.log(points)
+			return null
+		}
+		else {
+			points = points.map(point => {return(
+			  <CircleMarker key={point[0]} center={[point[2], point[1]]} radius={1} color={this.chooseColor(point[4])}>
+			    <Popup>
+			      ID: {point[0]} <br />
+			      Long / Lat: {point[1]} / {point[2]} <br />
+			      Date: {point[3]} <br />
+			      Data Sources: {point[4]}
+			    </Popup>
+			  </CircleMarker>
+			)})
+			return points
+		}
+    }
+
+    findDataset(url){
+    	return url.slice(url.search('(?<='+this.apiPrefix+')'), url.search('(?=comp)')-1 )
+    }
+
 	render(){
 		console.log('render ahoy')
 
 		// reformualte all URLs
-		let urls = [this.generateArgoURLs(), this.generateCCHDOURLs(), this.generateDrifterURLs(), this.generateTCURLs()]
+		let urls = {
+			'argo': this.generateArgoURLs(),
+			'cchdo': this.generateCCHDOURLs(),
+			'drifters':  this.generateDrifterURLs(),
+			'tc': this.generateTCURLs()
+		}
 		let refresh = []
 		console.log('urls', urls)
 
 		//compare new URLs to old URLs; any that are new, add them to a to-be-updated list, and update urls in state
-		for(let i=0; i<urls.length; i++){
+		for(let dataset in urls){
 			let refetch = false
-			for(let k=0; k<urls[i].length; k++){
-				if(!this.state.urls[i].includes(urls[i][k])){
+			for(let i=0; i<urls[dataset].length; i++){
+				if(!this.state.urls[dataset].includes(urls[dataset][i])){
 					refetch = true
 				}
 			}
+			if(urls[dataset].length === 0){
+				// eslint-disable-next-line
+				this.state.points[dataset] = []
+				refetch = true
+			}
 			if(refetch){
-				refresh = refresh.concat(urls[i])
-				this.state.urls[i] = urls[i]
+				refresh = refresh.concat(urls[dataset])
+				// eslint-disable-next-line
+				this.state.urls[dataset] = urls[dataset]
 			}
 		}
 
@@ -253,10 +295,27 @@ class Argovis extends React.Component {
 
 		//promise all across a `fetch` for all new URLs, and update CircleMarkers for all new fetches
 		Promise.all(refresh.map(x => fetch(x))).then(responses => {
-				let datasets = responses.map(x => x.url.slice(x.url.search('(?<='+this.apiPrefix+')'), x.url.search('(?=comp)')-1 ))
+				let datasets = responses.map(x => this.findDataset(x.url))
 				console.log('datasets', datasets)
 				Promise.all(responses.map(res => res.json())).then(data => {
-					console.log(data)
+					let newPoints = {}
+					for(let i=0; i<data.length; i++){
+						let points = data[i].map(x => x.concat([datasets[i]])) // so there's something in the source position for everything other than argo
+						console.log(points)
+						points = this.circlefy(points)
+						if(points){
+							if(newPoints.hasOwnProperty(datasets[i])){
+								newPoints[datasets[i]].concat(points)
+							} else {
+								newPoints[datasets[i]] = points
+							}
+						}
+					}
+					// eslint-disable-next-line
+					this.state.points = {...this.state.points, ...newPoints}
+					if(Object.keys(newPoints).length>0){
+						this.refreshMap()
+					}
 				})
 			})
 
@@ -304,11 +363,11 @@ class Argovis extends React.Component {
 						<button type="button" className="btn btn-primary verticalGroup" onClick={()=>this.refreshMap()}>Refresh Map</button>
 						<div className='verticalGroup'>
 							<div className="form-floating mb-3">
-								<input type="date" className="form-control" id="startDate" value='2020-01-01' placeholder="" onChange={(v) => this.setDate('startDate', v)}></input>
+								<input type="date" className="form-control" id="startDate" value={this.state.startDate[0]} placeholder="" onChange={(v) => this.setDate('startDate', v)}></input>
 								<label htmlFor="startDate">Start Date</label>
 							</div>
 							<div className="form-floating mb-3">
-								<input type="date" className="form-control" id="endDate" value='2020-01-02' placeholder="" onChange={(v) => this.setDate('endDate', v)}></input>
+								<input type="date" className="form-control" id="endDate" value={this.state.endDate[0]} placeholder="" onChange={(v) => this.setDate('endDate', v)}></input>
 								<label htmlFor="endDate">End Date</label>
 							</div>
 							<div className="form-floating mb-3">
@@ -476,7 +535,10 @@ class Argovis extends React.Component {
 						      }}
 						    />
 						  </FeatureGroup>
-						  {this.state.points}
+						  {this.state.points.argo}
+						  {this.state.points.cchdo}
+						  {this.state.points.drifters}
+						  {this.state.points.tc}
 						</MapContainer>
 					</div>
 				</div>
