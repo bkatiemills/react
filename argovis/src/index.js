@@ -358,7 +358,7 @@ class Argovis extends React.Component {
 				<div className='row'>
 					
 					{/*search option sidebar*/}
-					<div className='col-3 mapSearchInputs'>
+					<div className='col-3 mapSearchInputs overflow-auto'>
 						<h5>Search Control</h5>
 						<button type="button" className="btn btn-primary verticalGroup" onClick={()=>this.refreshMap()}>Refresh Map</button>
 						<div className='verticalGroup'>
