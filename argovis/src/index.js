@@ -32,7 +32,7 @@ class Argovis extends React.Component {
        	},
        	polygon: [], // [[lon0, lat0], [lon1, lat1], ..., [lonn,latn], [lon0,lat0]]
        	startDate: ['2020-01-01', '2020-01-01T00:00:00Z'],
-       	suppressRender: false,
+       	refreshData: true,
        	tcName: '',
        	urls: {
        		'argo': [],
@@ -42,26 +42,25 @@ class Argovis extends React.Component {
        	}
       }
       this.fgRef = React.createRef()
+      this.refreshButtonRef = React.createRef()
       this.apiPrefix = 'https://argovis-api.colorado.edu/'
     }
 
-    shouldComponentUpdate(nextProps, nextState){
-    	return !nextState.suppressRender
-    }
-
-    refreshMap(){
-    	this.setState({suppressRender: false})
-    }
-
+    // input handlers
     toggle(v){
+    	this.refreshButtonRef.current.classList.add('btn-primary');
+    	this.refreshButtonRef.current.classList.remove('btn-outline-primary');
     	let toggleState = {...this.state.datasetToggles}
     	toggleState[v.target.id] = !toggleState[v.target.id] 
     	this.setState({
+    		refreshData: false,
     		datasetToggles: toggleState,
     	})
     }
 
     setDate(date, v){
+    	this.refreshButtonRef.current.classList.add('btn-primary');
+    	this.refreshButtonRef.current.classList.remove('btn-outline-primary');
     	let d = ''
     	if(isNaN(v.target.valueAsNumber)){
     		d = ''
@@ -70,16 +69,26 @@ class Argovis extends React.Component {
 	    }
 	    let s = {...this.state}
 	    s[date] = [d.slice(0,10),d]
+	    s.refreshData = false
 	    this.setState(s)
     }
 
     setToken(key, v){
+    	this.refreshButtonRef.current.classList.add('btn-primary');
+    	this.refreshButtonRef.current.classList.remove('btn-outline-primary');
     	let s = {...this.state}
     	s[key] = v.target.value
-    	s.suppressRender = true
+    	s.refreshData = false
     	this.setState(s)
     }
 
+    refreshMap(){
+    	this.refreshButtonRef.current.classList.add('btn-outline-primary');
+    	this.refreshButtonRef.current.classList.remove('btn-primary');
+    	this.setState({refreshData: true})
+    }
+
+    // API URL generation
     generateTemporoSpatialURL(route){
     	//returns the api root, compression, time and space filters common to all endpoint queries
 
@@ -185,6 +194,7 @@ class Argovis extends React.Component {
     	return [url]
     }	
 
+    // leaflet helpers
     chooseColor(datasources){
     	if(datasources.includes('argo_bgc')){
     		return 'green'
@@ -254,6 +264,7 @@ class Argovis extends React.Component {
 		}
     }
 
+    // misc helpers
     findDataset(url){
     	return url.slice(url.search('(?<='+this.apiPrefix+')'), url.search('(?=comp)')-1 )
     }
@@ -261,95 +272,68 @@ class Argovis extends React.Component {
 	render(){
 		console.log('render ahoy')
 
-		// reformualte all URLs
-		let urls = {
-			'argo': this.generateArgoURLs(),
-			'cchdo': this.generateCCHDOURLs(),
-			'drifters':  this.generateDrifterURLs(),
-			'tc': this.generateTCURLs()
-		}
-		let refresh = []
-		console.log('urls', urls)
+		if(this.state.refreshData){
+			// reformualte all URLs
+			let urls = {
+				'argo': this.generateArgoURLs(),
+				'cchdo': this.generateCCHDOURLs(),
+				'drifters':  this.generateDrifterURLs(),
+				'tc': this.generateTCURLs()
+			}
+			let refresh = []
+			console.log('urls', urls)
 
-		//compare new URLs to old URLs; any that are new, add them to a to-be-updated list, and update urls in state
-		for(let dataset in urls){
-			let refetch = false
-			for(let i=0; i<urls[dataset].length; i++){
-				if(!this.state.urls[dataset].includes(urls[dataset][i])){
+			//compare new URLs to old URLs; any that are new, add them to a to-be-updated list, and update urls in state
+			for(let dataset in urls){
+				let refetch = false
+				for(let i=0; i<urls[dataset].length; i++){
+					if(!this.state.urls[dataset].includes(urls[dataset][i])){
+						refetch = true
+					}
+				}
+				if(urls[dataset].length === 0){
+					// eslint-disable-next-line
+					this.state.points[dataset] = []
 					refetch = true
 				}
+				if(refetch){
+					refresh = refresh.concat(urls[dataset])
+					// eslint-disable-next-line
+					this.state.urls[dataset] = urls[dataset]
+				}
 			}
-			if(urls[dataset].length === 0){
-				// eslint-disable-next-line
-				this.state.points[dataset] = []
-				refetch = true
-			}
-			if(refetch){
-				refresh = refresh.concat(urls[dataset])
-				// eslint-disable-next-line
-				this.state.urls[dataset] = urls[dataset]
-			}
-		}
 
-		console.log(refresh)
+			console.log(refresh)
 
-		//promise all across a `fetch` for all new URLs, and update CircleMarkers for all new fetches
-		Promise.all(refresh.map(x => fetch(x))).then(responses => {
-				let datasets = responses.map(x => this.findDataset(x.url))
-				console.log('datasets', datasets)
-				Promise.all(responses.map(res => res.json())).then(data => {
-					let newPoints = {}
-					for(let i=0; i<data.length; i++){
-						let points = data[i].map(x => x.concat([datasets[i]])) // so there's something in the source position for everything other than argo
-						console.log(points)
-						points = this.circlefy(points)
-						if(points){
-							if(newPoints.hasOwnProperty(datasets[i])){
-								newPoints[datasets[i]].concat(points)
-							} else {
-								newPoints[datasets[i]] = points
+			//promise all across a `fetch` for all new URLs, and update CircleMarkers for all new fetches
+			console.log('ooooo', this.state.apiKey)
+			Promise.all(refresh.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+					let datasets = responses.map(x => this.findDataset(x.url))
+					console.log('datasets', datasets)
+					Promise.all(responses.map(res => res.json())).then(data => {
+						let newPoints = {}
+						for(let i=0; i<data.length; i++){
+							let points = data[i].map(x => x.concat([datasets[i]])) // so there's something in the source position for everything other than argo
+							console.log(points)
+							points = this.circlefy(points)
+							if(points){
+								if(newPoints.hasOwnProperty(datasets[i])){
+									newPoints[datasets[i]].concat(points)
+								} else {
+									newPoints[datasets[i]] = points
+								}
 							}
 						}
-					}
-					// eslint-disable-next-line
-					this.state.points = {...this.state.points, ...newPoints}
-					if(Object.keys(newPoints).length>0){
-						this.refreshMap()
-					}
+						// eslint-disable-next-line
+						this.state.points = {...this.state.points, ...newPoints}
+						if(Object.keys(newPoints).length>0){
+							this.refreshMap()
+						}
+					})
 				})
-			})
-
-
-
-
-
-		// let url = this.formURL()
-		// const APIquery = async () => {
-		// 	if(url !== this.state.url){
-		// 		console.log(url)
-		// 		const response = await fetch(url);
-		// 		const res = await response.json();
-		// 		let points = []
-		// 		if(res.hasOwnProperty('code') || res[0].hasOwnProperty('code')){
-		// 			console.log(res)
-		// 		}
-		// 		else {
-		// 			points = res.map(point => {return(
-		// 			  <CircleMarker key={point[0]} center={[point[2], point[1]]} radius={1} color={this.chooseColor(point[4])}>
-		// 			    <Popup>
-		// 			      ID: {point[0]} <br />
-		// 			      Long / Lat: {point[1]} / {point[2]} <br />
-		// 			      Date: {point[3]} <br />
-		// 			      Data Sources: {point[4]}
-		// 			    </Popup>
-		// 			  </CircleMarker>
-		// 			)})
-					
-		// 		}
-		// 		this.setState({url: url, points: points})
-		// 	}
-		// }
-		// APIquery()
+			// eslint-disable-next-line
+			this.state.refreshData = false
+		}
 
 		return(
 			<div>
@@ -360,7 +344,7 @@ class Argovis extends React.Component {
 					{/*search option sidebar*/}
 					<div className='col-3 mapSearchInputs overflow-auto'>
 						<h5>Search Control</h5>
-						<button type="button" className="btn btn-primary verticalGroup" onClick={()=>this.refreshMap()}>Refresh Map</button>
+						<button id='mapRefresh' ref={this.refreshButtonRef} type="button" className="btn btn-outline-primary verticalGroup" onClick={()=>this.refreshMap()}>Refresh Map</button>
 						<div className='verticalGroup'>
 							<div className="form-floating mb-3">
 								<input type="date" className="form-control" id="startDate" value={this.state.startDate[0]} placeholder="" onChange={(v) => this.setDate('startDate', v)}></input>
