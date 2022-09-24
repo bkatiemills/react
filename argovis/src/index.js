@@ -123,9 +123,9 @@ class Argovis extends React.Component {
     	} else if(this.state.datasetToggles['Argo Core'] && this.state.datasetToggles['Argo BGC'] && this.state.datasetToggles['Argo Deep']){
     		source = ['argo_core']
     	} else if(this.state.datasetToggles['Argo Core'] && this.state.datasetToggles['Argo BGC'] && !this.state.datasetToggles['Argo Deep']){
-    		source = ['argo_core,argo_bgc,~argo_deep']
+    		source = ['argo_core,~argo_deep', 'argo_bgc']
     	} else if(this.state.datasetToggles['Argo Core'] && !this.state.datasetToggles['Argo BGC'] && this.state.datasetToggles['Argo Deep']){
-    		source = ['argo_core,~argo_bgc,argo_deep']
+    		source = ['argo_core,~argo_bgc', 'argo_deep']
     	} else if(!this.state.datasetToggles['Argo Core'] && this.state.datasetToggles['Argo BGC'] && this.state.datasetToggles['Argo Deep']){
     		source = ['argo_bgc', 'argo_deep']
     	} else if(this.state.datasetToggles['Argo Core'] && !this.state.datasetToggles['Argo BGC'] && !this.state.datasetToggles['Argo Deep']){
@@ -139,7 +139,7 @@ class Argovis extends React.Component {
     	if(source.length === 0){
     		return [url]
     	} else{
-    		return source.map(x => url += '&source='+x)
+    		return source.map(x => url+'&source='+x)
     	}
 
     }
@@ -246,12 +246,11 @@ class Argovis extends React.Component {
 
     circlefy(points){
 		if(points.hasOwnProperty('code') || points[0].hasOwnProperty('code')){
-			console.log(points)
 			return null
 		}
 		else {
 			points = points.map(point => {return(
-			  <CircleMarker key={point[0]} center={[point[2], point[1]]} radius={1} color={this.chooseColor(point[4])}>
+			  <CircleMarker key={point[0]+Math.random()} center={[point[2], point[1]]} radius={1} color={this.chooseColor(point[4])}>
 			    <Popup>
 			      ID: {point[0]} <br />
 			      Long / Lat: {point[1]} / {point[2]} <br />
@@ -281,15 +280,12 @@ class Argovis extends React.Component {
 				'tc': this.generateTCURLs()
 			}
 			let refresh = []
-			console.log('urls', urls)
 
 			//compare new URLs to old URLs; any that are new, add them to a to-be-updated list, and update urls in state
 			for(let dataset in urls){
 				let refetch = false
-				for(let i=0; i<urls[dataset].length; i++){
-					if(!this.state.urls[dataset].includes(urls[dataset][i])){
-						refetch = true
-					}
+				if(JSON.stringify(urls[dataset].sort())!==JSON.stringify(this.state.urls[dataset].sort())){
+					refetch = true
 				}
 				if(urls[dataset].length === 0){
 					// eslint-disable-next-line
@@ -303,22 +299,17 @@ class Argovis extends React.Component {
 				}
 			}
 
-			console.log(refresh)
-
 			//promise all across a `fetch` for all new URLs, and update CircleMarkers for all new fetches
-			console.log('ooooo', this.state.apiKey)
 			Promise.all(refresh.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 					let datasets = responses.map(x => this.findDataset(x.url))
-					console.log('datasets', datasets)
 					Promise.all(responses.map(res => res.json())).then(data => {
 						let newPoints = {}
 						for(let i=0; i<data.length; i++){
 							let points = data[i].map(x => x.concat([datasets[i]])) // so there's something in the source position for everything other than argo
-							console.log(points)
 							points = this.circlefy(points)
 							if(points){
 								if(newPoints.hasOwnProperty(datasets[i])){
-									newPoints[datasets[i]].concat(points)
+									newPoints[datasets[i]] = newPoints[datasets[i]].concat(points)
 								} else {
 									newPoints[datasets[i]] = points
 								}
