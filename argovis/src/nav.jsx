@@ -37,4 +37,4 @@ class ArgovisNav extends React.Component {
 	}
 }
 
-export {ArgovisNav}
+export default ArgovisNav
