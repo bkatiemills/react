@@ -11,3 +11,23 @@
 .verticalGroup {
   margin-bottom: 1em;
 }
+
+.hidden {
+  display: none !important;
+}
+
+.statusBanner {
+  width: 100%;
+  display: block;
+  padding: 1em;
+}
+
+.ready {
+  color: #FFFFFF;
+  background-color: #28a745;
+}
+
+.busy {
+  color: #212529;
+  background-color: #ffc107;
+}

@@ -243,22 +243,22 @@ class ArgovisExplore extends React.Component {
     }
 
     circlefy(points){
-		if(points.hasOwnProperty('code') || points[0].hasOwnProperty('code')){
-			return null
-		}
-		else {
-			points = points.map(point => {return(
-			  <CircleMarker key={point[0]+Math.random()} center={[point[2], point[1]]} radius={1} color={this.chooseColor(point[4])}>
-			    <Popup>
-			      ID: {point[0]} <br />
-			      Long / Lat: {point[1]} / {point[2]} <br />
-			      Date: {point[3]} <br />
-			      Data Sources: {point[4]}
-			    </Popup>
-			  </CircleMarker>
-			)})
-			return points
-		}
+			if(points.hasOwnProperty('code') || points[0].hasOwnProperty('code')){
+				return null
+			}
+			else {
+				points = points.map(point => {return(
+				  <CircleMarker key={point[0]+Math.random()} center={[point[2], point[1]]} radius={1} color={this.chooseColor(point[4])}>
+				    <Popup>
+				      ID: {point[0]} <br />
+				      Long / Lat: {point[1]} / {point[2]} <br />
+				      Date: {point[3]} <br />
+				      Data Sources: {point[4]}
+				    </Popup>
+				  </CircleMarker>
+				)})
+				return points
+			}
     }
 
     // misc helpers
@@ -485,7 +485,7 @@ class ArgovisExplore extends React.Component {
 
 					{/*leaflet map*/}
 					<div className='col-9'>
-						<MapContainer center={[35, 0]} zoom={2} scrollWheelZoom={true}>
+						<MapContainer center={[25, 0]} zoom={2} scrollWheelZoom={true}>
 						  <TileLayer
 						    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 						    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
