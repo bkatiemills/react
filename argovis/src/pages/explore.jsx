@@ -21,7 +21,7 @@ class ArgovisExplore extends React.Component {
        	},
        	drifterWMO: '',
        	drifterPlatform: '',
-       	endDate: ['2020-01-02', '2020-01-02T00:00:00Z'],
+       	endDate: ['2012-01-11', '2012-01-11T00:00:00Z'],
        	points: {
        		'argo': [],
        		'cchdo': [],
@@ -29,7 +29,7 @@ class ArgovisExplore extends React.Component {
        		'tc': []
        	},
        	polygon: [], // [[lon0, lat0], [lon1, lat1], ..., [lonn,latn], [lon0,lat0]]
-       	startDate: ['2020-01-01', '2020-01-01T00:00:00Z'],
+       	startDate: ['2012-01-01', '2012-01-01T00:00:00Z'],
        	refreshData: true,
        	tcName: '',
        	urls: {
@@ -41,7 +41,8 @@ class ArgovisExplore extends React.Component {
       }
       this.fgRef = React.createRef()
       this.refreshButtonRef = React.createRef()
-      this.apiPrefix = 'https://argovis-api.colorado.edu/'
+      //this.apiPrefix = 'https://argovis-api.colorado.edu/'
+      this.apiPrefix = 'http://3.88.185.52:8080/'
     }
 
     // input handlers
