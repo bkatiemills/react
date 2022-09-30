@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapContainer, TileLayer, Tooltip, Polygon, FeatureGroup, Rectangle} from 'react-leaflet'
+import { MapContainer, TileLayer, Popup, Polygon, FeatureGroup, Rectangle} from 'react-leaflet'
 import { EditControl } from "react-leaflet-draw";
 import '../index.css';
 import chroma from "chroma-js";
@@ -11,6 +11,9 @@ class Grids extends React.Component {
       	grid: [],
       	raw: [],
       	polygon: [[-52.382812,53.225768],[-62.050781,48.107431],[-72.773438,43.325178],[-77.695313,37.996163],[-81.5625,32.990236],[-82.089844,27.683528],[-78.925781,22.755921],[-71.547389,23.008026],[-64.160156,22.917923],[-57.673458,28.712256],[-50.449219,34.161818],[-40.078125,44.590467],[-35.683594,51.618017],[-43.066406,54.265224],[-52.382812,53.225768]],
+      	min: 0,
+      	max: 1,
+      	units: '',
       	levelindex: {
       		'temperature_rg': 0,
       		'salinity_rg': 0,
@@ -39,6 +42,11 @@ class Grids extends React.Component {
       	'temperature_rg': React.createRef(),
       	'salinity_rg': React.createRef(),
       	'ohc_kg': React.createRef()
+      }
+      this.scales = {
+      	'temperature_rg': '',
+      	'salinity_rg': '',
+      	'ohc_kg': 'G'
       }
       this.apiPrefix = 'https://argovis-api.colorado.edu/'
       this.scale = chroma.scale(['#440154', '#482777', '#3f4a8a', '#31678e', '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825']); //chroma -> colorbrewer -> viridis
@@ -77,7 +85,7 @@ class Grids extends React.Component {
     	console.log(this.state.levelindex)
     	if(data.length > 0){
 				let values = data.map(x=>x.data[this.state.levelindex[this.state.selectedGrid]][0]).filter(x=>x!==null)
-				this.setState({...this.state, grid: this.gridRasterfy(data, Math.min(...values), Math.max(...values)), raw: data, status: 'ready'})
+				this.setState({...this.state, grid: this.gridRasterfy(data, Math.min(...values), Math.max(...values)), raw: data, min: Math.min(...values), max: Math.max(...values), units: data[0].units[0], status: 'ready'})
 	    }
     }
 
@@ -112,11 +120,11 @@ class Grids extends React.Component {
 			else {
 				points = points.map(point => {return(
 					<Rectangle key={point._id+Math.random()} bounds={[[point.geolocation.coordinates[1]-0.5, point.geolocation.coordinates[0]-0.5],[point.geolocation.coordinates[1]+0.5, point.geolocation.coordinates[0]+0.5]]} pathOptions={{ fillOpacity: 0.5, weight: 0, color: this.chooseColor(point.data[this.state.levelindex[this.state.selectedGrid]][0], min, max) }}>
-      				<Tooltip>
+      				<Popup>
 				      	ID: {point._id} <br />
 				  			Long / Lat: {point.geolocation.coordinates[0]} / {point.geolocation.coordinates[1]} <br />
 				  			Date: {point.timestamp}
-				  		</Tooltip>
+				  		</Popup>
     			</Rectangle>
 				)})
 				return points
@@ -182,13 +190,25 @@ class Grids extends React.Component {
     	}
     }
 
+    unitTransform(unit, scale){
+    	console.log(unit, scale)
+    	if(scale === 'k'){
+    		return Math.round(unit)/1000
+    	} else if(scale === 'M'){
+    		return Math.round(unit/1000)/1000
+    	} else if(scale === 'G'){
+    		return Math.round(unit/1000000)/1000
+    	} else {
+    		return unit
+    	}
+    }
+
 	render(){
 		console.log('render ahoy')
 
 		return(
 			<div>
-				<div className='row'>
-					
+				<div className='row'>	
 					{/*search option sidebar*/}
 					<div className='col-3 overflow-auto'>
 						{this.generateStatus(this.state.status)}
@@ -197,13 +217,14 @@ class Grids extends React.Component {
 							<div className="form-check">
 							  <input className="form-check-input" type="radio" name="flexRadioDefault" id="temperature_rg" onChange={(v) => this.changeGrid(v)} checked={this.state.selectedGrid === 'temperature_rg'}/>
 							  <label className="form-check-label" htmlFor="temperature_rg">
-							    Roemmich-Gilson temperature total
+							    <strong>Roemmich-Gilson temperature total</strong>
 							  </label>
 							</div>
 							<div ref={this.gridControls['temperature_rg']}>
 								<div className='row'>
 									<div className='col-1'></div>
 									<div className='col-11'>
+										<small className="form-text text-muted"><a target="_blank" rel="noreferrer" href='https://sio-argo.ucsd.edu/RG_Climatology.html'>Original Data</a></small>
 										<select className="form-select" onChange={(v) => this.changeLevel(v, 'temperature_rg')}>
 											{this.levels.temperature_rg}
 										</select>
@@ -223,13 +244,14 @@ class Grids extends React.Component {
 							<div className="form-check">
 							  <input className="form-check-input" type="radio" name="flexRadioDefault" id="salinity_rg" onChange={(v) => this.changeGrid(v)} checked={this.state.selectedGrid === 'salinity_rg'}/>
 							  <label className="form-check-label" htmlFor="salinity_rg">
-							    Roemmich-Gilson salinity total
+							    <strong>Roemmich-Gilson salinity total</strong>
 							  </label>
 							</div>
 							<div ref={this.gridControls['salinity_rg']} className='hidden'>
 								<div className='row'>
 									<div className='col-1'></div>
 									<div className='col-11'>
+										<small className="form-text text-muted"><a target="_blank" rel="noreferrer" href='https://sio-argo.ucsd.edu/RG_Climatology.html'>Original Data</a></small>
 										<select className="form-select" onChange={(v) => this.changeLevel(v, 'salinity_rg')}>
 											{this.levels.salinity_rg}
 										</select>
@@ -249,13 +271,14 @@ class Grids extends React.Component {
 							<div className="form-check">
 							  <input className="form-check-input" type="radio" name="flexRadioDefault" id="ohc_kg" onChange={(v) => this.changeGrid(v)} checked={this.state.selectedGrid === 'ohc_kg'}/>
 							  <label className="form-check-label" htmlFor="ohc_kg">
-							    Kuusela-Giglio ocean heat content
+							    <strong>Kuusela-Giglio ocean heat content</strong>
 							  </label>
 							</div>
 							<div ref={this.gridControls['ohc_kg']} className='hidden'>
 								<div className='row'>
 									<div className='col-1'></div>
 										<div className='col-11'>
+											<small className="form-text text-muted"><a target="_blank" rel="noreferrer" href='https://zenodo.org/record/6131625'>Original Data</a></small>
 											<select className="form-select" onChange={(v) => this.changeLevel(v, 'ohc_kg')}>
 												{this.levels.ohc_kg}
 											</select>
@@ -272,6 +295,28 @@ class Grids extends React.Component {
 									</div>
 								</div>
 							</div>
+							<svg style={{'width':'100%', 'margin-top': '1em'}} version="1.1" xmlns="http://www.w3.org/2000/svg">
+							  <defs>
+							    <linearGradient id="grad" x1="0" x2="1" y1="0" y2="0">
+							      <stop offset="0%" stop-color={this.scale(0)} />
+							      <stop offset="10%" stop-color={this.scale(0.1)} />
+							      <stop offset="20%" stop-color={this.scale(0.2)} />
+							      <stop offset="30%" stop-color={this.scale(0.3)} />
+							      <stop offset="40%" stop-color={this.scale(0.4)} />
+							      <stop offset="50%" stop-color={this.scale(0.5)} />
+							      <stop offset="60%" stop-color={this.scale(0.6)} />
+							      <stop offset="70%" stop-color={this.scale(0.7)} />
+							      <stop offset="80%" stop-color={this.scale(0.8)} />
+							      <stop offset="90%" stop-color={this.scale(0.9)} />
+							      <stop offset="100%" stop-color={this.scale(1)} />
+							    </linearGradient>
+							  </defs>
+
+							  <rect width="100%" height="1em" fill="url(#grad)" />
+								<text style={{'transform': 'translate(0.2em, 1.5em) rotate(90deg)'}}>{this.unitTransform(this.state.min, this.scales[this.state.selectedGrid])}</text>
+							  <text style={{'transform': 'translate(100%, 1.5em) rotate(90deg) translate(0, 1em)',}}>{this.unitTransform(this.state.max, this.scales[this.state.selectedGrid])}</text>
+							  <text text-anchor="middle" style={{'transform': 'translate(50%, 2em)',}}>{this.scales[this.state.selectedGrid]+this.state.units}</text>
+							</svg>
 						</div>
 					</div>
 
@@ -297,13 +342,12 @@ class Grids extends React.Component {
                     marker: false,
                     polygon: {
                     	shapeOptions: {
-                    		color: "black",
                     		fillOpacity: 0
                     	}
                     }
 						      }}
 						    />
-						    <Polygon positions={this.state.polygon.map(x => [x[1],x[0]])} color={"black"} fillOpacity={0}></Polygon>
+						    <Polygon positions={this.state.polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
 						  </FeatureGroup>
               {this.state.grid}
 						</MapContainer>
