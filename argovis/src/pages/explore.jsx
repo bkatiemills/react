@@ -29,8 +29,8 @@ class ArgovisExplore extends React.Component {
        		'tc': []
        	},
        	polygon: [], // [[lon0, lat0], [lon1, lat1], ..., [lonn,latn], [lon0,lat0]]
-       	startDate: ['2012-01-01', '2012-01-01T00:00:00Z'],
        	refreshData: true,
+       	startDate: ['2012-01-01', '2012-01-01T00:00:00Z'],
        	tcName: '',
        	urls: {
        		'argo': [],
@@ -43,23 +43,80 @@ class ArgovisExplore extends React.Component {
       this.refreshButtonRef = React.createRef()
       //this.apiPrefix = 'https://argovis-api.colorado.edu/'
       this.apiPrefix = 'http://3.88.185.52:8080/'
+
+      this.componentDidUpdate()
+    }
+
+    componentDidUpdate(prevProps, prevState, snapshot){
+    	if(this.state.refreshData){
+				// reformualte all URLs
+				let urls = {
+					'argo': this.generateArgoURLs(),
+					'cchdo': this.generateCCHDOURLs(),
+					'drifters':  this.generateDrifterURLs(),
+					'tc': this.generateTCURLs()
+				}
+				console.log('urls', urls)
+				let refresh = []
+
+				//compare new URLs to old URLs; any that are new, add them to a to-be-updated list, and update urls in state
+				for(let dataset in urls){
+					let refetch = false
+					if(JSON.stringify(urls[dataset].sort())!==JSON.stringify(this.state.urls[dataset].sort())){
+						refetch = true
+					}
+					if(urls[dataset].length === 0){
+						// eslint-disable-next-line
+						this.state.points[dataset] = []
+						refetch = true
+					}
+					if(refetch){
+						refresh = refresh.concat(urls[dataset])
+						// eslint-disable-next-line
+						this.state.urls[dataset] = urls[dataset]
+					}
+				}
+				console.log('to be refreshed', refresh)
+
+				//promise all across a `fetch` for all new URLs, and update CircleMarkers for all new fetches
+				Promise.all(refresh.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+						let datasets = responses.map(x => this.findDataset(x.url))
+						Promise.all(responses.map(res => res.json())).then(data => {
+							let newPoints = {}
+							if(data.length>0 && data[0][0].code !== 404){
+							for(let i=0; i<data.length; i++){
+									let points = data[i].map(x => x.concat([datasets[i]])) // so there's something in the source position for everything other than argo
+									points = this.circlefy(points)
+									if(points){
+										if(newPoints.hasOwnProperty(datasets[i])){
+											newPoints[datasets[i]] = newPoints[datasets[i]].concat(points)
+										} else {
+											newPoints[datasets[i]] = points
+										}
+									}
+								}
+							}
+							// eslint-disable-next-line
+							this.state.points = {...this.state.points, ...newPoints}
+							if(Object.keys(newPoints).length>0){
+								this.refreshMap()
+							}
+						})
+					})
+			}
     }
 
     // input handlers
     toggle(v){
-    	this.refreshButtonRef.current.classList.add('btn-primary');
-    	this.refreshButtonRef.current.classList.remove('btn-outline-primary');
     	let toggleState = {...this.state.datasetToggles}
     	toggleState[v.target.id] = !toggleState[v.target.id] 
-    	this.setState({
-    		refreshData: false,
-    		datasetToggles: toggleState,
-    	})
+    	let s = {...this.state}
+    	s.datasetToggles = toggleState
+    	s.refreshData = true
+    	this.setState(s)
     }
 
     setDate(date, v){
-    	this.refreshButtonRef.current.classList.add('btn-primary');
-    	this.refreshButtonRef.current.classList.remove('btn-outline-primary');
     	let d = ''
     	if(isNaN(v.target.valueAsNumber)){
     		d = ''
@@ -68,7 +125,7 @@ class ArgovisExplore extends React.Component {
 	    }
 	    let s = {...this.state}
 	    s[date] = [d.slice(0,10),d]
-	    s.refreshData = false
+	    s.refreshData = true
 	    this.setState(s)
     }
 
@@ -109,6 +166,7 @@ class ArgovisExplore extends React.Component {
     }
 
     generateArgoURLs() {
+    	console.log('toggles', this.state.datasetToggles)
     	let url = this.generateTemporoSpatialURL('argo')
 
     	if(this.state.argoPlatform !== ''){
@@ -269,61 +327,6 @@ class ArgovisExplore extends React.Component {
 
 	render(){
 		console.log('render ahoy')
-
-		if(this.state.refreshData){
-			// reformualte all URLs
-			let urls = {
-				'argo': this.generateArgoURLs(),
-				'cchdo': this.generateCCHDOURLs(),
-				'drifters':  this.generateDrifterURLs(),
-				'tc': this.generateTCURLs()
-			}
-			let refresh = []
-
-			//compare new URLs to old URLs; any that are new, add them to a to-be-updated list, and update urls in state
-			for(let dataset in urls){
-				let refetch = false
-				if(JSON.stringify(urls[dataset].sort())!==JSON.stringify(this.state.urls[dataset].sort())){
-					refetch = true
-				}
-				if(urls[dataset].length === 0){
-					// eslint-disable-next-line
-					this.state.points[dataset] = []
-					refetch = true
-				}
-				if(refetch){
-					refresh = refresh.concat(urls[dataset])
-					// eslint-disable-next-line
-					this.state.urls[dataset] = urls[dataset]
-				}
-			}
-
-			//promise all across a `fetch` for all new URLs, and update CircleMarkers for all new fetches
-			Promise.all(refresh.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
-					let datasets = responses.map(x => this.findDataset(x.url))
-					Promise.all(responses.map(res => res.json())).then(data => {
-						let newPoints = {}
-						for(let i=0; i<data.length; i++){
-							let points = data[i].map(x => x.concat([datasets[i]])) // so there's something in the source position for everything other than argo
-							points = this.circlefy(points)
-							if(points){
-								if(newPoints.hasOwnProperty(datasets[i])){
-									newPoints[datasets[i]] = newPoints[datasets[i]].concat(points)
-								} else {
-									newPoints[datasets[i]] = points
-								}
-							}
-						}
-						// eslint-disable-next-line
-						this.state.points = {...this.state.points, ...newPoints}
-						if(Object.keys(newPoints).length>0){
-							this.refreshMap()
-						}
-					})
-				})
-			// eslint-disable-next-line
-			this.state.refreshData = false
-		}
 
 		return(
 			<div>
