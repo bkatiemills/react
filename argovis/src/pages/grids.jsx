@@ -3,13 +3,14 @@ import { MapContainer, TileLayer, Popup, Polygon, FeatureGroup, Rectangle} from 
 import { EditControl } from "react-leaflet-draw";
 import '../index.css';
 import chroma from "chroma-js";
+import helpers from'./helpers'
 
 class Grids extends React.Component {
     constructor(props) {
       super(props);
       this.state = {
       	grid: [],
-      	raw: [],
+      	points: [],
       	polygon: [[-52.382812,53.225768],[-62.050781,48.107431],[-72.773438,43.325178],[-77.695313,37.996163],[-81.5625,32.990236],[-82.089844,27.683528],[-78.925781,22.755921],[-71.547389,23.008026],[-64.160156,22.917923],[-57.673458,28.712256],[-50.449219,34.161818],[-40.078125,44.590467],[-35.683594,51.618017],[-43.066406,54.265224],[-52.382812,53.225768]],
       	min: 0,
       	max: 1,
@@ -25,7 +26,8 @@ class Grids extends React.Component {
       		'ohc_kg': "2005-01-15"
       	},
       	selectedGrid: 'temperature_rg',
-      	status: 'ready'
+      	status: 'ready',
+      	refreshData: true
       }
       this.levels = {
       	'temperature_rg': this.constructLevelOptions([2.5,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,182.5,200,220,240,260,280,300,320,340,360,380,400,420,440,462.5,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1412.5,1500,1600,1700,1800,1900,1975]),
@@ -50,9 +52,54 @@ class Grids extends React.Component {
       }
       this.apiPrefix = 'https://argovis-api.colorado.edu/'
       this.scale = chroma.scale(['#440154', '#482777', '#3f4a8a', '#31678e', '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825']); //chroma -> colorbrewer -> viridis
-      this.refreshData()
+      
+      this.componentDidUpdate()
     }
 
+    componentDidUpdate(prevProps, prevState, snapshot){
+    	if(this.state.refreshData){
+	    	//kick off request for new data, redraw the map when complete
+	    	console.log('refresh data', this.state.selectedGrid)
+	    	let url = this.apiPrefix + 'grids/' + this.state.selectedGrid+'?data=all&compression=array&startDate='+this.state.timestep[this.state.selectedGrid]+'T00:00:00Z&endDate='+this.state.timestep[this.state.selectedGrid]+'T00:00:01Z'
+	    	if(this.state.polygon.length > 0){
+	    		url += '&polygon='+JSON.stringify(this.state.polygon)
+	    	}
+				fetch(url)
+					.then(response => {response.json().then(data => {
+						// eslint-disable-next-line
+						this.state.points = data
+						this.refreshMap(false)				
+					})})
+			}
+    }
+
+    // input handlers
+    changeGrid(target){
+    	if(this.state.selectedGrid){
+	    	this.gridControls[this.state.selectedGrid].current.classList.toggle('hidden')
+	    }
+    	this.gridControls[target.target.id].current.classList.toggle('hidden')
+    	this.setState({...this.state, selectedGrid: target.target.id, status: 'downloading', refreshData: true})
+    }
+
+    changeLevel(target, grid){
+    	let s = this.state
+    	s.levelindex[grid] = parseInt(target.target.value)
+    	s.status = 'rendering'
+    	s.refreshData = false
+    	this.setState(s, () => this.refreshMap(false))
+    }
+
+    changeDate(target, grid){
+    	console.log('>>>>', target.target.value)
+    	let s = this.state
+    	s.timestep[grid] = target.target.value
+    	s.status = 'downloading'
+    	s.refreshData = true
+    	this.setState(s)
+    }
+
+    // mungers
     constructLevelOptions(levels){
     	return levels.map((x,i) => {return(
     			<option key={x+i} value={i}>{x}</option>
@@ -65,51 +112,21 @@ class Grids extends React.Component {
     		)})
     }
 
-    refreshData(){
-    	//kick off request for new data, redraw the map when complete
-    	console.log('refresh data', this.state.selectedGrid)
-    	let url = this.apiPrefix + 'grids/' + this.state.selectedGrid+'?data=all&compression=array&startDate='+this.state.timestep[this.state.selectedGrid]+'T00:00:00Z&endDate='+this.state.timestep[this.state.selectedGrid]+'T00:00:01Z'
-    	if(this.state.polygon.length > 0){
-    		url += '&polygon='+JSON.stringify(this.state.polygon)
-    	}
-			fetch(url)
-				.then(response => {response.json().then(data => {
-					this.setState({...this.state, status:'rendering'}, () => {this.refreshMap(data)})					
-				})})
-    }
-
-    refreshMap(data){
+    refreshMap(needNewData){
     	// redraw the map and render the dom
-    	console.log(data)
+    	console.log(this.state.points)
     	console.log(this.state.status)
     	console.log(this.state.levelindex)
-    	if(data.length > 0){
-				let values = data.map(x=>x.data[this.state.levelindex[this.state.selectedGrid]][0]).filter(x=>x!==null)
-				this.setState({...this.state, grid: this.gridRasterfy(data, Math.min(...values), Math.max(...values)), raw: data, min: Math.min(...values), max: Math.max(...values), units: data[0].units[0], status: 'ready'})
+    	if(this.state.points.length > 0){
+				let values = this.state.points.map(x=>x.data[this.state.levelindex[this.state.selectedGrid]][0]).filter(x=>x!==null)
+				this.setState({...this.state, 
+												grid: this.gridRasterfy(this.state.points, Math.min(...values), Math.max(...values)), 
+												min: Math.min(...values), 
+												max: Math.max(...values), 
+												units: this.state.points[0].units[0], 
+												status: 'ready',
+												refreshData: needNewData})
 	    }
-    }
-
-    changeGrid(target){
-    	if(this.state.selectedGrid){
-	    	this.gridControls[this.state.selectedGrid].current.classList.toggle('hidden')
-	    }
-    	this.gridControls[target.target.id].current.classList.toggle('hidden')
-    	this.setState({...this.state, selectedGrid: target.target.id, status: 'downloading'}, () => this.refreshData())
-    }
-
-    changeLevel(target, grid){
-    	let s = this.state
-    	s.levelindex[grid] = parseInt(target.target.value)
-    	s.status = 'rendering'
-    	this.setState(s, () => this.refreshMap(this.state.raw))
-    }
-
-    changeDate(target, grid){
-    	console.log('>>>>', target.target.value)
-    	let s = this.state
-    	s.timestep[grid] = target.target.value
-    	s.status = 'downloading'
-    	this.setState(s, () => this.refreshData())
     }
 
     gridRasterfy(points, min, max){
@@ -140,31 +157,11 @@ class Grids extends React.Component {
     }
 
     generateStatus(status){
-    	// status == 'ready', 'downloading', 'rendering'
-    	let message = ''
-  		let className = ''
-    	if(status === 'ready'){
-    		className = 'statusBanner ready'
-    		message = 'Ready'
-    	} else if(status === 'downloading'){
-    		className = 'statusBanner busy'
-    		message = 'Downloading...'
-    	} else if(status === 'rendering'){
-    		className = 'statusBanner busy'
-    		message = 'Rendering...'
-    	}
-    	return(
-	    	<span className={className}>{message}</span>
-	    	)
+    	helpers.generateStatus.bind(this)(status)
     }
 
     fetchPolygon(coords){
-    	// coords == array of {lng: xx, lat: xx}, such as returned by getLatLngs
-    	let vertexes = coords.map(x => [x.lng, x.lat])
-    	vertexes.push(vertexes[0])
-    	// eslint-disable-next-line 
-    	this.state.polygon = vertexes 	
-    	this.refreshData()
+    	helpers.fetchPolygon.bind(this)(coords)   	
     }
 
     onPolyCreate(payload){
@@ -172,9 +169,7 @@ class Grids extends React.Component {
     }
 
     onPolyDelete(payload){
-    	// eslint-disable-next-line
-    	this.state.polygon = []
-    	this.refreshData()
+    	this.setState({polygon: []})
     }
 
     onPolyEdit(payload){
@@ -182,12 +177,7 @@ class Grids extends React.Component {
     }
 
     onDrawStop(payload){
-    	// if there's already a polygon, get rid of it.
-    	if(Object.keys(this.fgRef.current._layers).length > 1){
-    		let layerID = Object.keys(this.fgRef.current._layers)[0]
-    		let layer = this.fgRef.current._layers[layerID]
-    		this.fgRef.current.removeLayer(layer)
-    	}
+    	helpers.onDrawStop.bind(this)(payload)
     }
 
     unitTransform(unit, scale){
@@ -295,27 +285,27 @@ class Grids extends React.Component {
 									</div>
 								</div>
 							</div>
-							<svg style={{'width':'100%', 'margin-top': '1em'}} version="1.1" xmlns="http://www.w3.org/2000/svg">
+							<svg style={{'width':'100%', 'marginTop': '1em'}} version="1.1" xmlns="http://www.w3.org/2000/svg">
 							  <defs>
 							    <linearGradient id="grad" x1="0" x2="1" y1="0" y2="0">
-							      <stop offset="0%" stop-color={this.scale(0)} />
-							      <stop offset="10%" stop-color={this.scale(0.1)} />
-							      <stop offset="20%" stop-color={this.scale(0.2)} />
-							      <stop offset="30%" stop-color={this.scale(0.3)} />
-							      <stop offset="40%" stop-color={this.scale(0.4)} />
-							      <stop offset="50%" stop-color={this.scale(0.5)} />
-							      <stop offset="60%" stop-color={this.scale(0.6)} />
-							      <stop offset="70%" stop-color={this.scale(0.7)} />
-							      <stop offset="80%" stop-color={this.scale(0.8)} />
-							      <stop offset="90%" stop-color={this.scale(0.9)} />
-							      <stop offset="100%" stop-color={this.scale(1)} />
+							      <stop offset="0%" stopColor={this.scale(0)} />
+							      <stop offset="10%" stopColor={this.scale(0.1)} />
+							      <stop offset="20%" stopColor={this.scale(0.2)} />
+							      <stop offset="30%" stopColor={this.scale(0.3)} />
+							      <stop offset="40%" stopColor={this.scale(0.4)} />
+							      <stop offset="50%" stopColor={this.scale(0.5)} />
+							      <stop offset="60%" stopColor={this.scale(0.6)} />
+							      <stop offset="70%" stopColor={this.scale(0.7)} />
+							      <stop offset="80%" stopColor={this.scale(0.8)} />
+							      <stop offset="90%" stopColor={this.scale(0.9)} />
+							      <stop offset="100%" stopColor={this.scale(1)} />
 							    </linearGradient>
 							  </defs>
 
 							  <rect width="100%" height="1em" fill="url(#grad)" />
 								<text style={{'transform': 'translate(0.2em, 1.5em) rotate(90deg)'}}>{this.unitTransform(this.state.min, this.scales[this.state.selectedGrid])}</text>
 							  <text style={{'transform': 'translate(100%, 1.5em) rotate(90deg) translate(0, 1em)',}}>{this.unitTransform(this.state.max, this.scales[this.state.selectedGrid])}</text>
-							  <text text-anchor="middle" style={{'transform': 'translate(50%, 2em)',}}>{this.scales[this.state.selectedGrid]+this.state.units}</text>
+							  <text textAnchor="middle" style={{'transform': 'translate(50%, 2em)',}}>{this.scales[this.state.selectedGrid]+this.state.units}</text>
 							</svg>
 						</div>
 					</div>

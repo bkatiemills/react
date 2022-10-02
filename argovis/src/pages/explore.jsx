@@ -2,6 +2,7 @@ import React from 'react';
 import { MapContainer, TileLayer, Popup, CircleMarker, FeatureGroup} from 'react-leaflet'
 import { EditControl } from "react-leaflet-draw";
 import '../index.css';
+import helpers from'./helpers'
 
 class ArgovisExplore extends React.Component {
     constructor(props) {
@@ -31,6 +32,7 @@ class ArgovisExplore extends React.Component {
        	polygon: [], // [[lon0, lat0], [lon1, lat1], ..., [lonn,latn], [lon0,lat0]]
        	refreshData: true,
        	startDate: ['2012-01-01', '2012-01-01T00:00:00Z'],
+       	status: 'downloading',
        	tcName: '',
        	urls: {
        		'argo': [],
@@ -99,7 +101,7 @@ class ArgovisExplore extends React.Component {
 							// eslint-disable-next-line
 							this.state.points = {...this.state.points, ...newPoints}
 							if(Object.keys(newPoints).length>0){
-								this.refreshMap()
+								this.refreshMap(false)
 							}
 						})
 					})
@@ -113,6 +115,7 @@ class ArgovisExplore extends React.Component {
     	let s = {...this.state}
     	s.datasetToggles = toggleState
     	s.refreshData = true
+    	s.status = 'downloading'
     	this.setState(s)
     }
 
@@ -126,6 +129,7 @@ class ArgovisExplore extends React.Component {
 	    let s = {...this.state}
 	    s[date] = [d.slice(0,10),d]
 	    s.refreshData = true
+	    s.status = 'downloading'
 	    this.setState(s)
     }
 
@@ -135,13 +139,14 @@ class ArgovisExplore extends React.Component {
     	let s = {...this.state}
     	s[key] = v.target.value
     	s.refreshData = false
+    	s.status = 'needs refresh'
     	this.setState(s)
     }
 
-    refreshMap(){
+    refreshMap(needNewData){
     	this.refreshButtonRef.current.classList.add('btn-outline-primary');
     	this.refreshButtonRef.current.classList.remove('btn-primary');
-    	this.setState({refreshData: true})
+    	this.setState({refreshData: needNewData, status:'ready'})
     }
 
     // API URL generation
@@ -274,10 +279,7 @@ class ArgovisExplore extends React.Component {
     }
 
     fetchPolygon(coords){
-    	// coords == array of {lng: xx, lat: xx}, such as returned by getLatLngs
-    	let vertexes = coords.map(x => [x.lng, x.lat])
-    	vertexes.push(vertexes[0])
-    	this.setState({polygon: vertexes})    	
+    	helpers.fetchPolygon.bind(this)(coords)   	
     }
 
     onPolyCreate(payload){
@@ -293,12 +295,7 @@ class ArgovisExplore extends React.Component {
     }
 
     onDrawStop(payload){
-    	// if there's already a polygon, get rid of it.
-    	if(Object.keys(this.fgRef.current._layers).length > 1){
-    		let layerID = Object.keys(this.fgRef.current._layers)[0]
-    		let layer = this.fgRef.current._layers[layerID]
-    		this.fgRef.current.removeLayer(layer)
-    	}
+    	helpers.onDrawStop.bind(this)(payload)
     }
 
     circlefy(points){
@@ -325,6 +322,10 @@ class ArgovisExplore extends React.Component {
     	return url.slice(url.search('(?<='+this.apiPrefix+')'), url.search('(?=comp)')-1 )
     }
 
+    generateStatus(status){
+    	helpers.generateStatus.bind(this)(status)
+    }
+
 	render(){
 		console.log('render ahoy')
 
@@ -333,157 +334,160 @@ class ArgovisExplore extends React.Component {
 				<div className='row'>
 					
 					{/*search option sidebar*/}
-					<div className='col-3 mapSearchInputs overflow-auto'>
-						<h5>Search Control</h5>
-						<button id='mapRefresh' ref={this.refreshButtonRef} type="button" className="btn btn-outline-primary verticalGroup" onClick={()=>this.refreshMap()}>Refresh Map</button>
-						<div className='verticalGroup'>
-							<div className="form-floating mb-3">
-								<input type="date" className="form-control" id="startDate" value={this.state.startDate[0]} placeholder="" onChange={(v) => this.setDate('startDate', v)}></input>
-								<label htmlFor="startDate">Start Date</label>
-							</div>
-							<div className="form-floating mb-3">
-								<input type="date" className="form-control" id="endDate" value={this.state.endDate[0]} placeholder="" onChange={(v) => this.setDate('endDate', v)}></input>
-								<label htmlFor="endDate">End Date</label>
-							</div>
-							<div className="form-floating mb-3">
-								<input type="password" className="form-control" id="apiKey" placeholder="" onInput={(v) => this.setToken('apiKey', v)}></input>
-								<label htmlFor="apiKey">API Key</label>
-								<div id="apiKeyHelpBlock" className="form-text">
-							  		<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
+					<div className='col-3 overflow-auto'>
+						{this.generateStatus(this.state.status)}
+						<div className='mapSearchInputs'>
+							<h5>Search Control</h5>
+							<button id='mapRefresh' ref={this.refreshButtonRef} type="button" className="btn btn-outline-primary verticalGroup" onClick={()=>this.refreshMap(true)}>Refresh Map</button>
+							<div className='verticalGroup'>
+								<div className="form-floating mb-3">
+									<input type="date" className="form-control" id="startDate" value={this.state.startDate[0]} placeholder="" onChange={(v) => this.setDate('startDate', v)}></input>
+									<label htmlFor="startDate">Start Date</label>
+								</div>
+								<div className="form-floating mb-3">
+									<input type="date" className="form-control" id="endDate" value={this.state.endDate[0]} placeholder="" onChange={(v) => this.setDate('endDate', v)}></input>
+									<label htmlFor="endDate">End Date</label>
+								</div>
+								<div className="form-floating mb-3">
+									<input type="password" className="form-control" id="apiKey" placeholder="" onInput={(v) => this.setToken('apiKey', v)}></input>
+									<label htmlFor="apiKey">API Key</label>
+									<div id="apiKeyHelpBlock" className="form-text">
+								  		<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
+									</div>
 								</div>
 							</div>
-						</div>
-						<h6>Dataset Filters</h6>
-						<div className="accordion" id="exploreMapControl">
-						  <div className="accordion-item">
-						    <h2 className="accordion-header" id="argoHeading">
-						      <button className="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseArgo" aria-expanded="true" aria-controls="collapseArgo">
-						        <strong>Argo</strong>
-						      </button>
-						    </h2>
-						    <div id="collapseArgo" className="accordion-collapse collapse show" aria-labelledby="argoHeading">
-						      <div className="accordion-body">
-						      	<div className='verticalGroup'>
-							        <div className="form-check">
-										<input className="form-check-input" checked={this.state.datasetToggles['Argo Core']} onChange={(v) => this.toggle(v)} type="checkbox" id='Argo Core'></input>
-										<label className="form-check-label" htmlFor='Argo Core'>Display Argo Core</label>
-									</div>
-								    <div className="form-check">
-										<input className="form-check-input" checked={this.state.datasetToggles['Argo BGC']} onChange={(v) => this.toggle(v)} type="checkbox" id='Argo BGC'></input>
-										<label className="form-check-label" htmlFor='Argo BGC'>Display Argo BGC</label>
-									</div>
-					        		<div className="form-check">
-										<input className="form-check-input" checked={this.state.datasetToggles['Argo Deep']} onChange={(v) => this.toggle(v)} type="checkbox" id='Argo Deep'></input>
-										<label className="form-check-label" htmlFor='Argo Deep'>Display Argo Deep</label>
-									</div>
-								</div>
-								<div className='verticalGroup'>
-									<div className="form-floating mb-3">
-  										<input type="text" className="form-control" id="argoPlatform" placeholder="" onInput={(v) => this.setToken('argoPlatform', v)}></input>
-  										<label htmlFor="argoPlatform">Platform ID</label>
-										<div id="argoPlatformHelpBlock" className="form-text">
-									  		<a target="_blank" rel="noreferrer" href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform'>See list of Platform ID options</a>
+							<h6>Dataset Filters</h6>
+							<div className="accordion" id="exploreMapControl">
+							  <div className="accordion-item">
+							    <h2 className="accordion-header" id="argoHeading">
+							      <button className="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseArgo" aria-expanded="true" aria-controls="collapseArgo">
+							        <strong>Argo</strong>
+							      </button>
+							    </h2>
+							    <div id="collapseArgo" className="accordion-collapse collapse show" aria-labelledby="argoHeading">
+							      <div className="accordion-body">
+							      	<div className='verticalGroup'>
+								        <div className="form-check">
+											<input className="form-check-input" checked={this.state.datasetToggles['Argo Core']} onChange={(v) => this.toggle(v)} type="checkbox" id='Argo Core'></input>
+											<label className="form-check-label" htmlFor='Argo Core'>Display Argo Core</label>
+										</div>
+									    <div className="form-check">
+											<input className="form-check-input" checked={this.state.datasetToggles['Argo BGC']} onChange={(v) => this.toggle(v)} type="checkbox" id='Argo BGC'></input>
+											<label className="form-check-label" htmlFor='Argo BGC'>Display Argo BGC</label>
+										</div>
+						        		<div className="form-check">
+											<input className="form-check-input" checked={this.state.datasetToggles['Argo Deep']} onChange={(v) => this.toggle(v)} type="checkbox" id='Argo Deep'></input>
+											<label className="form-check-label" htmlFor='Argo Deep'>Display Argo Deep</label>
 										</div>
 									</div>
-								</div>
-						      </div>
-						    </div>
-						  </div>
+									<div className='verticalGroup'>
+										<div className="form-floating mb-3">
+	  										<input type="text" className="form-control" id="argoPlatform" placeholder="" onInput={(v) => this.setToken('argoPlatform', v)}></input>
+	  										<label htmlFor="argoPlatform">Platform ID</label>
+											<div id="argoPlatformHelpBlock" className="form-text">
+										  		<a target="_blank" rel="noreferrer" href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform'>See list of Platform ID options</a>
+											</div>
+										</div>
+									</div>
+							      </div>
+							    </div>
+							  </div>
 
-						  <div className="accordion-item">
-						    <h2 className="accordion-header" id="cchdoHeading">
-						      <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCCHDO" aria-expanded="false" aria-controls="collapseCCHDO">
-						        <strong>CCHDO</strong>
-						      </button>
-						    </h2>
-						    <div id="collapseCCHDO" className="accordion-collapse collapse" aria-labelledby="cchdoHeading">
-						      <div className="accordion-body">
-							    <div className='verticalGroup'>
-				        			<div className="form-check">
-										<input className="form-check-input" checked={this.state.datasetToggles['CCHDO']} onChange={(v) => this.toggle(v)} type="checkbox" id='CCHDO'></input>
-										<label className="form-check-label" htmlFor='CCHDO'>Display CCHDO</label>
-									</div>
-								</div>
-								<div className='verticalGroup'>
-									<div className="form-floating mb-3">
-  										<input type="text" className="form-control" id="cchdowoceline" placeholder="A10" onInput={(v) => this.setToken('cchdoWOCE', v)}></input>
-  										<label htmlFor="cchdowoceline">WOCE line</label>
-										<div id="cchdowoceHelpBlock" className="form-text">
-									  		<a target="_blank" rel="noreferrer" href='https://argovis-api.colorado.edu/cchdo/vocabulary?parameter=woceline'>See list of WOCE line options</a>
+							  <div className="accordion-item">
+							    <h2 className="accordion-header" id="cchdoHeading">
+							      <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCCHDO" aria-expanded="false" aria-controls="collapseCCHDO">
+							        <strong>CCHDO</strong>
+							      </button>
+							    </h2>
+							    <div id="collapseCCHDO" className="accordion-collapse collapse" aria-labelledby="cchdoHeading">
+							      <div className="accordion-body">
+								    <div className='verticalGroup'>
+					        			<div className="form-check">
+											<input className="form-check-input" checked={this.state.datasetToggles['CCHDO']} onChange={(v) => this.toggle(v)} type="checkbox" id='CCHDO'></input>
+											<label className="form-check-label" htmlFor='CCHDO'>Display CCHDO</label>
 										</div>
 									</div>
-									<div className="form-floating mb-3">
-  										<input type="text" className="form-control" id="cchdoCruise" placeholder="" onInput={(v) => this.setToken('cchdoCruise', v)}></input>
-  										<label htmlFor="cchdoCruise">Cruise No.</label>
-										<div id="cchdoCruise" className="form-text">
-									  		<a target="_blank" rel="noreferrer" href='https://argovis-api.colorado.edu/cchdo/vocabulary?parameter=cchdo_cruise'>See list of CCHDO cruise No. options</a>
+									<div className='verticalGroup'>
+										<div className="form-floating mb-3">
+	  										<input type="text" className="form-control" id="cchdowoceline" placeholder="A10" onInput={(v) => this.setToken('cchdoWOCE', v)}></input>
+	  										<label htmlFor="cchdowoceline">WOCE line</label>
+											<div id="cchdowoceHelpBlock" className="form-text">
+										  		<a target="_blank" rel="noreferrer" href='https://argovis-api.colorado.edu/cchdo/vocabulary?parameter=woceline'>See list of WOCE line options</a>
+											</div>
+										</div>
+										<div className="form-floating mb-3">
+	  										<input type="text" className="form-control" id="cchdoCruise" placeholder="" onInput={(v) => this.setToken('cchdoCruise', v)}></input>
+	  										<label htmlFor="cchdoCruise">Cruise No.</label>
+											<div id="cchdoCruise" className="form-text">
+										  		<a target="_blank" rel="noreferrer" href='https://argovis-api.colorado.edu/cchdo/vocabulary?parameter=cchdo_cruise'>See list of CCHDO cruise No. options</a>
+											</div>
 										</div>
 									</div>
-								</div>
-						      </div>
-						    </div>
-						  </div>
+							      </div>
+							    </div>
+							  </div>
 
-						  <div className="accordion-item">
-						    <h2 className="accordion-header" id="driftersHeading">
-						      <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDrifters" aria-expanded="false" aria-controls="collapseDrifters">
-						        <strong>Global Drifter Program</strong>
-						      </button>
-						    </h2>
-						    <div id="collapseDrifters" className="accordion-collapse collapse" aria-labelledby="drifterHeading">
-						      <div className="accordion-body">
-							    <div className='verticalGroup'>
-				        			<div className="form-check">
-										<input className="form-check-input" checked={this.state.datasetToggles['Drifters']} onChange={(v) => this.toggle(v)} type="checkbox" id='Drifters'></input>
-										<label className="form-check-label" htmlFor='Drifters'>Display Drifters</label>
-									</div>
-								</div>
-								<div className='verticalGroup'>
-									<div className="form-floating mb-3">
-  										<input type="text" className="form-control" id="drifterWMO" placeholder="" onInput={(v) => this.setToken('drifterWMO', v)}></input>
-  										<label htmlFor="drifterWMO">WMO ID</label>
-										<div id="drifterWMOHelpBlock" className="form-text">
-									  		<a target="_blank" rel="noreferrer" href='https://argovis-api.colorado.edu/drifters/vocabulary?parameter=wmo'>See list of WMO ID options</a>
+							  <div className="accordion-item">
+							    <h2 className="accordion-header" id="driftersHeading">
+							      <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDrifters" aria-expanded="false" aria-controls="collapseDrifters">
+							        <strong>Global Drifter Program</strong>
+							      </button>
+							    </h2>
+							    <div id="collapseDrifters" className="accordion-collapse collapse" aria-labelledby="drifterHeading">
+							      <div className="accordion-body">
+								    <div className='verticalGroup'>
+					        			<div className="form-check">
+											<input className="form-check-input" checked={this.state.datasetToggles['Drifters']} onChange={(v) => this.toggle(v)} type="checkbox" id='Drifters'></input>
+											<label className="form-check-label" htmlFor='Drifters'>Display Drifters</label>
 										</div>
 									</div>
-									<div className="form-floating mb-3">
-  										<input type="text" className="form-control" id="drifterPlatform" placeholder="" onInput={(v) => this.setToken('drifterPlatform', v)}></input>
-  										<label htmlFor="drifterPlatform">Platform ID</label>
-										<div id="drifterPlatform" className="form-text">
-									  		<a target="_blank" rel="noreferrer" href='https://argovis-api.colorado.edu/drifters/vocabulary?parameter=platform'>See list of platform ID options</a>
+									<div className='verticalGroup'>
+										<div className="form-floating mb-3">
+	  										<input type="text" className="form-control" id="drifterWMO" placeholder="" onInput={(v) => this.setToken('drifterWMO', v)}></input>
+	  										<label htmlFor="drifterWMO">WMO ID</label>
+											<div id="drifterWMOHelpBlock" className="form-text">
+										  		<a target="_blank" rel="noreferrer" href='https://argovis-api.colorado.edu/drifters/vocabulary?parameter=wmo'>See list of WMO ID options</a>
+											</div>
+										</div>
+										<div className="form-floating mb-3">
+	  										<input type="text" className="form-control" id="drifterPlatform" placeholder="" onInput={(v) => this.setToken('drifterPlatform', v)}></input>
+	  										<label htmlFor="drifterPlatform">Platform ID</label>
+											<div id="drifterPlatform" className="form-text">
+										  		<a target="_blank" rel="noreferrer" href='https://argovis-api.colorado.edu/drifters/vocabulary?parameter=platform'>See list of platform ID options</a>
+											</div>
 										</div>
 									</div>
-								</div>
-						      </div>
-						    </div>
-						  </div>
+							      </div>
+							    </div>
+							  </div>
 
-						  <div className="accordion-item">
-						    <h2 className="accordion-header" id="tcHeading">
-						      <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTC" aria-expanded="false" aria-controls="collapseTC">
-						        <strong>Tropical Cyclones</strong>
-						      </button>
-						    </h2>
-						    <div id="collapseTC" className="accordion-collapse collapse" aria-labelledby="tcHeading">
-						      <div className="accordion-body">
-						      	<div className='verticalGroup'>
-					        		<div className="form-check">
-										<input className="form-check-input" checked={this.state.datasetToggles['Tropical Cyclones']} onChange={(v) => this.toggle(v)} type="checkbox" id='Tropical Cyclones'></input>
-										<label className="form-check-label" htmlFor='Tropical Cyclones'>Display Tropical Cyclones</label>
-									</div>
-								</div>
-								<div className='verticalGroup'>
-									<div className="form-floating mb-3">
-  										<input type="text" className="form-control" id="tcName" placeholder="" onInput={(v) => this.setToken('tcName', v)}></input>
-  										<label htmlFor="tcName">Name</label>
-										<div id="tcNameHelpBlock" className="form-text">
-									  		<a target="_blank" rel="noreferrer" href='https://argovis-api.colorado.edu/tc/vocabulary?parameter=name'>See list of TC name options</a>
+							  <div className="accordion-item">
+							    <h2 className="accordion-header" id="tcHeading">
+							      <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTC" aria-expanded="false" aria-controls="collapseTC">
+							        <strong>Tropical Cyclones</strong>
+							      </button>
+							    </h2>
+							    <div id="collapseTC" className="accordion-collapse collapse" aria-labelledby="tcHeading">
+							      <div className="accordion-body">
+							      	<div className='verticalGroup'>
+						        		<div className="form-check">
+											<input className="form-check-input" checked={this.state.datasetToggles['Tropical Cyclones']} onChange={(v) => this.toggle(v)} type="checkbox" id='Tropical Cyclones'></input>
+											<label className="form-check-label" htmlFor='Tropical Cyclones'>Display Tropical Cyclones</label>
 										</div>
 									</div>
-								</div>
-						      </div>
-						    </div>
-						  </div>
+									<div className='verticalGroup'>
+										<div className="form-floating mb-3">
+	  										<input type="text" className="form-control" id="tcName" placeholder="" onInput={(v) => this.setToken('tcName', v)}></input>
+	  										<label htmlFor="tcName">Name</label>
+											<div id="tcNameHelpBlock" className="form-text">
+										  		<a target="_blank" rel="noreferrer" href='https://argovis-api.colorado.edu/tc/vocabulary?parameter=name'>See list of TC name options</a>
+											</div>
+										</div>
+									</div>
+							      </div>
+							    </div>
+							  </div>
+							</div>
 						</div>
 					</div>
 
