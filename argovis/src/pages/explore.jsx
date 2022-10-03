@@ -323,7 +323,7 @@ class ArgovisExplore extends React.Component {
     }
 
     generateStatus(status){
-    	helpers.generateStatus.bind(this)(status)
+    	return helpers.generateStatus.bind(this)(status)
     }
 
 	render(){

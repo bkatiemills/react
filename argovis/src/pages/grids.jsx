@@ -1,4 +1,5 @@
 import React from 'react';
+import { flushSync } from 'react-dom';
 import { MapContainer, TileLayer, Popup, Polygon, FeatureGroup, Rectangle} from 'react-leaflet'
 import { EditControl } from "react-leaflet-draw";
 import '../index.css';
@@ -26,8 +27,8 @@ class Grids extends React.Component {
       		'ohc_kg': "2005-01-15"
       	},
       	selectedGrid: 'temperature_rg',
-      	status: 'ready',
-      	refreshData: true
+      	refreshData: true,
+      	refreshMapOnly: false
       }
       this.levels = {
       	'temperature_rg': this.constructLevelOptions([2.5,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,182.5,200,220,240,260,280,300,320,340,360,380,400,420,440,462.5,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1412.5,1500,1600,1700,1800,1900,1975]),
@@ -45,6 +46,7 @@ class Grids extends React.Component {
       	'salinity_rg': React.createRef(),
       	'ohc_kg': React.createRef()
       }
+      this.statusReporting = React.createRef()
       this.scales = {
       	'temperature_rg': '',
       	'salinity_rg': '',
@@ -58,8 +60,10 @@ class Grids extends React.Component {
 
     componentDidUpdate(prevProps, prevState, snapshot){
     	if(this.state.refreshData){
+    		if(this.statusReporting.current){
+					helpers.manageStatus.bind(this)('downloading')
+				}
 	    	//kick off request for new data, redraw the map when complete
-	    	console.log('refresh data', this.state.selectedGrid)
 	    	let url = this.apiPrefix + 'grids/' + this.state.selectedGrid+'?data=all&compression=array&startDate='+this.state.timestep[this.state.selectedGrid]+'T00:00:00Z&endDate='+this.state.timestep[this.state.selectedGrid]+'T00:00:01Z'
 	    	if(this.state.polygon.length > 0){
 	    		url += '&polygon='+JSON.stringify(this.state.polygon)
@@ -68,8 +72,11 @@ class Grids extends React.Component {
 					.then(response => {response.json().then(data => {
 						// eslint-disable-next-line
 						this.state.points = data
+						helpers.manageStatus.bind(this)('rendering')
 						this.refreshMap(false)				
 					})})
+			} else if(this.state.refreshMapOnly){
+				this.refreshMap(false)
 			}
     }
 
@@ -79,22 +86,24 @@ class Grids extends React.Component {
 	    	this.gridControls[this.state.selectedGrid].current.classList.toggle('hidden')
 	    }
     	this.gridControls[target.target.id].current.classList.toggle('hidden')
-    	this.setState({...this.state, selectedGrid: target.target.id, status: 'downloading', refreshData: true})
+    	this.setState({...this.state, selectedGrid: target.target.id, refreshData: true})
     }
 
     changeLevel(target, grid){
+    	flushSync(() =>{
+    		helpers.manageStatus.bind(this)('rendering')
+    		this.setState(this.state)
+    	})
     	let s = this.state
     	s.levelindex[grid] = parseInt(target.target.value)
-    	s.status = 'rendering'
     	s.refreshData = false
-    	this.setState(s, () => this.refreshMap(false))
+    	s.refreshMapOnly = true
+    	this.setState(s)
     }
 
     changeDate(target, grid){
-    	console.log('>>>>', target.target.value)
     	let s = this.state
     	s.timestep[grid] = target.target.value
-    	s.status = 'downloading'
     	s.refreshData = true
     	this.setState(s)
     }
@@ -114,9 +123,6 @@ class Grids extends React.Component {
 
     refreshMap(needNewData){
     	// redraw the map and render the dom
-    	console.log(this.state.points)
-    	console.log(this.state.status)
-    	console.log(this.state.levelindex)
     	if(this.state.points.length > 0){
 				let values = this.state.points.map(x=>x.data[this.state.levelindex[this.state.selectedGrid]][0]).filter(x=>x!==null)
 				this.setState({...this.state, 
@@ -124,8 +130,10 @@ class Grids extends React.Component {
 												min: Math.min(...values), 
 												max: Math.max(...values), 
 												units: this.state.points[0].units[0], 
-												status: 'ready',
-												refreshData: needNewData})
+												refreshData: needNewData,
+												refreshMapOnly: false}, () => {
+													helpers.manageStatus.bind(this)('ready')
+												})
 	    }
     }
 
@@ -156,10 +164,6 @@ class Grids extends React.Component {
     	return this.scale((val-min)/(max - min)).hex()
     }
 
-    generateStatus(status){
-    	helpers.generateStatus.bind(this)(status)
-    }
-
     fetchPolygon(coords){
     	helpers.fetchPolygon.bind(this)(coords)   	
     }
@@ -181,7 +185,6 @@ class Grids extends React.Component {
     }
 
     unitTransform(unit, scale){
-    	console.log(unit, scale)
     	if(scale === 'k'){
     		return Math.round(unit)/1000
     	} else if(scale === 'M'){
@@ -201,7 +204,7 @@ class Grids extends React.Component {
 				<div className='row'>	
 					{/*search option sidebar*/}
 					<div className='col-3 overflow-auto'>
-						{this.generateStatus(this.state.status)}
+						<span ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
 						<div className='mapSearchInputs'>
 							<h5>Search Control</h5>
 							<div className="form-check">
