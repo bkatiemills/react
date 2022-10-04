@@ -1,4 +1,5 @@
 import React from 'react';
+import { flushSync } from 'react-dom';
 import { MapContainer, TileLayer, Popup, CircleMarker, FeatureGroup} from 'react-leaflet'
 import { EditControl } from "react-leaflet-draw";
 import '../index.css';
@@ -32,7 +33,6 @@ class ArgovisExplore extends React.Component {
        	polygon: [], // [[lon0, lat0], [lon1, lat1], ..., [lonn,latn], [lon0,lat0]]
        	refreshData: true,
        	startDate: ['2012-01-01', '2012-01-01T00:00:00Z'],
-       	status: 'downloading',
        	tcName: '',
        	urls: {
        		'argo': [],
@@ -42,15 +42,32 @@ class ArgovisExplore extends React.Component {
        	}
       }
       this.fgRef = React.createRef()
-      this.refreshButtonRef = React.createRef()
+      this.fieldNames = {
+      	'argoPlatform': 'Argo Platform ID',
+      	'cchdoWOCE': 'CCHDO WOCE line',
+      	'cchdoCruise': 'CCHDO Cruise No.',
+      	'drifterWMO': 'WMO ID',
+      	'drifterPlatform': 'Platform ID',
+      	'tcName': 'Tropical Cyclone name'
+
+      }
+      this.statusReporting = React.createRef()
       //this.apiPrefix = 'https://argovis-api.colorado.edu/'
       this.apiPrefix = 'http://3.88.185.52:8080/'
+      this.vocab = {}
 
       this.componentDidUpdate()
+
+      fetch(this.apiPrefix + 'argo/vocabulary?parameter=platform', {headers:{'x-argokey': this.state.apiKey}})
+      .then(response => response.json())
+      .then(data => this.vocab['argoPlatform'] = data)
     }
 
     componentDidUpdate(prevProps, prevState, snapshot){
     	if(this.state.refreshData){
+    		if(this.statusReporting.current){
+					helpers.manageStatus.bind(this)('downloading')
+				}
 				// reformualte all URLs
 				let urls = {
 					'argo': this.generateArgoURLs(),
@@ -58,7 +75,6 @@ class ArgovisExplore extends React.Component {
 					'drifters':  this.generateDrifterURLs(),
 					'tc': this.generateTCURLs()
 				}
-				console.log('urls', urls)
 				let refresh = []
 
 				//compare new URLs to old URLs; any that are new, add them to a to-be-updated list, and update urls in state
@@ -78,15 +94,19 @@ class ArgovisExplore extends React.Component {
 						this.state.urls[dataset] = urls[dataset]
 					}
 				}
-				console.log('to be refreshed', refresh)
-
-				//promise all across a `fetch` for all new URLs, and update CircleMarkers for all new fetches
-				Promise.all(refresh.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+				if(refresh.length === 0){
+					helpers.manageStatus.bind(this)('ready')
+					if(this.state.points.length>0){
+						this.refreshMap(false)
+					}
+				} else {
+					//promise all across a `fetch` for all new URLs, and update CircleMarkers for all new fetches
+					Promise.all(refresh.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 						let datasets = responses.map(x => this.findDataset(x.url))
 						Promise.all(responses.map(res => res.json())).then(data => {
 							let newPoints = {}
 							if(data.length>0 && data[0][0].code !== 404){
-							for(let i=0; i<data.length; i++){
+								for(let i=0; i<data.length; i++){
 									let points = data[i].map(x => x.concat([datasets[i]])) // so there's something in the source position for everything other than argo
 									points = this.circlefy(points)
 									if(points){
@@ -100,11 +120,13 @@ class ArgovisExplore extends React.Component {
 							}
 							// eslint-disable-next-line
 							this.state.points = {...this.state.points, ...newPoints}
+							helpers.manageStatus.bind(this)('rendering')
 							if(Object.keys(newPoints).length>0){
 								this.refreshMap(false)
 							}
 						})
 					})
+				}
 			}
     }
 
@@ -115,7 +137,6 @@ class ArgovisExplore extends React.Component {
     	let s = {...this.state}
     	s.datasetToggles = toggleState
     	s.refreshData = true
-    	s.status = 'downloading'
     	this.setState(s)
     }
 
@@ -129,24 +150,31 @@ class ArgovisExplore extends React.Component {
 	    let s = {...this.state}
 	    s[date] = [d.slice(0,10),d]
 	    s.refreshData = true
-	    s.status = 'downloading'
 	    this.setState(s)
     }
 
     setToken(key, v){
-    	this.refreshButtonRef.current.classList.add('btn-primary');
-    	this.refreshButtonRef.current.classList.remove('btn-outline-primary');
-    	let s = {...this.state}
-    	s[key] = v.target.value
-    	s.refreshData = false
-    	s.status = 'needs refresh'
-    	this.setState(s)
+    	if(v.target.value && !this.vocab[key].includes(v.target.value)){
+    		helpers.manageStatus.bind(this)('error', this.fieldNames[key])
+	    } else {
+	    	let s = {...this.state}
+	    	console.log('token:', key, v.target.value)
+  	  	s[key] = v.target.value
+    		s.refreshData = true
+    		this.setState(s)
+    	}
     }
 
     refreshMap(needNewData){
-    	this.refreshButtonRef.current.classList.add('btn-outline-primary');
-    	this.refreshButtonRef.current.classList.remove('btn-primary');
-    	this.setState({refreshData: needNewData, status:'ready'})
+  		if(needNewData){
+    		helpers.manageStatus.bind(this)('downloading')
+    	} else {
+    		helpers.manageStatus.bind(this)('rendering')
+    	}
+
+    	this.setState({refreshData: needNewData}, () => {
+				helpers.manageStatus.bind(this)('ready')
+			})
     }
 
     // API URL generation
@@ -171,7 +199,6 @@ class ArgovisExplore extends React.Component {
     }
 
     generateArgoURLs() {
-    	console.log('toggles', this.state.datasetToggles)
     	let url = this.generateTemporoSpatialURL('argo')
 
     	if(this.state.argoPlatform !== ''){
@@ -322,23 +349,16 @@ class ArgovisExplore extends React.Component {
     	return url.slice(url.search('(?<='+this.apiPrefix+')'), url.search('(?=comp)')-1 )
     }
 
-    generateStatus(status){
-    	return helpers.generateStatus.bind(this)(status)
-    }
-
 	render(){
-		console.log('render ahoy')
-
 		return(
 			<div>
 				<div className='row'>
 					
 					{/*search option sidebar*/}
 					<div className='col-3 overflow-auto'>
-						{this.generateStatus(this.state.status)}
+						<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
 						<div className='mapSearchInputs'>
 							<h5>Search Control</h5>
-							<button id='mapRefresh' ref={this.refreshButtonRef} type="button" className="btn btn-outline-primary verticalGroup" onClick={()=>this.refreshMap(true)}>Refresh Map</button>
 							<div className='verticalGroup'>
 								<div className="form-floating mb-3">
 									<input type="date" className="form-control" id="startDate" value={this.state.startDate[0]} placeholder="" onChange={(v) => this.setDate('startDate', v)}></input>

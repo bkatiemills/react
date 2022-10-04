@@ -31,3 +31,8 @@
   color: #212529;
   background-color: #ffc107;
 }
+
+.error {
+  color: #FFFFFF;
+  background-color: #dc3545;
+}

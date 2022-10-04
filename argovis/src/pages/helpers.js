@@ -16,31 +16,13 @@ helpers.onDrawStop = function(payload){
 	}
 }
 
-helpers.generateStatus = function(status){
-	// status == 'ready', 'downloading', 'rendering'
-	let message = ''
-		let className = ''
-	if(status === 'ready'){
-		className = 'statusBanner ready'
-		message = 'Ready'
-	} else if(status === 'downloading'){
-		className = 'statusBanner busy'
-		message = 'Downloading...'
-	} else if(status === 'rendering'){
-		className = 'statusBanner busy'
-		message = 'Rendering...'
-	} else if(status === 'needs refresh'){
-		className = 'statusBanner busy'
-		message = 'Refresh map when ready'
-	}
-	return(<span ref={this.statusReporting} className={className}>{message}</span>)
-}
-
-helpers.manageStatus = function(newStatus){
+helpers.manageStatus = function(newStatus, messageArg){
 	let statuses = {
 		ready: ['Ready', 'ready'],  // message, classname
 		downloading: ['Downloading...', 'busy'],
-		rendering: ['Rendering...', 'busy']
+		rendering: ['Rendering...', 'busy'],
+		needsRefresh: ['Refresh map when ready', 'busy'],
+		error: ['Check input value in '+messageArg, 'error']
 	}
 
 	for(let key in statuses){
