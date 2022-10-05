@@ -1,5 +1,4 @@
 import React from 'react';
-import { flushSync } from 'react-dom';
 import { MapContainer, TileLayer, Popup, Polygon, FeatureGroup, Rectangle} from 'react-leaflet'
 import { EditControl } from "react-leaflet-draw";
 import '../index.css';

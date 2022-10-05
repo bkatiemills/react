@@ -1,5 +1,4 @@
 import React from 'react';
-import { flushSync } from 'react-dom';
 import { MapContainer, TileLayer, Popup, CircleMarker, FeatureGroup} from 'react-leaflet'
 import { EditControl } from "react-leaflet-draw";
 import '../index.css';
@@ -8,21 +7,16 @@ import helpers from'./helpers'
 class ArgovisExplore extends React.Component {
     constructor(props) {
       super(props);
+
+      let q = new URLSearchParams(window.location.search)
+
       this.state = {
-      	argoPlatform: '',
+      	argoPlatform: q.has('argoPlatform') ? q.get('argoPlatform') : '',
       	apiKey: 'guest',
-      	cchdoWOCE: '',
-      	cchdoCruise: '',
-      	datasetToggles: {
-	        'Argo Core': 			true,
-    	    'Argo BGC':  			true,
-        	'Argo Deep': 			true,
-        	'CCHDO':    			false,
-        	'Drifters': 			false,
-       		'Tropical Cyclones':    false
-       	},
-       	drifterWMO: '',
-       	drifterPlatform: '',
+      	cchdoWOCE: q.has('cchdoWOCE') ? q.get('cchdoWOCE') : '',
+      	cchdoCruise: q.has('cchdoCruise') ? q.get('cchdoCruise') : '',
+       	drifterWMO: q.has('drifterWMO') ? q.get('drifterWMO') : '',
+       	drifterPlatform: q.has('drifterPlatform') ? q.get('drifterPlatform') : '',
        	endDate: ['2012-01-11', '2012-01-11T00:00:00Z'],
        	points: {
        		'argo': [],
@@ -33,7 +27,13 @@ class ArgovisExplore extends React.Component {
        	polygon: [], // [[lon0, lat0], [lon1, lat1], ..., [lonn,latn], [lon0,lat0]]
        	refreshData: true,
        	startDate: ['2012-01-01', '2012-01-01T00:00:00Z'],
-       	tcName: '',
+       	tcName: q.has('tcName') ? q.get('tcName') : '',
+       	argocore: q.has('argocore') ? q.get('argocore') === 'true' : false,
+       	argobgc: q.has('argobgc') ? q.get('argobgc') === 'true' : false,
+       	argodeep: q.has('argodeep') ? q.get('argodeep') === 'true' : false,
+       	cchdo: q.has('cchdo') ? q.get('cchdo') === 'true' : false,
+       	drifters: q.has('drifters') ? q.get('drifters') === 'true' : false,
+       	tc: q.has('tc') ? q.get('tc') === 'true' : false,
        	urls: {
        		'argo': [],
        		'cchdo': [],
@@ -41,6 +41,24 @@ class ArgovisExplore extends React.Component {
        		'tc': []
        	}
       }
+
+      if(q.has('endDate') && q.has('startDate')){
+      	this.state.startDate = [q.get('startDate'), q.get('startDate')+'T00:00:00Z'] 
+      	this.state.endDate = [q.get('endDate'), q.get('endDate')+'T00:00:00Z'] 
+      } else {
+	      let last = new Date()
+  	    let first = new Date(last.getTime() - (10 * 24 * 60 * 60 * 1000));
+  	    this.state.startDate = [first.toISOString().slice(0,10), first.toISOString().slice(0,-5)+'Z']
+  	    this.state.endDate = [last.toISOString().slice(0,10), last.toISOString().slice(0,-5)+'Z']
+      }
+
+      if(!window.location.search){
+      	console.log('imposing defaults')
+      	this.state.argocore = true
+      	this.state.argobgc = true
+      	this.state.argodeep = true
+      }
+
       this.fgRef = React.createRef()
       this.fieldNames = {
       	'argoPlatform': 'Argo Platform ID',
@@ -55,6 +73,8 @@ class ArgovisExplore extends React.Component {
       //this.apiPrefix = 'https://argovis-api.colorado.edu/'
       this.apiPrefix = 'http://3.88.185.52:8080/'
       this.vocab = {}
+
+			this.setQueryString()
 
       this.componentDidUpdate()
 
@@ -128,14 +148,30 @@ class ArgovisExplore extends React.Component {
 					})
 				}
 			}
+			this.setQueryString()
+    }
+
+    setQueryString(){
+      let queryManagement = new URL(window.location)
+
+      queryManagement.searchParams.set('startDate', this.state.startDate[0])
+     	queryManagement.searchParams.set('endDate', this.state.endDate[0])
+
+      let qparams = ['argocore', 'argobgc', 'argodeep', 'cchdo', 'drifters', 'tc', 'cchdoWOCE', 'cchdoCruise', 'argoPlatform', 'drifterWMO', 'drifterPlatform', 'tcName']
+      for(let i=0; i<qparams.length; i++){
+      	if(this.state[qparams[i]]){
+      		queryManagement.searchParams.set(qparams[i], this.state[qparams[i]])
+      	} else{
+      		queryManagement.searchParams.delete(qparams[i])
+      	}
+      } 
+      window.history.pushState(null, '', queryManagement.toString());
     }
 
     // input handlers
     toggle(v){
-    	let toggleState = {...this.state.datasetToggles}
-    	toggleState[v.target.id] = !toggleState[v.target.id] 
     	let s = {...this.state}
-    	s.datasetToggles = toggleState
+    	s[v.target.id] = !s[v.target.id]
     	s.refreshData = true
     	this.setState(s)
     }
@@ -207,21 +243,21 @@ class ArgovisExplore extends React.Component {
 
     	// decide on source.source
     	let source = []
-    	if(!this.state.datasetToggles['Argo Core'] && !this.state.datasetToggles['Argo BGC'] && !this.state.datasetToggles['Argo Deep']){
+    	if(!this.state.argocore && !this.state.argobgc && !this.state.argodeep){
     		return []
-    	} else if(this.state.datasetToggles['Argo Core'] && this.state.datasetToggles['Argo BGC'] && this.state.datasetToggles['Argo Deep']){
+    	} else if(this.state.argocore && this.state.argobgc && this.state.argodeep){
     		source = ['argo_core']
-    	} else if(this.state.datasetToggles['Argo Core'] && this.state.datasetToggles['Argo BGC'] && !this.state.datasetToggles['Argo Deep']){
+    	} else if(this.state.argocore && this.state.argobgc && !this.state.argodeep){
     		source = ['argo_core,~argo_deep', 'argo_bgc']
-    	} else if(this.state.datasetToggles['Argo Core'] && !this.state.datasetToggles['Argo BGC'] && this.state.datasetToggles['Argo Deep']){
+    	} else if(this.state.argocore && !this.state.argobgc && this.state.argodeep){
     		source = ['argo_core,~argo_bgc', 'argo_deep']
-    	} else if(!this.state.datasetToggles['Argo Core'] && this.state.datasetToggles['Argo BGC'] && this.state.datasetToggles['Argo Deep']){
+    	} else if(!this.state.argocore && this.state.argobgc && this.state.argodeep){
     		source = ['argo_bgc', 'argo_deep']
-    	} else if(this.state.datasetToggles['Argo Core'] && !this.state.datasetToggles['Argo BGC'] && !this.state.datasetToggles['Argo Deep']){
+    	} else if(this.state.argocore && !this.state.argobgc && !this.state.argodeep){
     		source = ['argo_core,~argo_bgc,~argo_deep']
-    	} else if(!this.state.datasetToggles['Argo Core'] && this.state.datasetToggles['Argo BGC'] && !this.state.datasetToggles['Argo Deep']){
+    	} else if(!this.state.argocore && this.state.argobgc && !this.state.argodeep){
     		source = ['argo_bgc']
-    	} else if(!this.state.datasetToggles['Argo Core'] && !this.state.datasetToggles['Argo BGC'] && this.state.datasetToggles['Argo Deep']){
+    	} else if(!this.state.argocore && !this.state.argobgc && this.state.argodeep){
     		source = ['argo_deep']
     	}
 
@@ -234,7 +270,7 @@ class ArgovisExplore extends React.Component {
     }
 
     generateCCHDOURLs() {
-    	if(!this.state.datasetToggles['CCHDO']){
+    	if(!this.state.cchdo){
     		return []
     	}
 
@@ -252,7 +288,7 @@ class ArgovisExplore extends React.Component {
     }
 
     generateDrifterURLs(){
-    	if(!this.state.datasetToggles['Drifters']){
+    	if(!this.state.drifters){
     		return []
     	}
 
@@ -270,7 +306,7 @@ class ArgovisExplore extends React.Component {
     }
 
     generateTCURLs(){
-    	if(!this.state.datasetToggles['Tropical Cyclones']){
+    	if(!this.state.tc){
     		return []
     	}
 
@@ -388,21 +424,21 @@ class ArgovisExplore extends React.Component {
 							      <div className="accordion-body">
 							      	<div className='verticalGroup'>
 								        <div className="form-check">
-											<input className="form-check-input" checked={this.state.datasetToggles['Argo Core']} onChange={(v) => this.toggle(v)} type="checkbox" id='Argo Core'></input>
+											<input className="form-check-input" checked={this.state.argocore} onChange={(v) => this.toggle(v)} type="checkbox" id='argocore'></input>
 											<label className="form-check-label" htmlFor='Argo Core'>Display Argo Core</label>
 										</div>
 									    <div className="form-check">
-											<input className="form-check-input" checked={this.state.datasetToggles['Argo BGC']} onChange={(v) => this.toggle(v)} type="checkbox" id='Argo BGC'></input>
+											<input className="form-check-input" checked={this.state.argobgc} onChange={(v) => this.toggle(v)} type="checkbox" id='argobgc'></input>
 											<label className="form-check-label" htmlFor='Argo BGC'>Display Argo BGC</label>
 										</div>
 						        		<div className="form-check">
-											<input className="form-check-input" checked={this.state.datasetToggles['Argo Deep']} onChange={(v) => this.toggle(v)} type="checkbox" id='Argo Deep'></input>
+											<input className="form-check-input" checked={this.state.argodeep} onChange={(v) => this.toggle(v)} type="checkbox" id='argodeep'></input>
 											<label className="form-check-label" htmlFor='Argo Deep'>Display Argo Deep</label>
 										</div>
 									</div>
 									<div className='verticalGroup'>
 										<div className="form-floating mb-3">
-	  										<input type="text" className="form-control" id="argoPlatform" placeholder="" onInput={(v) => this.setToken('argoPlatform', v)}></input>
+	  										<input type="text" className="form-control" id="argoPlatform" onInput={(v) => this.setToken('argoPlatform', v)}></input>
 	  										<label htmlFor="argoPlatform">Platform ID</label>
 											<div id="argoPlatformHelpBlock" className="form-text">
 										  		<a target="_blank" rel="noreferrer" href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform'>See list of Platform ID options</a>
@@ -423,7 +459,7 @@ class ArgovisExplore extends React.Component {
 							      <div className="accordion-body">
 								    <div className='verticalGroup'>
 					        			<div className="form-check">
-											<input className="form-check-input" checked={this.state.datasetToggles['CCHDO']} onChange={(v) => this.toggle(v)} type="checkbox" id='CCHDO'></input>
+											<input className="form-check-input" checked={this.state.cchdo} onChange={(v) => this.toggle(v)} type="checkbox" id='cchdo'></input>
 											<label className="form-check-label" htmlFor='CCHDO'>Display CCHDO</label>
 										</div>
 									</div>
@@ -457,7 +493,7 @@ class ArgovisExplore extends React.Component {
 							      <div className="accordion-body">
 								    <div className='verticalGroup'>
 					        			<div className="form-check">
-											<input className="form-check-input" checked={this.state.datasetToggles['Drifters']} onChange={(v) => this.toggle(v)} type="checkbox" id='Drifters'></input>
+											<input className="form-check-input" checked={this.state.drifters} onChange={(v) => this.toggle(v)} type="checkbox" id='drifters'></input>
 											<label className="form-check-label" htmlFor='Drifters'>Display Drifters</label>
 										</div>
 									</div>
@@ -491,7 +527,7 @@ class ArgovisExplore extends React.Component {
 							      <div className="accordion-body">
 							      	<div className='verticalGroup'>
 						        		<div className="form-check">
-											<input className="form-check-input" checked={this.state.datasetToggles['Tropical Cyclones']} onChange={(v) => this.toggle(v)} type="checkbox" id='Tropical Cyclones'></input>
+											<input className="form-check-input" checked={this.state.tc} onChange={(v) => this.toggle(v)} type="checkbox" id='tc'></input>
 											<label className="form-check-label" htmlFor='Tropical Cyclones'>Display Tropical Cyclones</label>
 										</div>
 									</div>
