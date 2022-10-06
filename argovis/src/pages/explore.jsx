@@ -1,6 +1,7 @@
 import React from 'react';
 import { MapContainer, TileLayer, Popup, CircleMarker, FeatureGroup} from 'react-leaflet'
 import { EditControl } from "react-leaflet-draw";
+import Autosuggest from 'react-autosuggest';
 import '../index.css';
 import helpers from'./helpers'
 
@@ -39,7 +40,10 @@ class ArgovisExplore extends React.Component {
        		'cchdo': [],
        		'drifters': [],
        		'tc': []
-       	}
+       	},
+       	/////////////
+       	suggestions:[]
+       	/////////////
       }
 
       if(q.has('endDate') && q.has('startDate')){
@@ -82,7 +86,39 @@ class ArgovisExplore extends React.Component {
       .then(response => response.json())
       .then(data => this.vocab['argoPlatform'] = data)
     }
+    //////////////////////////
+		getSuggestions = value => {
+		  const inputValue = value.trim().toLowerCase();
+		  const inputLength = inputValue.length;
 
+		  return inputLength === 0 ? [] : this.vocab['argoPlatform'].filter(argoPlatform =>
+		    argoPlatform.toLowerCase().slice(0, inputLength) === inputValue
+		  );
+		};
+		getSuggestionValue = suggestion => suggestion;
+		renderSuggestion = suggestion => (
+		  <div>
+		    {suggestion}
+		  </div>
+		);
+	  onChange = (event, { newValue }) => {
+	    // this.setState({
+	    //   argoPlatform: newValue
+	    // });
+	    this.setToken('argoPlatform', {target:{value:newValue}})
+
+	  };
+	  onSuggestionsFetchRequested = ({ value }) => {
+	    this.setState({
+	      suggestions: this.getSuggestions(value)
+	    });
+	  };
+	  onSuggestionsClearRequested = () => {
+	    this.setState({
+	      suggestions: []
+	    });
+	  };
+    /////////////////////
     componentDidUpdate(prevProps, prevState, snapshot){
     	if(this.state.refreshData){
     		if(this.statusReporting.current){
@@ -190,15 +226,15 @@ class ArgovisExplore extends React.Component {
     }
 
     setToken(key, v){
+    	let s = {...this.state}
+  	  s[key] = v.target.value
     	if(v.target.value && !this.vocab[key].includes(v.target.value)){
     		helpers.manageStatus.bind(this)('error', this.fieldNames[key])
+    		s.refreshData = false
 	    } else {
-	    	let s = {...this.state}
-	    	console.log('token:', key, v.target.value)
-  	  	s[key] = v.target.value
     		s.refreshData = true
-    		this.setState(s)
     	}
+    	this.setState(s)
     }
 
     refreshMap(needNewData){
@@ -386,6 +422,13 @@ class ArgovisExplore extends React.Component {
     }
 
 	render(){
+
+    const inputProps = {
+      placeholder: 'Argo platform ID',
+      value: this.state.argoPlatform,
+      onChange: this.onChange
+    };
+
 		return(
 			<div>
 				<div className='row'>
@@ -438,8 +481,16 @@ class ArgovisExplore extends React.Component {
 									</div>
 									<div className='verticalGroup'>
 										<div className="form-floating mb-3">
-	  										<input type="text" className="form-control" id="argoPlatform" onInput={(v) => this.setToken('argoPlatform', v)}></input>
-	  										<label htmlFor="argoPlatform">Platform ID</label>
+									      <Autosuggest
+									      	id='argoPlatform'
+									        suggestions={this.state.suggestions}
+									        onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
+									        onSuggestionsClearRequested={this.onSuggestionsClearRequested}
+									        getSuggestionValue={this.getSuggestionValue}
+									        renderSuggestion={this.renderSuggestion}
+									        inputProps={inputProps}
+									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
+									      />
 											<div id="argoPlatformHelpBlock" className="form-text">
 										  		<a target="_blank" rel="noreferrer" href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform'>See list of Platform ID options</a>
 											</div>
