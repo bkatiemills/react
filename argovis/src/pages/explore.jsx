@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapContainer, TileLayer, Popup, CircleMarker, FeatureGroup} from 'react-leaflet'
+import { MapContainer, TileLayer, Popup, CircleMarker, Polygon, FeatureGroup} from 'react-leaflet'
 import { EditControl } from "react-leaflet-draw";
 import Autosuggest from 'react-autosuggest';
 import '../index.css';
@@ -25,7 +25,7 @@ class ArgovisExplore extends React.Component {
        		'drifters': [],
        		'tc': []
        	},
-       	polygon: [], // [[lon0, lat0], [lon1, lat1], ..., [lonn,latn], [lon0,lat0]]
+       	polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [], // [[lon0, lat0], [lon1, lat1], ..., [lonn,latn], [lon0,lat0]]
        	refreshData: true,
        	startDate: ['2012-01-01', '2012-01-01T00:00:00Z'],
        	tcName: q.has('tcName') ? q.get('tcName') : '',
@@ -201,6 +201,12 @@ class ArgovisExplore extends React.Component {
       		queryManagement.searchParams.delete(qparams[i])
       	}
       } 
+
+      if(JSON.stringify(this.state.polygon) !== '[]'){
+      	queryManagement.searchParams.set('polygon', JSON.stringify(this.state.polygon))
+      } else {
+      	queryManagement.searchParams.delete('polygon')
+      }
       window.history.pushState(null, '', queryManagement.toString());
     }
 
@@ -213,14 +219,37 @@ class ArgovisExplore extends React.Component {
     }
 
     setDate(date, v){
-    	let d = ''
+    	// when setting dates from the UI, don't let the user ask for a timespan longer than some cutoff. 
+    	// If they do, move the other time bound to match.
+    	let start = new Date(this.state.startDate[0])
+    	let end = new Date(this.state.endDate[0])
+    	let delta = end.getTime() - start.getTime()
+    	let cutoff = 10*24*60*60*1000
     	if(isNaN(v.target.valueAsNumber)){
-    		d = ''
+    		console.log('undefined time', v.target.valueAsNumber)
+    		return
     	} else{
-	    	d = new Date(v.target.valueAsNumber).toISOString().replace('.000Z', 'Z')
+    		if(date === 'startDate'){
+		    	start = new Date(v.target.valueAsNumber)
+		    	if(end.getTime() - start.getTime() > cutoff){
+		    		end = new Date(v.target.valueAsNumber + cutoff)
+		    	} else if (start.getTime() > end.getTime()){
+		    		end = new Date(v.target.valueAsNumber + delta)
+		    	}  	
+		    } else if(date === 'endDate'){
+		    	end = new Date(v.target.valueAsNumber)
+		    	if(end.getTime() - start.getTime() > cutoff){
+		    		start = new Date(v.target.valueAsNumber - cutoff)
+		    	} else if (start.getTime() > end.getTime()){
+		    		start = new Date(v.target.valueAsNumber - delta)
+		    	}  	
+		    }
+		    start = start.toISOString().replace('.000Z', 'Z')
+		   	end = end.toISOString().replace('.000Z', 'Z')
 	    }
 	    let s = {...this.state}
-	    s[date] = [d.slice(0,10),d]
+	    s.startDate = [start.slice(0,10), start]
+	    s.endDate = [end.slice(0,10), end]
 	    s.refreshData = true
 	    this.setState(s)
     }
@@ -618,8 +647,14 @@ class ArgovisExplore extends React.Component {
                                 polyline: false,
                                 circlemarker: false,
                                 marker: false,
+                                polygon: {
+                    							shapeOptions: {
+                    								fillOpacity: 0
+                    							}
+                    						}
 						      }}
 						    />
+						    <Polygon positions={this.state.polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
 						  </FeatureGroup>
 						  {this.state.points.argo}
 						  {this.state.points.cchdo}
