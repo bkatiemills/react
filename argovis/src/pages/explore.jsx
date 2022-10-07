@@ -6,54 +6,73 @@ import '../index.css';
 import helpers from'./helpers'
 
 class ArgovisExplore extends React.Component {
+		// top level element for the Argovis landing page
     constructor(props) {
       super(props);
 
-      let q = new URLSearchParams(window.location.search)
+      let q = new URLSearchParams(window.location.search) // parse out query string
 
-      this.state = {
-      	argoPlatform: q.has('argoPlatform') ? q.get('argoPlatform') : '',
-      	apiKey: 'guest',
-      	cchdoWOCE: q.has('cchdoWOCE') ? q.get('cchdoWOCE') : '',
-      	cchdoCruise: q.has('cchdoCruise') ? q.get('cchdoCruise') : '',
-       	drifterWMO: q.has('drifterWMO') ? q.get('drifterWMO') : '',
-       	drifterPlatform: q.has('drifterPlatform') ? q.get('drifterPlatform') : '',
-       	endDate: ['2012-01-11', '2012-01-11T00:00:00Z'],
-       	points: {
+      // a state configuration we can use to 'reset' to.
+      this.neutralState = {
+      	argoPlatform: '',					// argo platform ID requested by user
+      	apiKey: 'guest',					// user's API key, if provided
+      	cchdoWOCE: '',						// cchdo WOCE line requested by user
+      	cchdoCruise: '',					// cchdo cruise requested by user
+       	drifterWMO: '',						// driter WMO number requested by user
+       	drifterPlatform: '',			// drifter platform ID requested by user
+       	endDate: [],							// end date of temporospatial requests, [yyyy-mm-dd, yyyy-mm-ddT00:00:00Z]
+       	points: {									// arrays of points to paint for each dataset
        		'argo': [],
        		'cchdo': [],
        		'drifters': [],
        		'tc': []
        	},
+       	polygon: [],							// polygon region for temporospatial search [[lon0, lat0],[lon1,lat1],...,[lonN,latN],[lon0,lat0]]
+       	refreshData: false,				// should data be refetched on this render?
+       	startDate: [],						// start date of temporospatial requests, [yyyy-mm-dd, yyyy-mm-ddT00:00:00Z]
+       	tcName: '',								// tropical cyclone name requested by user
+       	argocore: false,					// are we asking for argo core points?
+       	argobgc: false,						// argo bgc "
+       	argodeep: false,					// argo deep "
+       	cchdo: false,							// cchdo ""
+       	drifters: false,					// drifters "
+       	tc: false,								// tropical cyclones "
+       	urls: {										// URLs to query for each dataset
+       		'argo': [],
+       		'cchdo': [],
+       		'drifters': [],
+       		'tc': []
+       	},
+       	observingEntity: false, 	// are we requesting and plotting an entity like an argo float or named cyclone, rather than a temporospatial search?
+       	argoPlatformSuggestions: [] // vocab entries that match partial requests for argo platforms
+      }
+
+      if(q.has('endDate') && q.has('startDate')){
+      	this.neutralState.startDate = [q.get('startDate'), q.get('startDate')+'T00:00:00Z'] 
+      	this.neutralState.endDate = [q.get('endDate'), q.get('endDate')+'T00:00:00Z'] 
+      } else {
+	      let last = new Date()
+  	    let first = new Date(last.getTime() - (3 * 24 * 60 * 60 * 1000));
+  	    this.neutralState.startDate = [first.toISOString().slice(0,10), first.toISOString().slice(0,-5)+'Z']
+  	    this.neutralState.endDate = [last.toISOString().slice(0,10), last.toISOString().slice(0,-5)+'Z']
+      }
+
+      this.state = {
+      	...this.neutralState,
+      	argoPlatform: q.has('argoPlatform') ? q.get('argoPlatform') : '',
+      	cchdoWOCE: q.has('cchdoWOCE') ? q.get('cchdoWOCE') : '',
+      	cchdoCruise: q.has('cchdoCruise') ? q.get('cchdoCruise') : '',
+       	drifterWMO: q.has('drifterWMO') ? q.get('drifterWMO') : '',
+       	drifterPlatform: q.has('drifterPlatform') ? q.get('drifterPlatform') : '',
        	polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [], // [[lon0, lat0], [lon1, lat1], ..., [lonn,latn], [lon0,lat0]]
        	refreshData: true,
-       	startDate: ['2012-01-01', '2012-01-01T00:00:00Z'],
        	tcName: q.has('tcName') ? q.get('tcName') : '',
        	argocore: q.has('argocore') ? q.get('argocore') === 'true' : false,
        	argobgc: q.has('argobgc') ? q.get('argobgc') === 'true' : false,
        	argodeep: q.has('argodeep') ? q.get('argodeep') === 'true' : false,
        	cchdo: q.has('cchdo') ? q.get('cchdo') === 'true' : false,
        	drifters: q.has('drifters') ? q.get('drifters') === 'true' : false,
-       	tc: q.has('tc') ? q.get('tc') === 'true' : false,
-       	urls: {
-       		'argo': [],
-       		'cchdo': [],
-       		'drifters': [],
-       		'tc': []
-       	},
-       	/////////////
-       	suggestions:[]
-       	/////////////
-      }
-
-      if(q.has('endDate') && q.has('startDate')){
-      	this.state.startDate = [q.get('startDate'), q.get('startDate')+'T00:00:00Z'] 
-      	this.state.endDate = [q.get('endDate'), q.get('endDate')+'T00:00:00Z'] 
-      } else {
-	      let last = new Date()
-  	    let first = new Date(last.getTime() - (10 * 24 * 60 * 60 * 1000));
-  	    this.state.startDate = [first.toISOString().slice(0,10), first.toISOString().slice(0,-5)+'Z']
-  	    this.state.endDate = [last.toISOString().slice(0,10), last.toISOString().slice(0,-5)+'Z']
+       	tc: q.has('tc') ? q.get('tc') === 'true' : false
       }
 
       if(!window.location.search){
@@ -73,6 +92,14 @@ class ArgovisExplore extends React.Component {
       	'tcName': 'Tropical Cyclone name'
 
       }
+      this.exclusiveState = {
+      	// when some text fields are filled in, everything else gets reset back to neutralState save these
+      	'argoPlatform': {
+      		'argocore': true,
+      		'argobgc': true,
+      		'argodeep': true
+      	}
+      }
       this.statusReporting = React.createRef()
       //this.apiPrefix = 'https://argovis-api.colorado.edu/'
       this.apiPrefix = 'http://3.88.185.52:8080/'
@@ -86,39 +113,7 @@ class ArgovisExplore extends React.Component {
       .then(response => response.json())
       .then(data => this.vocab['argoPlatform'] = data)
     }
-    //////////////////////////
-		getSuggestions = value => {
-		  const inputValue = value.trim().toLowerCase();
-		  const inputLength = inputValue.length;
 
-		  return inputLength === 0 ? [] : this.vocab['argoPlatform'].filter(argoPlatform =>
-		    argoPlatform.toLowerCase().slice(0, inputLength) === inputValue
-		  );
-		};
-		getSuggestionValue = suggestion => suggestion;
-		renderSuggestion = suggestion => (
-		  <div>
-		    {suggestion}
-		  </div>
-		);
-	  onChange = (event, { newValue }) => {
-	    // this.setState({
-	    //   argoPlatform: newValue
-	    // });
-	    this.setToken('argoPlatform', {target:{value:newValue}})
-
-	  };
-	  onSuggestionsFetchRequested = ({ value }) => {
-	    this.setState({
-	      suggestions: this.getSuggestions(value)
-	    });
-	  };
-	  onSuggestionsClearRequested = () => {
-	    this.setState({
-	      suggestions: []
-	    });
-	  };
-    /////////////////////
     componentDidUpdate(prevProps, prevState, snapshot){
     	if(this.state.refreshData){
     		if(this.statusReporting.current){
@@ -161,8 +156,10 @@ class ArgovisExplore extends React.Component {
 						let datasets = responses.map(x => this.findDataset(x.url))
 						Promise.all(responses.map(res => res.json())).then(data => {
 							let newPoints = {}
+							let timestamps = []
 							if(data.length>0 && data[0][0].code !== 404){
 								for(let i=0; i<data.length; i++){
+									timestamps = timestamps.concat(data[i].map(x => x[3]))
 									let points = data[i].map(x => x.concat([datasets[i]])) // so there's something in the source position for everything other than argo
 									points = this.circlefy(points)
 									if(points){
@@ -173,6 +170,21 @@ class ArgovisExplore extends React.Component {
 										}
 									}
 								}
+							}
+							if(this.state.argoPlatform || this.state.cchdoCruise || this.state.cchdoWOCE || this.state.drifterPlatform || this.state.drifterWMO || this.state.tcName){
+								timestamps = timestamps.map(x => { let d = new Date(x); return d.getTime()})
+								let start = new Date(Math.min(...timestamps))
+								let end = new Date(Math.max(...timestamps))
+								
+						    start = start.toISOString().replace('.000Z', 'Z')
+		   					end = end.toISOString().replace('.000Z', 'Z')
+
+		   					// eslint-disable-next-line
+		   					this.state.startDate = [start.slice(0,10), start] ; this.state.endDate = [end.slice(0,10), end] ; this.state.observingEntity = true
+							} else if(this.state.observingEntity) {
+								this.observingEntity = false
+								this.state.startDate = this.neutralState.startDate
+								this.state.endDate = this.neutralState.endDate
 							}
 							// eslint-disable-next-line
 							this.state.points = {...this.state.points, ...newPoints}
@@ -187,28 +199,43 @@ class ArgovisExplore extends React.Component {
 			this.setQueryString()
     }
 
-    setQueryString(){
-      let queryManagement = new URL(window.location)
+    // autoselect helpers
+		getSuggestions(value, vocabKey){
+		  const inputValue = value.trim().toLowerCase();
+		  const inputLength = inputValue.length;
 
-      queryManagement.searchParams.set('startDate', this.state.startDate[0])
-     	queryManagement.searchParams.set('endDate', this.state.endDate[0])
+		  return inputLength === 0 ? [] : this.vocab[vocabKey].filter(v =>
+		    v.toLowerCase().slice(0, inputLength) === inputValue
+		  );
+		};
 
-      let qparams = ['argocore', 'argobgc', 'argodeep', 'cchdo', 'drifters', 'tc', 'cchdoWOCE', 'cchdoCruise', 'argoPlatform', 'drifterWMO', 'drifterPlatform', 'tcName']
-      for(let i=0; i<qparams.length; i++){
-      	if(this.state[qparams[i]]){
-      		queryManagement.searchParams.set(qparams[i], this.state[qparams[i]])
-      	} else{
-      		queryManagement.searchParams.delete(qparams[i])
-      	}
-      } 
+		getSuggestionValue(suggestion){
+			return suggestion
+		}
 
-      if(JSON.stringify(this.state.polygon) !== '[]'){
-      	queryManagement.searchParams.set('polygon', JSON.stringify(this.state.polygon))
-      } else {
-      	queryManagement.searchParams.delete('polygon')
-      }
-      window.history.pushState(null, '', queryManagement.toString());
-    }
+		renderSuggestion(suggestion){
+			return(
+			  <div>
+			    {suggestion}
+			  </div>
+			)
+		}
+
+	  onAutosuggestChange(event, change){
+	  	this.setToken(event.target.id, change.newValue, true)
+	  }
+
+	  onSuggestionsFetchRequested(suggestionList, update){
+	  	let s = {}
+	  	s[suggestionList] = this.getSuggestions(update.value, suggestionList.slice(0,-11))
+	  	this.setState(s)
+	  }
+
+	  onSuggestionsClearRequested(suggestionList){
+	  	let s = {}
+	  	s[suggestionList] = []
+	  	this.setState(s)
+	  }
 
     // input handlers
     toggle(v){
@@ -254,10 +281,18 @@ class ArgovisExplore extends React.Component {
 	    this.setState(s)
     }
 
-    setToken(key, v){
+    setToken(key, v, exclusive){
+    	// key: state key labeling this input token
+    	// v: new value being considered
+    	// exclusive: bool indicating whether setting this value should reset everything else
     	let s = {...this.state}
-  	  s[key] = v.target.value
-    	if(v.target.value && !this.vocab[key].includes(v.target.value)){
+    	if(exclusive){
+    		// flatten everything but api key and just set this value
+    		s = {...this.neutralState, apiKey: s.apiKey, ...this.exclusiveState[key]}
+    	}
+    	
+  	  s[key] = v
+    	if(v && !this.vocab[key].includes(v)){
     		helpers.manageStatus.bind(this)('error', this.fieldNames[key])
     		s.refreshData = false
 	    } else {
@@ -300,38 +335,38 @@ class ArgovisExplore extends React.Component {
     }
 
     generateArgoURLs() {
-    	let url = this.generateTemporoSpatialURL('argo')
-
     	if(this.state.argoPlatform !== ''){
-    		url += '&platform=' + this.state.argoPlatform
-    	}    	
+    		return [this.apiPrefix +'argo?compression=minimal&platform=' + this.state.argoPlatform]
+    	} else {
 
-    	// decide on source.source
-    	let source = []
-    	if(!this.state.argocore && !this.state.argobgc && !this.state.argodeep){
-    		return []
-    	} else if(this.state.argocore && this.state.argobgc && this.state.argodeep){
-    		source = ['argo_core']
-    	} else if(this.state.argocore && this.state.argobgc && !this.state.argodeep){
-    		source = ['argo_core,~argo_deep', 'argo_bgc']
-    	} else if(this.state.argocore && !this.state.argobgc && this.state.argodeep){
-    		source = ['argo_core,~argo_bgc', 'argo_deep']
-    	} else if(!this.state.argocore && this.state.argobgc && this.state.argodeep){
-    		source = ['argo_bgc', 'argo_deep']
-    	} else if(this.state.argocore && !this.state.argobgc && !this.state.argodeep){
-    		source = ['argo_core,~argo_bgc,~argo_deep']
-    	} else if(!this.state.argocore && this.state.argobgc && !this.state.argodeep){
-    		source = ['argo_bgc']
-    	} else if(!this.state.argocore && !this.state.argobgc && this.state.argodeep){
-    		source = ['argo_deep']
-    	}
+	    	let url = this.generateTemporoSpatialURL('argo')	
 
-    	if(source.length === 0){
-    		return [url]
-    	} else{
-    		return source.map(x => url+'&source='+x)
-    	}
+	    	// decide on source.source
+	    	let source = []
+	    	if(!this.state.argocore && !this.state.argobgc && !this.state.argodeep){
+	    		return []
+	    	} else if(this.state.argocore && this.state.argobgc && this.state.argodeep){
+	    		source = ['argo_core']
+	    	} else if(this.state.argocore && this.state.argobgc && !this.state.argodeep){
+	    		source = ['argo_core,~argo_deep', 'argo_bgc']
+	    	} else if(this.state.argocore && !this.state.argobgc && this.state.argodeep){
+	    		source = ['argo_core,~argo_bgc', 'argo_deep']
+	    	} else if(!this.state.argocore && this.state.argobgc && this.state.argodeep){
+	    		source = ['argo_bgc', 'argo_deep']
+	    	} else if(this.state.argocore && !this.state.argobgc && !this.state.argodeep){
+	    		source = ['argo_core,~argo_bgc,~argo_deep']
+	    	} else if(!this.state.argocore && this.state.argobgc && !this.state.argodeep){
+	    		source = ['argo_bgc']
+	    	} else if(!this.state.argocore && !this.state.argobgc && this.state.argodeep){
+	    		source = ['argo_deep']
+	    	}
 
+	    	if(source.length === 0){
+	    		return [url]
+	    	} else{
+	    		return source.map(x => url+'&source='+x)
+	    	}
+	    }
     }
 
     generateCCHDOURLs() {
@@ -450,14 +485,40 @@ class ArgovisExplore extends React.Component {
     	return url.slice(url.search('(?<='+this.apiPrefix+')'), url.search('(?=comp)')-1 )
     }
 
+    observingEntity(){
+    	// returns bool answer to the question, are we looking at an entity rather than a temporospatial range?
+
+    	if(this.state.argoPlatform || this.state.cchdoCruise || this.state.cchdoWOCE || this.state.drifterPlatform || this.state.drifterWMO || this.state.tcName){
+    		return true
+    	} else{
+    		return false
+    	}
+    }
+
+    setQueryString(){
+      let queryManagement = new URL(window.location)
+
+      queryManagement.searchParams.set('startDate', this.state.startDate[0])
+     	queryManagement.searchParams.set('endDate', this.state.endDate[0])
+
+      let qparams = ['argocore', 'argobgc', 'argodeep', 'cchdo', 'drifters', 'tc', 'cchdoWOCE', 'cchdoCruise', 'argoPlatform', 'drifterWMO', 'drifterPlatform', 'tcName']
+      for(let i=0; i<qparams.length; i++){
+      	if(this.state[qparams[i]]){
+      		queryManagement.searchParams.set(qparams[i], this.state[qparams[i]])
+      	} else{
+      		queryManagement.searchParams.delete(qparams[i])
+      	}
+      } 
+
+      if(JSON.stringify(this.state.polygon) !== '[]'){
+      	queryManagement.searchParams.set('polygon', JSON.stringify(this.state.polygon))
+      } else {
+      	queryManagement.searchParams.delete('polygon')
+      }
+      window.history.pushState(null, '', queryManagement.toString());
+    }
+
 	render(){
-
-    const inputProps = {
-      placeholder: 'Argo platform ID',
-      value: this.state.argoPlatform,
-      onChange: this.onChange
-    };
-
 		return(
 			<div>
 				<div className='row'>
@@ -469,11 +530,11 @@ class ArgovisExplore extends React.Component {
 							<h5>Search Control</h5>
 							<div className='verticalGroup'>
 								<div className="form-floating mb-3">
-									<input type="date" className="form-control" id="startDate" value={this.state.startDate[0]} placeholder="" onChange={(v) => this.setDate('startDate', v)}></input>
+									<input type="date" disabled={this.state.observingEntity} className="form-control" id="startDate" value={this.state.startDate[0]} placeholder="" onChange={(v) => this.setDate('startDate', v)}></input>
 									<label htmlFor="startDate">Start Date</label>
 								</div>
 								<div className="form-floating mb-3">
-									<input type="date" className="form-control" id="endDate" value={this.state.endDate[0]} placeholder="" onChange={(v) => this.setDate('endDate', v)}></input>
+									<input type="date" disabled={this.state.observingEntity} className="form-control" id="endDate" value={this.state.endDate[0]} placeholder="" onChange={(v) => this.setDate('endDate', v)}></input>
 									<label htmlFor="endDate">End Date</label>
 								</div>
 								<div className="form-floating mb-3">
@@ -511,13 +572,13 @@ class ArgovisExplore extends React.Component {
 									<div className='verticalGroup'>
 										<div className="form-floating mb-3">
 									      <Autosuggest
-									      	id='argoPlatform'
-									        suggestions={this.state.suggestions}
-									        onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
-									        onSuggestionsClearRequested={this.onSuggestionsClearRequested}
+									      	id='argoPlatformAS'
+									        suggestions={this.state.argoPlatformSuggestions}
+									        onSuggestionsFetchRequested={this.onSuggestionsFetchRequested.bind(this, 'argoPlatformSuggestions')}
+									        onSuggestionsClearRequested={this.onSuggestionsClearRequested.bind(this, 'argoPlatformSuggestions')}
 									        getSuggestionValue={this.getSuggestionValue}
 									        renderSuggestion={this.renderSuggestion}
-									        inputProps={inputProps}
+									        inputProps={{placeholder: 'Argo platform ID', value: this.state.argoPlatform, onChange: this.onAutosuggestChange.bind(this), id: 'argoPlatform'}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 									      />
 											<div id="argoPlatformHelpBlock" className="form-text">
