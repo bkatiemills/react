@@ -1,3 +1,5 @@
+// top navigation bar on all argovis pages
+
 import React from 'react';
 
 class ArgovisNav extends React.Component {

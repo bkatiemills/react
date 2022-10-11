@@ -204,9 +204,12 @@ class ArgovisExplore extends React.Component {
 		  const inputValue = value.trim().toLowerCase();
 		  const inputLength = inputValue.length;
 
-		  return inputLength === 0 ? [] : this.vocab[vocabKey].filter(v =>
+		  let x =  inputLength === 0 ? [] : this.vocab[vocabKey].filter(v =>
 		    v.toLowerCase().slice(0, inputLength) === inputValue
 		  );
+
+		  console.log('getSuggestions',x)
+		  return x
 		};
 
 		getSuggestionValue(suggestion){
@@ -557,18 +560,18 @@ class ArgovisExplore extends React.Component {
 							      <div className="accordion-body">
 							      	<div className='verticalGroup'>
 								        <div className="form-check">
-											<input className="form-check-input" checked={this.state.argocore} onChange={(v) => this.toggle(v)} type="checkbox" id='argocore'></input>
-											<label className="form-check-label" htmlFor='Argo Core'>Display Argo Core</label>
-										</div>
-									    <div className="form-check">
-											<input className="form-check-input" checked={this.state.argobgc} onChange={(v) => this.toggle(v)} type="checkbox" id='argobgc'></input>
-											<label className="form-check-label" htmlFor='Argo BGC'>Display Argo BGC</label>
-										</div>
+													<input className="form-check-input" checked={this.state.argocore} onChange={(v) => this.toggle(v)} type="checkbox" id='argocore'></input>
+													<label className="form-check-label" htmlFor='Argo Core'>Display Argo Core</label>
+												</div>
+									    	<div className="form-check">
+													<input className="form-check-input" checked={this.state.argobgc} onChange={(v) => this.toggle(v)} type="checkbox" id='argobgc'></input>
+													<label className="form-check-label" htmlFor='Argo BGC'>Display Argo BGC</label>
+												</div>
 						        		<div className="form-check">
-											<input className="form-check-input" checked={this.state.argodeep} onChange={(v) => this.toggle(v)} type="checkbox" id='argodeep'></input>
-											<label className="form-check-label" htmlFor='Argo Deep'>Display Argo Deep</label>
-										</div>
-									</div>
+													<input className="form-check-input" checked={this.state.argodeep} onChange={(v) => this.toggle(v)} type="checkbox" id='argodeep'></input>
+													<label className="form-check-label" htmlFor='Argo Deep'>Display Argo Deep</label>
+												</div>
+											</div>
 									<div className='verticalGroup'>
 										<div className="form-floating mb-3">
 									      <Autosuggest

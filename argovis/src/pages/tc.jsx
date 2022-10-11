@@ -1,0 +1,165 @@
+import React from 'react';
+import { MapContainer, TileLayer, Polygon, FeatureGroup} from 'react-leaflet'
+import { EditControl } from "react-leaflet-draw";
+import Autosuggest from 'react-autosuggest';
+import '../index.css';
+import helpers from'./helpers'
+
+class TCExplore extends React.Component {
+
+	constructor(props) {
+		super(props);
+
+		let q = new URLSearchParams(window.location.search) // parse out query string
+
+		// default state, pulling in query string specifications
+		this.state = {
+			observingEntity: false,
+			apiKey: 'guest',
+			tcNameSuggestions: [],
+			tcName: q.has('tcName') ? q.get('tcName') : '',
+			refreshData: false,
+			points: [],
+			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [],
+			urls: []
+		}
+
+		// dates: August 2020 unless specified in the query string
+		this.today = '2020-08-31'
+		this.earlier = '2020-08-01'
+        if(q.has('endDate') && q.has('startDate')){
+        	this.state.startDate = q.get('startDate')
+        	this.state.endDate = q.get('endDate')
+        } else {
+    	    this.state.startDate = this.earlier
+    	    this.state.endDate = this.today
+        }
+
+        // some other useful class variables
+        this.fgRef = React.createRef()
+		this.statusReporting = React.createRef()
+        //this.apiPrefix = 'https://argovis-api.colorado.edu/'
+        this.apiPrefix = 'http://3.88.185.52:8080/'
+        this.vocab = {}
+        this.lookupLabel = {}
+        this.dataset = 'tc'
+        this.customQueryParams =  ['tcName']
+
+        // populate vocabularies, and trigger first render
+        fetch(this.apiPrefix + 'summary?id=tc_labels', {headers:{'x-argokey': this.state.apiKey}})
+        .then(response => response.json())
+        .then(data => {
+        	this.vocab['tcName'] = data[0].summary.map(x=>x.label)
+        	this.lookupLabel = {}
+        	for(let i=0; i<data[0].summary.length; i++){
+        		this.lookupLabel[data[0].summary[i].label] = data[0].summary[i]._id
+        	}
+        	this.setState({refreshData:true})
+        })
+	}
+
+    componentDidUpdate(prevProps, prevState, snapshot){
+    	helpers.componentDidUpdate.bind(this)()
+    }
+
+    lookingForEntity(){
+    	// return true if any token, valid or not, is specified for any entity query string parameter
+    	return Boolean(this.state.tcName)
+    }
+
+    generateURLs(){
+    	if(this.state.tcName !== ''){
+    		return [this.apiPrefix +'tc?compression=minimal&metadata=' + this.lookupLabel[this.state.tcName]]
+    	} else {
+    		return [helpers.generateTemporoSpatialURL.bind(this)('tc')]
+    	}
+    }	
+
+    chooseColor(datasources){
+    	return 'red'
+    }
+
+	render(){
+		console.log(this.state)
+		return(
+			<>
+				<div className='row'>
+					<div className='col-3 overflow-auto'>
+						<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
+						<div className='mapSearchInputs'>
+							<h5>Explore Tropical Cyclones</h5>
+							<div className='verticalGroup'>
+								<div className="form-floating mb-3">
+									<input type="password" className="form-control" id="apiKey" placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value)}></input>
+									<label htmlFor="apiKey">API Key</label>
+									<div id="apiKeyHelpBlock" className="form-text">
+					  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
+									</div>
+								</div>
+								<div className="form-floating mb-3">
+									<input type="date" disabled={this.state.observingEntity} className="form-control" id="startDate" value={this.state.startDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('startDate', v.target.valueAsNumber, 31)}></input>
+									<label htmlFor="startDate">Start Date</label>
+								</div>
+								<div className="form-floating mb-3">
+									<input type="date" disabled={this.state.observingEntity} className="form-control" id="endDate" value={this.state.endDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('endDate', v.target.valueAsNumber, 31)}></input>
+									<label htmlFor="endDate">End Date</label>
+								</div>
+							</div>
+
+							<div className='verticalGroup'>
+								<div className="form-floating mb-3">
+		      						<Autosuggest
+								      	id='tcNameAS'
+								        suggestions={this.state.tcNameSuggestions}
+								        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'tcNameSuggestions')}
+								        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'tcNameSuggestions')}
+								        getSuggestionValue={helpers.getSuggestionValue}
+								        renderSuggestion={helpers.renderSuggestion}
+								        inputProps={{placeholder: 'TC Name', value: this.state.tcName, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of TC Name'), id: 'tcName'}}
+								        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
+		      						/>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					{/*leaflet map*/}
+					<div className='col-9'>
+						<MapContainer center={[25, 0]} zoom={2} scrollWheelZoom={true}>
+							<TileLayer
+							attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+							url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+							/>
+							<FeatureGroup ref={this.fgRef}>
+								<EditControl
+								position='topleft'
+								onEdited={p => helpers.onPolyEdit.bind(this,p)()}
+								onCreated={p => helpers.onPolyCreate.bind(this,p)()}
+								onDeleted={p => helpers.onPolyDelete.bind(this,p)()}
+								onDrawStop={p => helpers.onDrawStop.bind(this,p)()}
+								onDrawStart={p => helpers.onDrawStart.bind(this,p)()}
+								draw={{
+									rectangle: false,
+									circle: false,
+									polyline: false,
+									circlemarker: false,
+									marker: false,
+									polygon: {
+										shapeOptions: {
+											fillOpacity: 0
+										}
+									}
+								}}
+								/>
+								<Polygon positions={this.state.polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
+							</FeatureGroup>
+							{this.state.points}
+						</MapContainer>
+					</div>
+				</div>
+			</>
+		)
+	}
+}
+
+export default TCExplore

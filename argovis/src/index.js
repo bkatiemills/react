@@ -2,8 +2,10 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./pages/layout";
 import ArgovisExplore from "./pages/explore"
-import HM from "./pages/heatmap"
 import Grids from "./pages/grids"
+import ArgoExplore from "./pages/argo"
+import TCExplore from "./pages/tc"
+import Drifters from "./pages/drifters"
 
 export default function App() {
   return (
@@ -11,8 +13,10 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<ArgovisExplore />} />
-          <Route path="heatmap" element={<HM />} />
+          <Route path="argo" element={<ArgoExplore />} />
+          <Route path="tc" element={<TCExplore />} />
           <Route path="grids" element={<Grids />} />
+          <Route path="drifters" element={<Drifters />} />
         </Route>
       </Routes>
     </BrowserRouter>
