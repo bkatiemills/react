@@ -27,20 +27,11 @@ class ArgoExplore extends React.Component {
 			urls: []
 		}
 
-		// dates: most recent 10 days unless specified in the query string
-		this.today = new Date()
-		this.earlier = new Date(this.today.getTime() - (10 * 24 * 60 * 60 * 1000)).toISOString().slice(0,10);
-		this.today = this.today.toISOString().slice(0,10);
-        if(q.has('endDate') && q.has('startDate')){
-        	this.state.startDate = q.get('startDate')
-        	this.state.endDate = q.get('endDate')
-        } else {
-    	    this.state.startDate = this.earlier
-    	    this.state.endDate = this.today
-        }
+		this.maxDayspan = 9
+		helpers.mungeTime.bind(this)(q, this.maxDayspan)
 
-        // if no query string specified at all, turn on all argo categories
-        if(!window.location.search){
+        // if no query string specified at all or no categories selected turn on all argo categories
+        if(!window.location.search || !q.has('argocore') && !q.has('argobgc') && !q.has('argodeep') ){
         	console.log('imposing defaults')
         	this.state.argocore = true
         	this.state.argobgc = true
@@ -49,6 +40,7 @@ class ArgoExplore extends React.Component {
 
         // some other useful class variables
         this.fgRef = React.createRef()
+        this.formRef = React.createRef()
 		this.statusReporting = React.createRef()
         //this.apiPrefix = 'https://argovis-api.colorado.edu/'
         this.apiPrefix = 'http://3.88.185.52:8080/'
@@ -134,57 +126,65 @@ class ArgoExplore extends React.Component {
 			<>
 				<div className='row'>
 					<div className='col-3 overflow-auto'>
-						<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
-						<div className='mapSearchInputs'>
-							<h5>Explore Argo Profiles</h5>
-							<div className='verticalGroup'>
-								<div className="form-floating mb-3">
-									<input type="password" className="form-control" id="apiKey" placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value)}></input>
-									<label htmlFor="apiKey">API Key</label>
-									<div id="apiKeyHelpBlock" className="form-text">
-					  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
+						<fieldset ref={this.formRef}>
+							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
+							<div className='mapSearchInputs'>
+								<h5>Explore Argo Profiles</h5>
+								<div className='verticalGroup'>
+									<div className="form-floating mb-3">
+										<input type="password" className="form-control" id="apiKey" placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value)}></input>
+										<label htmlFor="apiKey">API Key</label>
+										<div id="apiKeyHelpBlock" className="form-text">
+						  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
+										</div>
+									</div>
+									<h6>Time range</h6>
+									<div className="form-floating mb-3">
+										<input type="date" disabled={this.state.observingEntity} className="form-control" id="startDate" value={this.state.startDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('startDate', v.target.valueAsNumber, this.maxDayspan)}></input>
+										<label htmlFor="startDate">Start Date</label>
+									</div>
+									<div className="form-floating mb-3">
+										<input type="date" disabled={this.state.observingEntity} className="form-control" id="endDate" value={this.state.endDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('endDate', v.target.valueAsNumber, this.maxDayspan)}></input>
+										<label htmlFor="endDate">End Date</label>
+									</div>
+									<div id="dateRangeHelp" className="form-text">
+					  					<p>Max day range: {this.maxDayspan+1}</p>
 									</div>
 								</div>
-								<div className="form-floating mb-3">
-									<input type="date" disabled={this.state.observingEntity} className="form-control" id="startDate" value={this.state.startDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('startDate', v.target.valueAsNumber, 10)}></input>
-									<label htmlFor="startDate">Start Date</label>
-								</div>
-								<div className="form-floating mb-3">
-									<input type="date" disabled={this.state.observingEntity} className="form-control" id="endDate" value={this.state.endDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('endDate', v.target.valueAsNumber, 10)}></input>
-									<label htmlFor="endDate">End Date</label>
-								</div>
-							</div>
 
-							<div className='verticalGroup'>
-								<div className="form-check">
-									<input className="form-check-input" checked={this.state.argocore} onChange={(v) => this.toggle(v, 'argocore')} type="checkbox" id='argocore'></input>
-									<label className="form-check-label" htmlFor='argocore'>Display Argo Core</label>
+								<div className='verticalGroup'>
+									<h6>Subsets</h6>
+									<div className="form-check">
+										<input className="form-check-input" checked={this.state.argocore} onChange={(v) => this.toggle(v, 'argocore')} type="checkbox" id='argocore'></input>
+										<label className="form-check-label" htmlFor='argocore'>Display Argo Core</label>
+									</div>
+									<div className="form-check">
+										<input className="form-check-input" checked={this.state.argobgc} onChange={(v) => this.toggle(v, 'argobgc')} type="checkbox" id='argobgc'></input>
+										<label className="form-check-label" htmlFor='argobgc'>Display Argo BGC</label>
+									</div>
+									<div className="form-check">
+										<input className="form-check-input" checked={this.state.argodeep} onChange={(v) => this.toggle(v, 'argodeep')} type="checkbox" id='argodeep'></input>
+										<label className="form-check-label" htmlFor='argodeep'>Display Argo Deep</label>
+									</div>
 								</div>
-								<div className="form-check">
-									<input className="form-check-input" checked={this.state.argobgc} onChange={(v) => this.toggle(v, 'argobgc')} type="checkbox" id='argobgc'></input>
-									<label className="form-check-label" htmlFor='argobgc'>Display Argo BGC</label>
-								</div>
-								<div className="form-check">
-									<input className="form-check-input" checked={this.state.argodeep} onChange={(v) => this.toggle(v, 'argodeep')} type="checkbox" id='argodeep'></input>
-									<label className="form-check-label" htmlFor='argodeep'>Display Argo Deep</label>
-								</div>
-							</div>
 
-							<div className='verticalGroup'>
-								<div className="form-floating mb-3">
-		      						<Autosuggest
-								      	id='argoPlatformAS'
-								        suggestions={this.state.argoPlatformSuggestions}
-								        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'argoPlatformSuggestions')}
-								        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'argoPlatformSuggestions')}
-								        getSuggestionValue={helpers.getSuggestionValue}
-								        renderSuggestion={helpers.renderSuggestion}
-								        inputProps={{placeholder: 'Argo platform ID', value: this.state.argoPlatform, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of Argo platform ID'), id: 'argoPlatform'}}
-								        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
-		      						/>
+								<div className='verticalGroup'>
+									<h6>Object Filters</h6>
+									<div className="form-floating mb-3">
+			      						<Autosuggest
+									      	id='argoPlatformAS'
+									        suggestions={this.state.argoPlatformSuggestions}
+									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'argoPlatformSuggestions')}
+									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'argoPlatformSuggestions')}
+									        getSuggestionValue={helpers.getSuggestionValue}
+									        renderSuggestion={helpers.renderSuggestion}
+									        inputProps={{placeholder: 'Argo platform ID', value: this.state.argoPlatform, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of Argo platform ID'), id: 'argoPlatform'}}
+									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
+			      						/>
+									</div>
 								</div>
 							</div>
-						</div>
+						</fieldset>
 					</div>
 
 					{/*leaflet map*/}
@@ -201,6 +201,7 @@ class ArgoExplore extends React.Component {
 								onCreated={p => helpers.onPolyCreate.bind(this,p)()}
 								onDeleted={p => helpers.onPolyDelete.bind(this,p)()}
 								onDrawStop={p => helpers.onDrawStop.bind(this,p)()}
+								onDrawStart={p => helpers.onDrawStart.bind(this,p)()}
 								draw={{
 									rectangle: false,
 									circle: false,

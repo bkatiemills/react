@@ -48,6 +48,7 @@ helpers.componentDidUpdate = function(){
 	// generic logic to bind into each explore page's componentDidUpdate
 
 	if(this.state.refreshData){
+		this.formRef.current.setAttribute('disabled', 'true')
 		if(this.statusReporting.current){
 			helpers.manageStatus.bind(this)('downloading')
 		}
@@ -57,6 +58,10 @@ helpers.componentDidUpdate = function(){
 			this.state.observingEntity = false
 			// eslint-disable-next-line
 			this.state.startDate = this.earlier ; this.state.endDate = this.today
+			if(this.defaultPolygon){
+				// eslint-disable-next-line
+				this.state.polygon = this.defaultPolygon
+			}
 		}
 
 		// reformualte all URLs
@@ -123,6 +128,7 @@ helpers.refreshMap = function(){
 
 	this.setState({refreshData: false}, () => {
 			helpers.manageStatus.bind(this)('ready')
+			this.formRef.current.removeAttribute('disabled')
 		})
 }
 
@@ -144,7 +150,17 @@ helpers.generateTemporoSpatialURL = function(route){
 	}  
 
 	if(this.state.polygon.length>0){
-		url += '&polygon=[' + this.state.polygon.map(x => '['+x[0]+','+x[1]+']').join(',') + ']'
+		let tidypoly = [] // make sure longitudes are on [-180,180]
+		for(let i=0; i<this.state.polygon.length; i++){
+			let point = [this.state.polygon[i][0], this.state.polygon[i][1]]
+			if(point[0] < -180){
+				point[0] += 360
+			} else if(point[0] > 180){
+				point[0] -= 360
+			}
+			tidypoly.push(point)
+		}
+		url += '&polygon=[' + tidypoly.map(x => '['+x[0]+','+x[1]+']').join(',') + ']'
 	}    
 
 	return url	
@@ -257,6 +273,27 @@ helpers.setQueryString = function(entityParams){
 		queryManagement.searchParams.delete('polygon')
 	}
 	window.history.pushState(null, '', queryManagement.toString());
+}
+
+helpers.mungeTime = function(q, nDays, defaultEnd){
+	// q == queryString, nDays == max number of days to allow, defaultEnd yyyy-mm-dd timestamp of endof default range; omit for today
+	if(defaultEnd){
+		this.today = new Date(defaultEnd)
+	} else {
+		this.today = new Date()
+	}
+	this.earlier = new Date(this.today.getTime() - (nDays * 24 * 60 * 60 * 1000)).toISOString().slice(0,10);
+	this.today = this.today.toISOString().slice(0,10);
+	this.state.startDate = this.earlier
+	this.state.endDate = this.today
+    if(q.has('endDate') && q.has('startDate')){
+    	let t0 = new Date(q.get('startDate'))
+    	let t1 = new Date(q.get('endDate'))
+    	if(t1.getTime() - t0.getTime() < (nDays * 24 * 60 * 60 * 1000)){
+    		this.state.startDate = q.get('startDate')
+	    	this.state.endDate = q.get('endDate')
+    	} 
+    }
 }
 
 // autoselect helpers

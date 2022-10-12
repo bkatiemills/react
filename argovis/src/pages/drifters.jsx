@@ -12,6 +12,7 @@ class Drifters extends React.Component {
 
 		let q = new URLSearchParams(window.location.search) // parse out query string
 
+		this.defaultPolygon = [[-62.57812500000001,52.482780222078226],[-84.37500000000001,34.016241889667036],[-87.18750000000001,15.623036831528264],[-64.33593750000001,13.923403897723347],[-40.42968750000001,46.07323062540835],[-62.57812500000001,52.482780222078226]]
 		// default state, pulling in query string specifications
 		this.state = {
 			observingEntity: false,
@@ -22,23 +23,16 @@ class Drifters extends React.Component {
 			platform: q.has('platform') ? q.get('platform') : '',
 			refreshData: false,
 			points: [],
-			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [[-62.57812500000001,52.482780222078226],[-84.37500000000001,34.016241889667036],[-87.18750000000001,15.623036831528264],[-64.33593750000001,13.923403897723347],[-40.42968750000001,46.07323062540835],[-62.57812500000001,52.482780222078226]],
+			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : this.defaultPolygon,
 			urls: []
 		}
 
-		// dates: January 1 2020 unless specified in the query string
-		this.today = '2020-01-01'
-		this.earlier = '2020-01-01'
-        if(q.has('endDate') && q.has('startDate')){
-        	this.state.startDate = q.get('startDate')
-        	this.state.endDate = q.get('endDate')
-        } else {
-    	    this.state.startDate = this.earlier
-    	    this.state.endDate = this.today
-        }
+		this.maxDayspan = 0 // note the url construction always allows for one extra day than endDate-startDate
+		helpers.mungeTime.bind(this)(q, this.maxDayspan, '2020-01-01')
 
         // some other useful class variables
         this.fgRef = React.createRef()
+        this.formRef = React.createRef()
 		this.statusReporting = React.createRef()
         //this.apiPrefix = 'https://argovis-api.colorado.edu/'
         this.apiPrefix = 'http://3.88.185.52:8080/'
@@ -87,57 +81,64 @@ class Drifters extends React.Component {
 			<>
 				<div className='row'>
 					<div className='col-3 overflow-auto'>
-						<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
-						<div className='mapSearchInputs'>
-							<h5>Explore Global Drifter Program</h5>
-							<div className='verticalGroup'>
-								<div className="form-floating mb-3">
-									<input type="password" className="form-control" id="apiKey" placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value)}></input>
-									<label htmlFor="apiKey">API Key</label>
-									<div id="apiKeyHelpBlock" className="form-text">
-					  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
+						<fieldset ref={this.formRef}>
+							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
+							<div className='mapSearchInputs'>
+								<h5>Explore Global Drifter Program</h5>
+								<div className='verticalGroup'>
+									<div className="form-floating mb-3">
+										<input type="password" className="form-control" id="apiKey" placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value)}></input>
+										<label htmlFor="apiKey">API Key</label>
+										<div id="apiKeyHelpBlock" className="form-text">
+						  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
+										</div>
+									</div>
+									<h6>Time Range</h6>
+									<div className="form-floating mb-3">
+										<input type="date" disabled={this.state.observingEntity} className="form-control" id="startDate" value={this.state.startDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('startDate', v.target.valueAsNumber, this.maxDayspan)}></input>
+										<label htmlFor="startDate">Start Date</label>
+									</div>
+									<div className="form-floating mb-3">
+										<input type="date" disabled={this.state.observingEntity} className="form-control" id="endDate" value={this.state.endDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('endDate', v.target.valueAsNumber, this.maxDayspan)}></input>
+										<label htmlFor="endDate">End Date</label>
+									</div>
+									<div id="dateRangeHelp" className="form-text">
+					  					<p>Max day range: {this.maxDayspan+1}</p>
 									</div>
 								</div>
-								<div className="form-floating mb-3">
-									<input type="date" disabled={this.state.observingEntity} className="form-control" id="startDate" value={this.state.startDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('startDate', v.target.valueAsNumber, 31)}></input>
-									<label htmlFor="startDate">Start Date</label>
-								</div>
-								<div className="form-floating mb-3">
-									<input type="date" disabled={this.state.observingEntity} className="form-control" id="endDate" value={this.state.endDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('endDate', v.target.valueAsNumber, 31)}></input>
-									<label htmlFor="endDate">End Date</label>
+
+								<div className='verticalGroup'>
+									<h6>Object Filters</h6>
+									<div className="form-floating mb-3">
+			      						<Autosuggest
+									      	id='wmoAS'
+									      	key='wmo'
+									        suggestions={this.state.wmoSuggestions}
+									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'wmoSuggestions')}
+									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'wmoSuggestions')}
+									        getSuggestionValue={helpers.getSuggestionValue}
+									        renderSuggestion={helpers.renderSuggestion}
+									        inputProps={{placeholder: 'WMO ID', value: this.state.wmo, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of WMO ID'), id: 'wmo', disabled: Boolean(this.state.platform)}}
+									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
+			      						/>
+									</div>
+
+									<div className="form-floating mb-3">
+			      						<Autosuggest
+									      	id='platformAS'
+									      	key='platform'
+									        suggestions={this.state.platformSuggestions}
+									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'platformSuggestions')}
+									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'platformSuggestions')}
+									        getSuggestionValue={helpers.getSuggestionValue}
+									        renderSuggestion={helpers.renderSuggestion}
+									        inputProps={{placeholder: 'Platform ID', value: this.state.platform, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of Platform ID'), id: 'platform',  disabled: Boolean(this.state.wmo)}}
+									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
+			      						/>
+									</div>
 								</div>
 							</div>
-
-							<div className='verticalGroup'>
-								<div className="form-floating mb-3">
-		      						<Autosuggest
-								      	id='wmoAS'
-								      	key='wmo'
-								        suggestions={this.state.wmoSuggestions}
-								        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'wmoSuggestions')}
-								        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'wmoSuggestions')}
-								        getSuggestionValue={helpers.getSuggestionValue}
-								        renderSuggestion={helpers.renderSuggestion}
-								        inputProps={{placeholder: 'WMO ID', value: this.state.wmo, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of WMO ID'), id: 'wmo', disabled: Boolean(this.state.platform)}}
-								        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
-		      						/>
-								</div>
-
-								<div className="form-floating mb-3">
-		      						<Autosuggest
-								      	id='platformAS'
-								      	key='platform'
-								        suggestions={this.state.platformSuggestions}
-								        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'platformSuggestions')}
-								        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'platformSuggestions')}
-								        getSuggestionValue={helpers.getSuggestionValue}
-								        renderSuggestion={helpers.renderSuggestion}
-								        inputProps={{placeholder: 'Platform ID', value: this.state.platform, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of Platform ID'), id: 'platform',  disabled: Boolean(this.state.wmo)}}
-								        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
-		      						/>
-								</div>
-							</div>
-						</div>
+						</fieldset>
 					</div>
 
 					{/*leaflet map*/}
@@ -154,6 +155,7 @@ class Drifters extends React.Component {
 								onCreated={p => helpers.onPolyCreate.bind(this,p)()}
 								onDeleted={p => helpers.onPolyDelete.bind(this,p)()}
 								onDrawStop={p => helpers.onDrawStop.bind(this,p)()}
+								onDrawStart={p => helpers.onDrawStart.bind(this,p)()}
 								draw={{
 									rectangle: false,
 									circle: false,

@@ -24,19 +24,12 @@ class TCExplore extends React.Component {
 			urls: []
 		}
 
-		// dates: August 2020 unless specified in the query string
-		this.today = '2020-08-31'
-		this.earlier = '2020-08-01'
-        if(q.has('endDate') && q.has('startDate')){
-        	this.state.startDate = q.get('startDate')
-        	this.state.endDate = q.get('endDate')
-        } else {
-    	    this.state.startDate = this.earlier
-    	    this.state.endDate = this.today
-        }
+		this.maxDayspan = 30
+		helpers.mungeTime.bind(this)(q, this.maxDayspan, '2020-08-31')
 
         // some other useful class variables
         this.fgRef = React.createRef()
+        this.formRef = React.createRef()
 		this.statusReporting = React.createRef()
         //this.apiPrefix = 'https://argovis-api.colorado.edu/'
         this.apiPrefix = 'http://3.88.185.52:8080/'
@@ -85,42 +78,49 @@ class TCExplore extends React.Component {
 			<>
 				<div className='row'>
 					<div className='col-3 overflow-auto'>
-						<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
-						<div className='mapSearchInputs'>
-							<h5>Explore Tropical Cyclones</h5>
-							<div className='verticalGroup'>
-								<div className="form-floating mb-3">
-									<input type="password" className="form-control" id="apiKey" placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value)}></input>
-									<label htmlFor="apiKey">API Key</label>
-									<div id="apiKeyHelpBlock" className="form-text">
-					  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
+						<fieldset ref={this.formRef}>
+							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
+							<div className='mapSearchInputs'>
+								<h5>Explore Tropical Cyclones</h5>
+								<div className='verticalGroup'>
+									<div className="form-floating mb-3">
+										<input type="password" className="form-control" id="apiKey" placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value)}></input>
+										<label htmlFor="apiKey">API Key</label>
+										<div id="apiKeyHelpBlock" className="form-text">
+						  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
+										</div>
+									</div>
+									<h6>Time Range</h6>
+									<div className="form-floating mb-3">
+										<input type="date" disabled={this.state.observingEntity} className="form-control" id="startDate" value={this.state.startDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('startDate', v.target.valueAsNumber, this.maxDayspan)}></input>
+										<label htmlFor="startDate">Start Date</label>
+									</div>
+									<div className="form-floating mb-3">
+										<input type="date" disabled={this.state.observingEntity} className="form-control" id="endDate" value={this.state.endDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('endDate', v.target.valueAsNumber, this.maxDayspan)}></input>
+										<label htmlFor="endDate">End Date</label>
+									</div>
+									<div id="dateRangeHelp" className="form-text">
+					  					<p>Max day range: {this.maxDayspan+1}</p>
 									</div>
 								</div>
-								<div className="form-floating mb-3">
-									<input type="date" disabled={this.state.observingEntity} className="form-control" id="startDate" value={this.state.startDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('startDate', v.target.valueAsNumber, 31)}></input>
-									<label htmlFor="startDate">Start Date</label>
-								</div>
-								<div className="form-floating mb-3">
-									<input type="date" disabled={this.state.observingEntity} className="form-control" id="endDate" value={this.state.endDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('endDate', v.target.valueAsNumber, 31)}></input>
-									<label htmlFor="endDate">End Date</label>
-								</div>
-							</div>
 
-							<div className='verticalGroup'>
-								<div className="form-floating mb-3">
-		      						<Autosuggest
-								      	id='tcNameAS'
-								        suggestions={this.state.tcNameSuggestions}
-								        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'tcNameSuggestions')}
-								        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'tcNameSuggestions')}
-								        getSuggestionValue={helpers.getSuggestionValue}
-								        renderSuggestion={helpers.renderSuggestion}
-								        inputProps={{placeholder: 'TC Name', value: this.state.tcName, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of TC Name'), id: 'tcName'}}
-								        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
-		      						/>
+								<div className='verticalGroup'>
+									<h6>Object Filters</h6>
+									<div className="form-floating mb-3">
+			      						<Autosuggest
+									      	id='tcNameAS'
+									        suggestions={this.state.tcNameSuggestions}
+									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'tcNameSuggestions')}
+									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'tcNameSuggestions')}
+									        getSuggestionValue={helpers.getSuggestionValue}
+									        renderSuggestion={helpers.renderSuggestion}
+									        inputProps={{placeholder: 'TC Name', value: this.state.tcName, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of TC Name'), id: 'tcName'}}
+									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
+			      						/>
+									</div>
 								</div>
 							</div>
-						</div>
+						</fieldset>
 					</div>
 
 					{/*leaflet map*/}
