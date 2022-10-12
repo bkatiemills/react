@@ -123,6 +123,7 @@ helpers.refreshMap = function(){
 	helpers.manageStatus.bind(this)('rendering')
 
 	if(JSON.stringify(this.state.polygon) === '[]'){
+		console.log('clear poly')
 		helpers.clearLeafletDraw.bind(this)()
 	}
 
@@ -310,9 +311,11 @@ helpers.getSuggestionValue = function(suggestion){
 	return suggestion
 }
 
-helpers.renderSuggestion = function(suggestion){
+helpers.renderSuggestion = function(inputState, suggestion){
 	return(
-	  <div>
+	  <div onClick={e => {
+	  	this.state[inputState] = e.target.textContent
+	  }}>
 	    {suggestion}
 	  </div>
 	)

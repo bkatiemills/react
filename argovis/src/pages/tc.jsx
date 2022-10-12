@@ -113,7 +113,7 @@ class TCExplore extends React.Component {
 									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'tcNameSuggestions')}
 									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'tcNameSuggestions')}
 									        getSuggestionValue={helpers.getSuggestionValue}
-									        renderSuggestion={helpers.renderSuggestion}
+									        renderSuggestion={helpers.renderSuggestion.bind(this, 'tcName')}
 									        inputProps={{placeholder: 'TC Name', value: this.state.tcName, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of TC Name'), id: 'tcName'}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
@@ -151,7 +151,7 @@ class TCExplore extends React.Component {
 									}
 								}}
 								/>
-								<Polygon positions={this.state.polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
+								<Polygon key={JSON.stringify(this.state.polygon)} positions={this.state.polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
 							</FeatureGroup>
 							{this.state.points}
 						</MapContainer>

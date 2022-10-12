@@ -27,7 +27,7 @@ class ArgoExplore extends React.Component {
 			urls: []
 		}
 
-		this.maxDayspan = 9
+		this.maxDayspan = 10
 		helpers.mungeTime.bind(this)(q, this.maxDayspan)
 
         // if no query string specified at all or no categories selected turn on all argo categories
@@ -177,7 +177,7 @@ class ArgoExplore extends React.Component {
 									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'argoPlatformSuggestions')}
 									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'argoPlatformSuggestions')}
 									        getSuggestionValue={helpers.getSuggestionValue}
-									        renderSuggestion={helpers.renderSuggestion}
+									        renderSuggestion={helpers.renderSuggestion.bind(this, 'argoPlatform')}
 									        inputProps={{placeholder: 'Argo platform ID', value: this.state.argoPlatform, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of Argo platform ID'), id: 'argoPlatform'}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
@@ -215,7 +215,7 @@ class ArgoExplore extends React.Component {
 									}
 								}}
 								/>
-								<Polygon positions={this.state.polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
+								<Polygon key={JSON.stringify(this.state.polygon)} positions={this.state.polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
 							</FeatureGroup>
 							{this.state.points}
 						</MapContainer>

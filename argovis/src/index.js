@@ -5,7 +5,8 @@ import ArgovisExplore from "./pages/explore"
 import Grids from "./pages/grids"
 import ArgoExplore from "./pages/argo"
 import TCExplore from "./pages/tc"
-import Drifters from "./pages/drifters"
+import DriftersExplore from "./pages/drifters"
+import ShipsExplore from "./pages/ships"
 
 export default function App() {
   return (
@@ -15,8 +16,9 @@ export default function App() {
           <Route index element={<ArgovisExplore />} />
           <Route path="argo" element={<ArgoExplore />} />
           <Route path="tc" element={<TCExplore />} />
+          <Route path="drifters" element={<DriftersExplore />} />
+          <Route path="ships" element={<ShipsExplore />} />
           <Route path="grids" element={<Grids />} />
-          <Route path="drifters" element={<Drifters />} />
         </Route>
       </Routes>
     </BrowserRouter>

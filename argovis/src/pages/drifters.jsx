@@ -5,7 +5,7 @@ import Autosuggest from 'react-autosuggest';
 import '../index.css';
 import helpers from'./helpers'
 
-class Drifters extends React.Component {
+class DriftersExplore extends React.Component {
 
 	constructor(props) {
 		super(props);
@@ -117,7 +117,7 @@ class Drifters extends React.Component {
 									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'wmoSuggestions')}
 									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'wmoSuggestions')}
 									        getSuggestionValue={helpers.getSuggestionValue}
-									        renderSuggestion={helpers.renderSuggestion}
+									        renderSuggestion={helpers.renderSuggestion.bind(this, 'wmo')}
 									        inputProps={{placeholder: 'WMO ID', value: this.state.wmo, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of WMO ID'), id: 'wmo', disabled: Boolean(this.state.platform)}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
@@ -131,7 +131,7 @@ class Drifters extends React.Component {
 									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'platformSuggestions')}
 									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'platformSuggestions')}
 									        getSuggestionValue={helpers.getSuggestionValue}
-									        renderSuggestion={helpers.renderSuggestion}
+									        renderSuggestion={helpers.renderSuggestion.bind(this, 'platform')}
 									        inputProps={{placeholder: 'Platform ID', value: this.state.platform, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of Platform ID'), id: 'platform',  disabled: Boolean(this.state.wmo)}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
@@ -169,7 +169,7 @@ class Drifters extends React.Component {
 									}
 								}}
 								/>
-								<Polygon positions={this.state.polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
+								<Polygon key={JSON.stringify(this.state.polygon)} positions={this.state.polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
 							</FeatureGroup>
 							{this.state.points}
 						</MapContainer>
@@ -180,4 +180,4 @@ class Drifters extends React.Component {
 	}
 }
 
-export default Drifters
+export default DriftersExplore

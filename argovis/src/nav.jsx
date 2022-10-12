@@ -2,6 +2,31 @@
 
 import React from 'react';
 
+class Dropdown extends React.Component {
+  state = {
+    isOpen: false
+  };
+
+  toggleOpen = () => this.setState({ isOpen: !this.state.isOpen });
+
+  render() {
+    const menuClass = `dropdown-menu${this.state.isOpen ? " show" : ""}`;
+    return (
+      <li className="nav-item dropdown" onClick={this.toggleOpen}>
+        <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Explore
+        </a>
+        <div className={menuClass} aria-labelledby="navbarDropdown">
+          <a className="dropdown-item" href="/argo">Argo profiles</a>
+          <a className="dropdown-item" href="/ships">Ship-based profiles</a>
+          <a className="dropdown-item" href="/drifters">Global drifter program</a>
+          <a className="dropdown-item" href="/tc">Tropical cyclones</a>
+        </div>
+      </li>
+    );
+  }
+}
+
 class ArgovisNav extends React.Component {
 	render(){
 		return(
@@ -12,10 +37,8 @@ class ArgovisNav extends React.Component {
 			      <span className="navbar-toggler-icon"></span>
 			    </button>
 			    <div className="collapse navbar-collapse" id="navbarNav">
-			      <ul className="navbar-nav">
-			        <li className="nav-item">
-			          <a className="nav-link active" aria-current="page" href="https://github.com/argovis">Home</a>
-			        </li>
+			      <ul className="navbar-nav mr-auto">
+			      	<Dropdown/>
 			        <li className="nav-item">
 			          <a className="nav-link" href="https://argovis-api.colorado.edu/docs/">API</a>
 			        </li>
