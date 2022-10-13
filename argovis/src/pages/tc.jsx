@@ -115,7 +115,7 @@ class TCExplore extends React.Component {
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'tcName')}
 									        inputProps={{placeholder: 'TC Name', value: this.state.tcName, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of TC Name'), id: 'tcName'}}
-									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
+									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item autocomplete-item'}}
 			      						/>
 									</div>
 								</div>

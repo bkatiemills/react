@@ -116,7 +116,6 @@ helpers.componentDidUpdate = function(){
 			})
 		}
 	}
-	helpers.setQueryString.bind(this)()
 }
 
 helpers.refreshMap = function(){
@@ -130,6 +129,7 @@ helpers.refreshMap = function(){
 	this.setState({refreshData: false}, () => {
 			helpers.manageStatus.bind(this)('ready')
 			this.formRef.current.removeAttribute('disabled')
+			helpers.setQueryString.bind(this)()
 		})
 }
 
@@ -313,9 +313,12 @@ helpers.getSuggestionValue = function(suggestion){
 
 helpers.renderSuggestion = function(inputState, suggestion){
 	return(
-	  <div onClick={e => {
-	  	this.state[inputState] = e.target.textContent
-	  }}>
+	  <div 
+	  	onClick={e => {this.state[inputState] = e.target.textContent}}
+	  	onMouseOver={e => e.target.parentElement.classList.add('highlightSuggestion')}
+	  	onMouseOut={e => e.target.parentElement.classList.remove('highlightSuggestion')}
+	  	className='autocomplete-item'
+	  >
 	    {suggestion}
 	  </div>
 	)

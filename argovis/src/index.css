@@ -36,3 +36,15 @@
   color: #FFFFFF;
   background-color: #dc3545;
 }
+
+li.autocomplete-item{
+  padding: 0px;
+}
+
+div.autocomplete-item{
+  padding: 0.5em;
+}
+
+.highlightSuggestion {
+  background-color: #98fb98 !important;
+}
