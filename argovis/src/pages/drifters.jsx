@@ -136,6 +136,9 @@ class DriftersExplore extends React.Component {
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 									</div>
+									<div id="coloHelpBlock" className="form-text">
+					  					<a target="_blank" rel="noreferrer" href='https://github.com/argovis/demo_notebooks/blob/main/Drifter_Intro.ipynb'>Colocate drifters with other products</a>
+									</div>
 								</div>
 							</div>
 						</fieldset>

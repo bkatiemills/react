@@ -199,6 +199,10 @@ class ShipsExplore extends React.Component {
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 									</div>
+
+									<div id="coloHelpBlock" className="form-text">
+					  					<a target="_blank" rel="noreferrer" href='https://github.com/argovis/demo_notebooks/blob/main/CCHDO_Intro.ipynb'>Colocate ship profiles with other products</a>
+									</div>
 								</div>
 							</div>
 						</fieldset>

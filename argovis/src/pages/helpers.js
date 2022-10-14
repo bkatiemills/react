@@ -2,12 +2,28 @@ import { Popup, CircleMarker} from 'react-leaflet'
 
 let helpers = {}
 
+// polygon management
+
+helpers.onPolyCreate = function(payload){
+	helpers.fetchPolygon.bind(this)(payload.layer.getLatLngs()[0])
+}
+
+helpers.onPolyDelete = function(payload){
+	this.setState({polygon: [], refreshData: true})
+}
+
+helpers.onPolyEdit = function(payload){
+	payload.layers.eachLayer(layer => helpers.fetchPolygon.bind(this)(layer.getLatLngs()[0]))
+}
+
 helpers.fetchPolygon = function(coords){
 	// coords == array of {lng: xx, lat: xx}, such as returned by getLatLngs
 	let vertexes = coords.map(x => [x.lng, x.lat])
 	vertexes.push(vertexes[0])
 	this.setState({polygon: vertexes, refreshData: true})    	
 }
+
+// leaflet draw callbacks
 
 helpers.onDrawStart = function(payload){
 	helpers.clearLeafletDraw.bind(this)()
@@ -26,23 +42,7 @@ helpers.clearLeafletDraw = function(){
 	}
 }
 
-helpers.manageStatus = function(newStatus, messageArg){
-	let statuses = {
-		ready: ['Ready', 'ready'],  // message, classname
-		downloading: ['Downloading...', 'busy'],
-		rendering: ['Rendering...', 'busy'],
-		needsRefresh: ['Refresh map when ready', 'busy'],
-		error: [messageArg, 'error']
-	}
-
-	for(let key in statuses){
-		if(key !== newStatus){
-			this.statusReporting.current.classList.remove(statuses[key][1])
-		}
-	}
-	this.statusReporting.current.classList.add(statuses[newStatus][1])
-	this.statusReporting.current.textContent = statuses[newStatus][0]
-}
+// update handlers
 
 helpers.componentDidUpdate = function(){
 	// generic logic to bind into each explore page's componentDidUpdate
@@ -116,6 +116,24 @@ helpers.componentDidUpdate = function(){
 	}
 }
 
+helpers.manageStatus = function(newStatus, messageArg){
+	let statuses = {
+		ready: ['Ready', 'ready'],  // message, classname
+		downloading: ['Downloading...', 'busy'],
+		rendering: ['Rendering...', 'busy'],
+		needsRefresh: ['Refresh map when ready', 'busy'],
+		error: [messageArg, 'error']
+	}
+
+	for(let key in statuses){
+		if(key !== newStatus){
+			this.statusReporting.current.classList.remove(statuses[key][1])
+		}
+	}
+	this.statusReporting.current.classList.add(statuses[newStatus][1])
+	this.statusReporting.current.textContent = statuses[newStatus][0]
+}
+
 helpers.refreshMap = function(){
 	helpers.manageStatus.bind(this)('rendering')
 
@@ -169,23 +187,54 @@ helpers.generateTemporoSpatialURL = function(route){
 }
 
 helpers.circlefy = function(points){
-		if(points.hasOwnProperty('code') || points[0].hasOwnProperty('code')){
-			return null
-		}
-		else {
-			points = points.map(point => {return(
-			  <CircleMarker key={point[0]+Math.random()} center={[point[2], point[1]]} radius={1} color={this.chooseColor(point[4])}>
-			    <Popup>
-			      ID: {point[0]} <br />
-			      Long / Lat: {point[1]} / {point[2]} <br />
-			      Date: {point[3]} <br />
-			      Data Sources: {point[4]}
-			    </Popup>
-			  </CircleMarker>
-			)})
-			return points
-		}
+	if(JSON.stringify(points) === '[]'){
+		return []
+	}
+
+	if(points.hasOwnProperty('code') || points[0].hasOwnProperty('code')){
+		return null
+	}
+	else {
+		points = points.map(point => {return(
+		  <CircleMarker key={point[0]+Math.random()} center={[point[2], point[1]]} radius={1} color={this.chooseColor(point[4])}>
+		    <Popup>
+		      ID: {point[0]} <br />
+		      Long / Lat: {point[1]} / {point[2]} <br />
+		      Date: {point[3]} <br />
+		      Data Sources: {point[4]}
+		    </Popup>
+		  </CircleMarker>
+		)})
+		return points
+	}
 }
+
+helpers.setQueryString = function(entityParams){
+	let queryManagement = new URL(window.location)
+
+	queryManagement.hash = '#close' // inject this upfront so leaflet doesnt trigger a page reload when user closes a tooltip
+
+	queryManagement.searchParams.set('startDate', this.state.startDate)
+	queryManagement.searchParams.set('endDate', this.state.endDate)
+
+	let qparams = this.customQueryParams
+	for(let i=0; i<qparams.length; i++){
+		if(this.state[qparams[i]]){
+			queryManagement.searchParams.set(qparams[i], this.state[qparams[i]])
+		} else{
+			queryManagement.searchParams.delete(qparams[i])
+		}
+	} 
+
+	if(JSON.stringify(this.state.polygon) !== '[]'){
+		queryManagement.searchParams.set('polygon', JSON.stringify(this.state.polygon))
+	} else {
+		queryManagement.searchParams.delete('polygon')
+	}
+	window.history.pushState(null, '', queryManagement.toString());
+}
+
+// input setters
 
 helpers.setDate = function(date, v, maxdays){
 	// when setting dates from the UI, don't let the user ask for a timespan longer than some cutoff. 
@@ -238,6 +287,8 @@ helpers.setToken = function(key, v, message){
 	this.setState(s)
 }
 
+// autosuggest callbacks
+
 helpers.onAutosuggestChange = function(message, event, change){
 	helpers.setToken.bind(this)(event.target.id, change.newValue, message)
 }
@@ -254,53 +305,6 @@ helpers.onSuggestionsClearRequested = function(suggestionList){
 	this.setState(s)
 }
 
-helpers.setQueryString = function(entityParams){
-	let queryManagement = new URL(window.location)
-
-	queryManagement.hash = '#close' // inject this upfront so leaflet doesnt trigger a page reload when user closes a tooltip
-
-	queryManagement.searchParams.set('startDate', this.state.startDate)
-	queryManagement.searchParams.set('endDate', this.state.endDate)
-
-	let qparams = this.customQueryParams
-	for(let i=0; i<qparams.length; i++){
-		if(this.state[qparams[i]]){
-			queryManagement.searchParams.set(qparams[i], this.state[qparams[i]])
-		} else{
-			queryManagement.searchParams.delete(qparams[i])
-		}
-	} 
-
-	if(JSON.stringify(this.state.polygon) !== '[]'){
-		queryManagement.searchParams.set('polygon', JSON.stringify(this.state.polygon))
-	} else {
-		queryManagement.searchParams.delete('polygon')
-	}
-	window.history.pushState(null, '', queryManagement.toString());
-}
-
-helpers.mungeTime = function(q, nDays, defaultEnd){
-	// q == queryString, nDays == max number of days to allow, defaultEnd yyyy-mm-dd timestamp of endof default range; omit for today
-	if(defaultEnd){
-		this.today = new Date(defaultEnd)
-	} else {
-		this.today = new Date()
-	}
-	this.earlier = new Date(this.today.getTime() - (nDays * 24 * 60 * 60 * 1000)).toISOString().slice(0,10);
-	this.today = this.today.toISOString().slice(0,10);
-	this.state.startDate = this.earlier
-	this.state.endDate = this.today
-    if(q.has('endDate') && q.has('startDate')){
-    	let t0 = new Date(q.get('startDate'))
-    	let t1 = new Date(q.get('endDate'))
-    	if(t1.getTime() - t0.getTime() < (nDays * 24 * 60 * 60 * 1000)){
-    		this.state.startDate = q.get('startDate')
-	    	this.state.endDate = q.get('endDate')
-    	} 
-    }
-}
-
-// autoselect helpers
 helpers.getSuggestions = function(value, vocabKey){
   const inputValue = value.trim().toLowerCase();
   const inputLength = inputValue.length;
@@ -327,16 +331,27 @@ helpers.renderSuggestion = function(inputState, suggestion){
 	)
 }
 
-helpers.onPolyCreate = function(payload){
-	helpers.fetchPolygon.bind(this)(payload.layer.getLatLngs()[0])
-}
+// misc helpers
 
-helpers.onPolyDelete = function(payload){
-	this.setState({polygon: [], refreshData: true})
-}
-
-helpers.onPolyEdit = function(payload){
-	payload.layers.eachLayer(layer => helpers.fetchPolygon.bind(this)(layer.getLatLngs()[0]))
+helpers.mungeTime = function(q, nDays, defaultEnd){
+	// q == queryString, nDays == max number of days to allow, defaultEnd yyyy-mm-dd timestamp of endof default range; omit for today
+	if(defaultEnd){
+		this.today = new Date(defaultEnd)
+	} else {
+		this.today = new Date()
+	}
+	this.earlier = new Date(this.today.getTime() - (nDays * 24 * 60 * 60 * 1000)).toISOString().slice(0,10);
+	this.today = this.today.toISOString().slice(0,10);
+	this.state.startDate = this.earlier
+	this.state.endDate = this.today
+    if(q.has('endDate') && q.has('startDate')){
+    	let t0 = new Date(q.get('startDate'))
+    	let t1 = new Date(q.get('endDate'))
+    	if(t1.getTime() - t0.getTime() < (nDays * 24 * 60 * 60 * 1000)){
+    		this.state.startDate = q.get('startDate')
+	    	this.state.endDate = q.get('endDate')
+    	} 
+    }
 }
 
 export default helpers
