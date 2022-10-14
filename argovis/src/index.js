@@ -1,5 +1,6 @@
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect } from 'react'
 import Layout from "./pages/layout";
 import ArgovisExplore from "./pages/explore"
 import Grids from "./pages/grids"
@@ -9,6 +10,13 @@ import DriftersExplore from "./pages/drifters"
 import ShipsExplore from "./pages/ships"
 
 export default function App() {
+  useEffect(() => {    
+     // so the back button works in a relatively reasonable manner
+     window.onpopstate = function(event){
+      window.location.reload()
+     }
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>

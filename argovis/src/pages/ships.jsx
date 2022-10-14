@@ -5,7 +5,7 @@ import Autosuggest from 'react-autosuggest';
 import '../index.css';
 import helpers from'./helpers'
 
-class ArgoExplore extends React.Component {
+class ShipsExplore extends React.Component {
 
 	constructor(props) {
 		super(props);
@@ -16,26 +16,28 @@ class ArgoExplore extends React.Component {
 		this.state = {
 			observingEntity: false,
 			apiKey: 'guest',
-			argocore: q.has('argocore') ? q.get('argocore') === 'true' : false,
-			argobgc: q.has('argobgc') ? q.get('argobgc') === 'true' : false,
-			argodeep: q.has('argodeep') ? q.get('argodeep') === 'true' : false,
-			argoPlatformSuggestions: [],
-			argoPlatform: q.has('argoPlatform') ? q.get('argoPlatform') : '',
+			woce: q.has('woce') ? q.get('woce') === 'true' : false,
+			goship: q.has('goship') ? q.get('goship') === 'true' : false,
+			other: q.has('other') ? q.get('other') === 'true' : false,
+			wocelineSuggestions: [],
+			woceline: q.has('woceline') ? q.get('woceline') : '',
+			cruiseSuggestions: [],
+			cruise: q.has('cruise') ? q.get('cruise') : '',
 			refreshData: true,
 			points: [],
 			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [],
 			urls: []
 		}
 
-		this.maxDayspan = 10
-		helpers.mungeTime.bind(this)(q, this.maxDayspan)
+		this.maxDayspan = 30
+		helpers.mungeTime.bind(this)(q, this.maxDayspan, '1993-07-31')
 
-        // if no query string specified at all or no categories selected turn on all argo categories
-        if(!window.location.search || !q.has('argocore') && !q.has('argobgc') && !q.has('argodeep') ){
+        // if no query string specified at all or no categories selected turn on all cchdo categories
+        if(!window.location.search || !q.has('woce') && !q.has('goship') && !q.has('other') ){
         	console.log('imposing defaults')
-        	this.state.argocore = true
-        	this.state.argobgc = true
-        	this.state.argodeep = true
+        	this.state.woce = true
+        	this.state.goship = true
+        	this.state.other = true
         }
 
         // some other useful class variables
@@ -45,16 +47,18 @@ class ArgoExplore extends React.Component {
         //this.apiPrefix = 'https://argovis-api.colorado.edu/'
         this.apiPrefix = 'http://3.88.185.52:8080/'
         this.vocab = {}
-        this.dataset = 'argo'
-        this.customQueryParams = ['argocore', 'argobgc', 'argodeep', 'argoPlatform']
+        this.dataset = 'cchdo'
+        this.customQueryParams = ['woce', 'goship', 'other', 'woceline', 'cruise']
 
         // populate vocabularies, and trigger first render
-        fetch(this.apiPrefix + 'argo/vocabulary?parameter=platform', {headers:{'x-argokey': this.state.apiKey}})
-        .then(response => response.json())
-        .then(data => {
-        	this.vocab['argoPlatform'] = data
-        	this.setState({refreshData:true})
-        })
+        let vocabURLs = [this.apiPrefix + 'cchdo/vocabulary?parameter=woceline', this.apiPrefix + 'cchdo/vocabulary?parameter=cchdo_cruise']
+		Promise.all(vocabURLs.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+			Promise.all(responses.map(res => res.json())).then(data => {
+				this.vocab['woceline'] = data[0]
+				this.vocab['cruise'] = data[1].map(x=>String(x))
+				this.setState({refreshData:true})
+			})
+		})
 	}
 
     componentDidUpdate(prevProps, prevState, snapshot){
@@ -63,34 +67,34 @@ class ArgoExplore extends React.Component {
 
     lookingForEntity(){
     	// return true if any token, valid or not, is specified for any entity query string parameter
-    	return Boolean(this.state.argoPlatform)
+    	return Boolean(this.state.woceline || this.state.cruise)
     }
 
     generateURLs() {
-    	if(this.state.argoPlatform !== ''){
-    		return [this.apiPrefix +'argo?compression=minimal&platform=' + this.state.argoPlatform]
+    	if(this.state.woceline !== ''){
+    		return [this.apiPrefix +'cchdo?compression=minimal&woceline=' + this.state.woceline]
+    	} else if(this.state.cruise !== '') {
+    		return [this.apiPrefix +'cchdo?compression=minimal&cchdo_cruise=' + this.state.cruise]
     	} else {
 
-	    	let url = helpers.generateTemporoSpatialURL.bind(this)('argo')	
+	    	let url = helpers.generateTemporoSpatialURL.bind(this)('cchdo')	
 
 	    	// decide on source.source
 	    	let source = []
-	    	if(!this.state.argocore && !this.state.argobgc && !this.state.argodeep){
-	    		return []
-	    	} else if(this.state.argocore && this.state.argobgc && this.state.argodeep){
-	    		source = ['argo_core']
-	    	} else if(this.state.argocore && this.state.argobgc && !this.state.argodeep){
-	    		source = ['argo_core,~argo_deep', 'argo_bgc']
-	    	} else if(this.state.argocore && !this.state.argobgc && this.state.argodeep){
-	    		source = ['argo_core,~argo_bgc', 'argo_deep']
-	    	} else if(!this.state.argocore && this.state.argobgc && this.state.argodeep){
-	    		source = ['argo_bgc', 'argo_deep']
-	    	} else if(this.state.argocore && !this.state.argobgc && !this.state.argodeep){
-	    		source = ['argo_core,~argo_bgc,~argo_deep']
-	    	} else if(!this.state.argocore && this.state.argobgc && !this.state.argodeep){
-	    		source = ['argo_bgc']
-	    	} else if(!this.state.argocore && !this.state.argobgc && this.state.argodeep){
-	    		source = ['argo_deep']
+	    	if(this.state.other && this.state.woce && this.state.goship){
+	    		source = []
+	    	} else if(this.state.other && this.state.woce && !this.state.goship){
+	    		source = ['~cchdo_woce,~cchdo_go-ship', 'cchdo_woce']
+	    	} else if(this.state.other && !this.state.woce && this.state.goship){
+	    		source = ['~cchdo_woce,~cchdo_go-ship', 'cchdo_go-ship']
+	    	} else if(!this.state.other && this.state.woce && this.state.goship){
+	    		source = ['cchdo_go-ship', 'cchdo_woce']
+	    	} else if(this.state.other && !this.state.woce && !this.state.goship){
+	    		source = ['~cchdo_go-ship,~cchdo_woce']
+	    	} else if(!this.state.other && this.state.woce && !this.state.goship){
+	    		source = ['cchdo_woce']
+	    	} else if(!this.state.other && !this.state.woce && this.state.goship){
+	    		source = ['cchdo_go-ship']
 	    	}
 
 	    	if(source.length === 0){
@@ -109,13 +113,11 @@ class ArgoExplore extends React.Component {
     }
 
     chooseColor(datasources){
-    	if(datasources.includes('argo_bgc')){
+    	if(datasources.includes('cchdo_woce')){
     		return 'green'
-    	}
-    	else if(datasources.includes('argo_deep')){
+    	} else if(datasources.includes('cchdo_go-ship')){
     		return 'blue'
-    	}
-    	else if(datasources.includes('argo_core')){
+    	} else{
 	    	return 'yellow'
 	    }
     }
@@ -129,7 +131,7 @@ class ArgoExplore extends React.Component {
 						<fieldset ref={this.formRef}>
 							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
 							<div className='mapSearchInputs'>
-								<h5>Explore Argo Profiles</h5>
+								<h5>Explore Ship-Based Profiles</h5>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">
 										<input type="password" className="form-control" id="apiKey" placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value)}></input>
@@ -155,16 +157,16 @@ class ArgoExplore extends React.Component {
 								<div className='verticalGroup'>
 									<h6>Subsets</h6>
 									<div className="form-check">
-										<input className="form-check-input" checked={this.state.argocore} onChange={(v) => this.toggle(v, 'argocore')} type="checkbox" id='argocore'></input>
-										<label className="form-check-label" htmlFor='argocore'>Display Argo Core <span style={{'color':this.chooseColor(['argo_core']), '-webkit-text-stroke': '1px black'}}>&#9679;</span></label>
+										<input className="form-check-input" checked={this.state.woce} onChange={(v) => this.toggle(v, 'woce')} type="checkbox" id='woce'></input>
+										<label className="form-check-label" htmlFor='woce'>Display WOCE ships <span style={{'color':this.chooseColor(['cchdo_woce']), '-webkit-text-stroke': '1px black'}}>&#9679;</span></label>
 									</div>
 									<div className="form-check">
-										<input className="form-check-input" checked={this.state.argobgc} onChange={(v) => this.toggle(v, 'argobgc')} type="checkbox" id='argobgc'></input>
-										<label className="form-check-label" htmlFor='argobgc'>Display Argo BGC <span style={{'color':this.chooseColor(['argo_bgc']), '-webkit-text-stroke': '1px black'}}>&#9679;</span></label>
+										<input className="form-check-input" checked={this.state.goship} onChange={(v) => this.toggle(v, 'goship')} type="checkbox" id='goship'></input>
+										<label className="form-check-label" htmlFor='goship'>Display GO-SHIP <span style={{'color':this.chooseColor(['cchdo_go-ship']), '-webkit-text-stroke': '1px black'}}>&#9679;</span></label>
 									</div>
 									<div className="form-check">
-										<input className="form-check-input" checked={this.state.argodeep} onChange={(v) => this.toggle(v, 'argodeep')} type="checkbox" id='argodeep'></input>
-										<label className="form-check-label" htmlFor='argodeep'>Display Argo Deep <span style={{'color':this.chooseColor(['argo_deep']), '-webkit-text-stroke': '1px black'}}>&#9679;</span></label>
+										<input className="form-check-input" checked={this.state.other} onChange={(v) => this.toggle(v, 'other')} type="checkbox" id='other'></input>
+										<label className="form-check-label" htmlFor='other'>Display other ships <span style={{'color':this.chooseColor(['cchdo_x']), '-webkit-text-stroke': '1px black'}}>&#9679;</span></label>
 									</div>
 								</div>
 
@@ -172,13 +174,28 @@ class ArgoExplore extends React.Component {
 									<h6>Object Filters</h6>
 									<div className="form-floating mb-3">
 			      						<Autosuggest
-									      	id='argoPlatformAS'
-									        suggestions={this.state.argoPlatformSuggestions}
-									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'argoPlatformSuggestions')}
-									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'argoPlatformSuggestions')}
+									      	id='woceAS'
+									      	key='woce'
+									        suggestions={this.state.wocelineSuggestions}
+									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'wocelineSuggestions')}
+									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'wocelineSuggestions')}
 									        getSuggestionValue={helpers.getSuggestionValue}
-									        renderSuggestion={helpers.renderSuggestion.bind(this, 'argoPlatform')}
-									        inputProps={{placeholder: 'Argo platform ID', value: this.state.argoPlatform, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of Argo platform ID'), id: 'argoPlatform'}}
+									        renderSuggestion={helpers.renderSuggestion.bind(this, 'woceline')}
+									        inputProps={{placeholder: 'WOCE Line', value: this.state.woceline, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of WOCE line'), id: 'woceline', disabled: Boolean(this.state.cruise)}}
+									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
+			      						/>
+									</div>
+
+									<div className="form-floating mb-3">
+			      						<Autosuggest
+									      	id='cruiseAS'
+									      	key='cruise'
+									        suggestions={this.state.cruiseSuggestions}
+									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'cruiseSuggestions')}
+									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'cruiseSuggestions')}
+									        getSuggestionValue={helpers.getSuggestionValue}
+									        renderSuggestion={helpers.renderSuggestion.bind(this, 'cruise')}
+									        inputProps={{placeholder: 'Cruise ID', value: this.state.cruise, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of Cruise ID'), id: 'cruise',  disabled: Boolean(this.state.woceline)}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 									</div>
@@ -226,4 +243,4 @@ class ArgoExplore extends React.Component {
 	}
 }
 
-export default ArgoExplore
+export default ShipsExplore
