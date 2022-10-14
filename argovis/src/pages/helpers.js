@@ -94,10 +94,10 @@ helpers.componentDidUpdate = function(){
 					for(let i=0; i<data.length; i++){
 						if(data[i].length>0 && data[i][0].code !== 404){
 							timestamps = timestamps.concat(data[i].map(x => x[3]))
-							newPoints = data[i].map(x => x.concat([this.dataset])) // so there's something in the source position for everything other than argo
-							newPoints = helpers.circlefy.bind(this)(newPoints)
+							newPoints = newPoints.concat(data[i].map(x => x.concat([this.dataset]))) // so there's something in the source position for everything other than argo
 						}
 					}
+					newPoints = helpers.circlefy.bind(this)(newPoints)
 					if(this.lookingForEntity()){
 						timestamps = timestamps.map(x => { let d = new Date(x); return d.getTime()})
 						let start = new Date(Math.min(...timestamps))
@@ -109,9 +109,7 @@ helpers.componentDidUpdate = function(){
 					// eslint-disable-next-line
 					this.state.points = newPoints
 					helpers.manageStatus.bind(this)('rendering')
-					if(newPoints.length>0){
-						helpers.refreshMap.bind(this)()
-					}
+					helpers.refreshMap.bind(this)()
 				})
 			})
 		}
@@ -122,12 +120,15 @@ helpers.refreshMap = function(){
 	helpers.manageStatus.bind(this)('rendering')
 
 	if(JSON.stringify(this.state.polygon) === '[]'){
-		console.log('clear poly')
 		helpers.clearLeafletDraw.bind(this)()
 	}
 
 	this.setState({refreshData: false}, () => {
-			helpers.manageStatus.bind(this)('ready')
+			if(this.state.points.length > 0){
+				helpers.manageStatus.bind(this)('ready')
+			} else {
+				helpers.manageStatus.bind(this)('error', 'No data found for this search.')
+			}
 			this.formRef.current.removeAttribute('disabled')
 			helpers.setQueryString.bind(this)()
 		})
@@ -255,6 +256,8 @@ helpers.onSuggestionsClearRequested = function(suggestionList){
 
 helpers.setQueryString = function(entityParams){
 	let queryManagement = new URL(window.location)
+
+	queryManagement.hash = '#close' // inject this upfront so leaflet doesnt trigger a page reload when user closes a tooltip
 
 	queryManagement.searchParams.set('startDate', this.state.startDate)
 	queryManagement.searchParams.set('endDate', this.state.endDate)
