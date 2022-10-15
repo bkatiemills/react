@@ -212,8 +212,6 @@ helpers.circlefy = function(points){
 helpers.setQueryString = function(entityParams){
 	let queryManagement = new URL(window.location)
 
-	queryManagement.hash = '#close' // inject this upfront so leaflet doesnt trigger a page reload when user closes a tooltip
-
 	queryManagement.searchParams.set('startDate', this.state.startDate)
 	queryManagement.searchParams.set('endDate', this.state.endDate)
 
@@ -231,6 +229,9 @@ helpers.setQueryString = function(entityParams){
 	} else {
 		queryManagement.searchParams.delete('polygon')
 	}
+
+	window.argoPrevious = queryManagement.search // keep track of query string changes so we know when to refresh
+
 	window.history.pushState(null, '', queryManagement.toString());
 }
 

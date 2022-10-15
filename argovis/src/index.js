@@ -11,10 +11,13 @@ import ShipsExplore from "./pages/ships"
 
 export default function App() {
   useEffect(() => {    
-     // so the back button works in a relatively reasonable manner
-     window.onpopstate = function(event){
-       window.location.reload()
-     }
+    // refresh iff query string changed onpopstate, so the back button works in a relatively reasonable manner
+    window.onpopstate = function(event){
+      if(window.argoPrevious !== window.location.search){
+        window.argoPrevious = window.location.search
+        window.location.reload() 
+      }
+    }
   }, []);
 
   return (
