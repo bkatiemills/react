@@ -13,7 +13,7 @@ export default function App() {
   useEffect(() => {    
      // so the back button works in a relatively reasonable manner
      window.onpopstate = function(event){
-      window.location.reload()
+       window.location.reload()
      }
   }, []);
 
