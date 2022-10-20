@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapContainer, TileLayer, Polygon, FeatureGroup} from 'react-leaflet'
+import { MapContainer, TileLayer, Polygon, FeatureGroup, Popup} from 'react-leaflet'
 import { EditControl } from "react-leaflet-draw";
 import Autosuggest from 'react-autosuggest';
 import '../index.css';
@@ -118,6 +118,21 @@ class ArgoExplore extends React.Component {
     	else if(datasources.includes('argo_core')){
 	    	return 'yellow'
 	    }
+    }
+
+    genTooltip(point){
+    	// given an array <point> corresponding to a single point returned by an API data route with compression=minimal,
+    	// return the jsx for an appropriate tooltip for this point.
+
+    	return(
+		    <Popup>
+		      ID: {point[0]} <br />
+		      Long / Lat: {point[1]} / {point[2]} <br />
+		      Date: {point[3]} <br />
+		      Data Sources: {point[4]} <br />
+		      <a target="_blank" rel="noreferrer" href={'/plots?argoPlatform='+point[0].split('_')[0]}>Profile Page</a>
+		    </Popup>
+    	)
     }
 
 	render(){

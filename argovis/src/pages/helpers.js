@@ -197,12 +197,7 @@ helpers.circlefy = function(points){
 	else {
 		points = points.map(point => {return(
 		  <CircleMarker key={point[0]+Math.random()} center={[point[2], point[1]]} radius={1} color={this.chooseColor(point[4])}>
-		    <Popup>
-		      ID: {point[0]} <br />
-		      Long / Lat: {point[1]} / {point[2]} <br />
-		      Date: {point[3]} <br />
-		      Data Sources: {point[4]}
-		    </Popup>
+		  	{this.genTooltip(point)}
 		  </CircleMarker>
 		)})
 		return points
@@ -297,6 +292,7 @@ helpers.onAutosuggestChange = function(message, event, change){
 helpers.onSuggestionsFetchRequested = function(suggestionList, update){
 	let s = {}
 	s[suggestionList] = helpers.getSuggestions.bind(this)(update.value, suggestionList.slice(0,-11))
+	console.log(suggestionList)
 	this.setState(s)
 }
 
@@ -309,8 +305,9 @@ helpers.onSuggestionsClearRequested = function(suggestionList){
 helpers.getSuggestions = function(value, vocabKey){
   const inputValue = value.trim().toLowerCase();
   const inputLength = inputValue.length;
-
-  return inputLength === 0 ? [] : this.vocab[vocabKey].filter(v =>
+  const notoken = this.showAll ? this.vocab[vocabKey] : [] 
+  console.log(notoken)
+  return inputLength === 0 ? notoken : this.vocab[vocabKey].filter(v =>
     String(v).toLowerCase().slice(0, inputLength) === inputValue
   );
 };

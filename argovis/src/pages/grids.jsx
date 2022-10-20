@@ -191,6 +191,20 @@ class Grids extends React.Component {
     	}
     }
 
+    genTooltip(point){
+    	// given an array <point> corresponding to a single point returned by an API data route with compression=minimal,
+    	// return the jsx for an appropriate tooltip for this point.
+
+    	return(
+		    <Popup>
+		      ID: {point[0]} <br />
+		      Long / Lat: {point[1]} / {point[2]} <br />
+		      Date: {point[3]} <br />
+		      Data Sources: {point[4]}
+		    </Popup>
+    	)
+    }
+
 	render(){
 		return(
 			<div>
