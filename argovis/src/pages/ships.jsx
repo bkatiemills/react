@@ -119,13 +119,6 @@ class ShipsExplore extends React.Component {
 	    }
     }
 
-    toggle(v){
-    	let s = {...this.state}
-    	s[v.target.id] = !s[v.target.id]
-    	s.refreshData = true
-    	this.setState(s)
-    }
-
     chooseColor(datasources){
     	if(datasources.includes('cchdo_woce')){
     		return 'green'
@@ -185,15 +178,15 @@ class ShipsExplore extends React.Component {
 								<div className='verticalGroup'>
 									<h6>Subsets</h6>
 									<div className="form-check">
-										<input className="form-check-input" disabled={this.state.observingEntity} checked={this.state.woce} onChange={(v) => this.toggle(v, 'woce')} type="checkbox" id='woce'></input>
+										<input className="form-check-input" disabled={this.state.observingEntity} checked={this.state.woce} onChange={(v) => helpers.toggle.bind(this)(v, 'woce')} type="checkbox" id='woce'></input>
 										<label className="form-check-label" htmlFor='woce'>Display WOCE ships <span style={{'color':this.chooseColor(['cchdo_woce']), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 									<div className="form-check">
-										<input className="form-check-input" disabled={this.state.observingEntity} checked={this.state.goship} onChange={(v) => this.toggle(v, 'goship')} type="checkbox" id='goship'></input>
+										<input className="form-check-input" disabled={this.state.observingEntity} checked={this.state.goship} onChange={(v) => helpers.toggle.bind(this)(v, 'goship')} type="checkbox" id='goship'></input>
 										<label className="form-check-label" htmlFor='goship'>Display GO-SHIP <span style={{'color':this.chooseColor(['cchdo_go-ship']), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 									<div className="form-check">
-										<input className="form-check-input" disabled={this.state.observingEntity} checked={this.state.other} onChange={(v) => this.toggle(v, 'other')} type="checkbox" id='other'></input>
+										<input className="form-check-input" disabled={this.state.observingEntity} checked={this.state.other} onChange={(v) => helpers.toggle.bind(this)(v, 'other')} type="checkbox" id='other'></input>
 										<label className="form-check-label" htmlFor='other'>Display other ships <span style={{'color':this.chooseColor(['cchdo_x']), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 								</div>

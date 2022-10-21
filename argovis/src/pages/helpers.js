@@ -240,7 +240,6 @@ helpers.setDate = function(date, v, maxdays){
 	let delta = end.getTime() - start.getTime()
 	let cutoff = maxdays*24*60*60*1000
 	if(isNaN(v)){
-		console.log('undefined time', v)
 		return
 	} else{
 		if(date === 'startDate'){
@@ -283,6 +282,13 @@ helpers.setToken = function(key, v, message){
 	this.setState(s)
 }
 
+helpers.toggle = function(v){
+	let s = {...this.state}
+	s[v.target.id] = !s[v.target.id]
+	s.refreshData = true
+	this.setState(s)
+}
+
 // autosuggest callbacks
 
 helpers.onAutosuggestChange = function(message, event, change){
@@ -292,7 +298,6 @@ helpers.onAutosuggestChange = function(message, event, change){
 helpers.onSuggestionsFetchRequested = function(suggestionList, update){
 	let s = {}
 	s[suggestionList] = helpers.getSuggestions.bind(this)(update.value, suggestionList.slice(0,-11))
-	console.log(suggestionList)
 	this.setState(s)
 }
 
@@ -306,7 +311,6 @@ helpers.getSuggestions = function(value, vocabKey){
   const inputValue = value.trim().toLowerCase();
   const inputLength = inputValue.length;
   const notoken = this.showAll ? this.vocab[vocabKey] : [] 
-  console.log(notoken)
   return inputLength === 0 ? notoken : this.vocab[vocabKey].filter(v =>
     String(v).toLowerCase().slice(0, inputLength) === inputValue
   );

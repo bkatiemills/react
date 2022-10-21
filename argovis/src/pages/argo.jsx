@@ -101,13 +101,6 @@ class ArgoExplore extends React.Component {
 	    }
     }
 
-    toggle(v){
-    	let s = {...this.state}
-    	s[v.target.id] = !s[v.target.id]
-    	s.refreshData = true
-    	this.setState(s)
-    }
-
     chooseColor(datasources){
     	if(datasources.includes('argo_bgc')){
     		return 'green'
@@ -170,15 +163,15 @@ class ArgoExplore extends React.Component {
 								<div className='verticalGroup'>
 									<h6>Subsets</h6>
 									<div className="form-check">
-										<input className="form-check-input" checked={this.state.argocore} onChange={(v) => this.toggle(v, 'argocore')} type="checkbox" id='argocore'></input>
+										<input className="form-check-input" checked={this.state.argocore} onChange={(v) => helpers.toggle.bind(this)(v, 'argocore')} type="checkbox" id='argocore'></input>
 										<label className="form-check-label" htmlFor='argocore'>Display Argo Core <span style={{'color':this.chooseColor(['argo_core']), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 									<div className="form-check">
-										<input className="form-check-input" checked={this.state.argobgc} onChange={(v) => this.toggle(v, 'argobgc')} type="checkbox" id='argobgc'></input>
+										<input className="form-check-input" checked={this.state.argobgc} onChange={(v) => helpers.toggle.bind(this)(v, 'argobgc')} type="checkbox" id='argobgc'></input>
 										<label className="form-check-label" htmlFor='argobgc'>Display Argo BGC <span style={{'color':this.chooseColor(['argo_bgc']), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 									<div className="form-check">
-										<input className="form-check-input" checked={this.state.argodeep} onChange={(v) => this.toggle(v, 'argodeep')} type="checkbox" id='argodeep'></input>
+										<input className="form-check-input" checked={this.state.argodeep} onChange={(v) => helpers.toggle.bind(this)(v, 'argodeep')} type="checkbox" id='argodeep'></input>
 										<label className="form-check-label" htmlFor='argodeep'>Display Argo Deep <span style={{'color':this.chooseColor(['argo_deep']), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 								</div>
