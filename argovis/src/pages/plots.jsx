@@ -1,4 +1,5 @@
 import React from 'react';
+import { MapContainer, TileLayer, CircleMarker} from 'react-leaflet'
 import Autosuggest from 'react-autosuggest';
 import '../index.css';
 import helpers from'./helpers'
@@ -31,7 +32,11 @@ class AVPlots extends React.Component {
 			reverseZ: false,
 			title: '',
 			data: [{}],
-			argoPlatform: q.has('argoPlatform') ? q.get('argoPlatform') : ''
+			metadata: {},
+			traces: {},
+			showAll: true,
+			argoPlatform: q.has('argoPlatform') ? q.get('argoPlatform') : '',
+			points: []
 		}
 
 		this.apiPrefix = 'http://3.88.185.52:8080/'
@@ -42,18 +47,42 @@ class AVPlots extends React.Component {
 		let x = Promise.all(this.generateURLs().map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 			Promise.all(responses.map(res => res.json())).then(data => {
 				let p = [].concat(...data)
+				let traces = {}
+				for(let i=0; i<p.length; i++){
+					traces[p[i]._id] = {'visible': true}
+				}
+				let metakeys = Array.from(new Set(p.map(x=>x['metadata'])))
 				let vars = this.getDataKeys(p)
 				p = p.map(d => this.transpose(d))
+				let mappoints = p.map(point => {
+					return(
+						<CircleMarker key={point._id+Math.random()} center={[point.latitude[0], point.longitude[0]]} radius={1} color={'yellow'}/>
+					)
+				})
+
 	        	this.vocab['xKey'] = vars
 	        	this.vocab['yKey'] = vars
 	        	this.vocab['zKey'] = ['[2D plot]'].concat(vars)
-	        	this.setState({
-	        		data:p, 
-	        		variables: vars, 
-	        		xKey: 'temperature',
-	        		yKey: 'salinity',
-	        		zKey: '[2D plot]'
-	        	})
+
+	        	let m = Promise.all(this.generateMetadataURLs(metakeys).map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+					Promise.all(responses.map(mres => mres.json())).then(metadata => {
+						metadata = [].concat(...metadata)
+						let meta = {}
+						for(let i=0; i<metadata.length; i++){
+							meta[metadata[i]._id] = metadata[i]
+						}
+			        	this.setState({
+			        		data:p, 
+			        		variables: vars, 
+			        		metadata: meta,
+			        		traces: traces,
+			        		points: mappoints,
+			        		xKey: 'temperature',
+			        		yKey: 'salinity',
+			        		zKey: '[2D plot]'
+			        	})
+					})
+				})
 			})
 		})
 	}
@@ -74,6 +103,8 @@ class AVPlots extends React.Component {
 		t['latitude'] = Array(profile.data.length).fill(profile.geolocation.coordinates[1],0)
 		t['timestamp'] = Array(profile.data.length).fill(profile.timestamp,0)
 		t['_id'] = profile._id
+		t['metadata'] = profile.metadata
+		t['source'] = profile.source
 
 		return t
 	}
@@ -99,6 +130,10 @@ class AVPlots extends React.Component {
 		}
 
 		return urls
+	}
+
+	generateMetadataURLs(metakeys){
+		return metakeys.map(x => this.apiPrefix + 'argo/meta?id=' + x)
 	}
 
 	generateRange(min, max, dataKey, reverse){
@@ -139,6 +174,31 @@ class AVPlots extends React.Component {
 				ymax: event["yaxis.range[1]"] ? event["yaxis.range[1]"]: ''
 			})
 		}
+	}
+
+	toggleTrace(id){
+		let s = {...this.state}
+		s.traces[id].visible = !s.traces[id].visible
+		this.setState(s)
+	}
+
+	toggleAll(){
+		let s = {...this.state}
+		let traces = {}
+		if(this.state.showAll){
+			for(let i=0; i<this.state.data.length; i++){
+				traces[this.state.data[i]._id] = {'visible': false}
+			}
+			s.traces = traces
+			s.showAll = false
+		} else {
+			for(let i=0; i<this.state.data.length; i++){
+				traces[this.state.data[i]._id] = {'visible': true}
+			}
+			s.traces = traces
+			s.showAll = true
+		}
+		this.setState(s)
 	}
 
 	render(){
@@ -247,6 +307,13 @@ class AVPlots extends React.Component {
 								</div>
 							</div>
 						</fieldset>
+						<MapContainer style={{'height': '30vh'}} center={[0,0]} zoom={0} scrollWheelZoom={true}>
+							<TileLayer
+							attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+							url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+							/>
+							{this.state.points}
+						</MapContainer>
 					</div>
 
 					{/* plots */}
@@ -260,13 +327,15 @@ class AVPlots extends React.Component {
 					          type: this.state.zKey === '[2D plot]' ? 'scatter2d' : 'scatter3d',
 					          mode: 'markers',
 					          marker: {size: 2},
-					          name: d._id
+					          name: d._id,
+					          visible: this.state.traces[d._id] ? this.state.traces[d._id].visible : true
 					        }
 					      })}
 					      onRelayout={e=>this.zoomSync(e)}
 					      layout={{
 					      	datarevision: Math.random(),
 					      	autosize: true, 
+					      	showlegend: false,
 							xaxis: {
 							  title: {text: this.state.xKey},
 							  range: this.generateRange(this.state.xmin, this.state.xmax, this.state.xKey, this.state.reverseX)
@@ -296,6 +365,55 @@ class AVPlots extends React.Component {
 					      	showTips: false
 					      }}
 					    />
+					</div>
+				</div>
+				<div className='row'>
+					<div className='col-12' style={{'paddingLeft': '2em', 'paddingRight': '5em', 'height': '50vh', 'overflow': 'auto'}}>
+						<table className='table'>
+							<thead style={{'position': 'sticky', 'top': 0, 'backgroundColor': '#FFFFFF'}}>
+							    <tr>
+							    	<th scope="col">
+							    		<span style={{'marginRight':'0.5em'}}>Show</span>
+										<input className="form-check-input" checked={this.state.showAll} onChange={(v) => this.toggleAll() } type="checkbox"></input>
+							    	</th>
+									<th scope="col">ID</th>
+									<th scope="col">Original Files</th>
+									<th scope="col">Longitude</th>
+									<th scope="col">Latitude</th>
+									<th scope="col">Timestamp</th>
+									<th scope="col">DAC</th>
+							    </tr>
+							</thead>
+							<tbody>
+								{this.state.data.map(d => {
+									if(d && JSON.stringify(d) !== '{}'){
+										return(
+											<tr key={Math.random()}>
+												<td>
+													<input key={d._id} className="form-check-input" checked={this.state.traces[d._id].visible} onChange={(v) => this.toggleTrace(d._id)} type="checkbox" id={d._id}></input>
+												</td>
+												<td>{d._id}</td>
+												<td>
+													{d.source.map(s => {
+														if(s.url.includes('profiles/S')){
+															return(<a key={Math.random()} className="btn btn-success" style={{'marginRight':'0.5em'}} href={s.url} role="button">BGC</a>)
+														} else {
+															return(<a key={Math.random()} className="btn btn-primary" href={s.url} role="button">Core</a>)
+														}
+													})}
+												</td>
+												<td>{d.longitude[0]}</td>
+												<td>{d.latitude[0]}</td>
+												<td>{d.timestamp[0]}</td>
+												<td>{this.state.metadata[d.metadata].data_center}</td>
+											</tr>
+										)
+									} else {
+										return ''
+									}
+								})}
+							</tbody>
+						</table>
 					</div>
 				</div>
 			</>
