@@ -32,7 +32,7 @@ class ArgovisNav extends React.Component {
 		return(
 			<nav className="navbar navbar-expand-lg bg-light">
 			  <div className="container-fluid">
-			    <a className="navbar-brand" href="https://github.com/argovis">Argovis</a>
+			    <a className="navbar-brand" href="https://github.com/argovis"><img src='./fulllogo.png' style={{'height':'30px'}} className='img-fluid'/></a>
 			    <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
 			      <span className="navbar-toggler-icon"></span>
 			    </button>
@@ -44,9 +44,6 @@ class ArgovisNav extends React.Component {
 			        </li>
 			        <li className="nav-item">
 			          <a className="nav-link" href="https://github.com/argovis/demo_notebooks">Jupyter Notebooks</a>
-			        </li>
-			        <li className="nav-item">
-			          <a className="nav-link" href="https://github.com/argovis">Code</a>
 			        </li>
 			        <li className="nav-item">
 			          <a className="nav-link" href="https://github.com/argovis">Publications</a>
