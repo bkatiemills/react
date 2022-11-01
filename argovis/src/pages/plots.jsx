@@ -215,10 +215,17 @@ class AVPlots extends React.Component {
 		return(
 			<>
 				<div className='row'>
-					<div className='col-3 overflow-auto' style={{'height':'90vh'}}>
+					<div className='col-3'>
 						<fieldset ref={this.formRef}>
 							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
-							<div className='mapSearchInputs'>
+							<MapContainer style={{'height': '30vh'}} center={[0,0]} zoom={0} scrollWheelZoom={true}>
+								<TileLayer
+								attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+								url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+								/>
+								{this.state.points}
+							</MapContainer>
+							<div className='mapSearchInputs overflow-auto' style={{'height':'55vh'}}>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">
 										<div className="form-text">
@@ -392,13 +399,6 @@ class AVPlots extends React.Component {
 								</div>
 							</div>
 						</fieldset>
-						<MapContainer style={{'height': '30vh'}} center={[0,0]} zoom={0} scrollWheelZoom={true}>
-							<TileLayer
-							attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-							url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-							/>
-							{this.state.points}
-						</MapContainer>
 					</div>
 
 					{/* plots */}
