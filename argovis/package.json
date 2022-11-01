@@ -8,6 +8,7 @@
     "@testing-library/user-event": "^13.5.0",
     "chroma-js": "^2.4.2",
     "leaflet": "^1.8.0",
+    "leaflet-geometryutil": "^0.10.1",
     "plotly.js": "^2.16.0",
     "react": "^18.2.0",
     "react-autosuggest": "^10.1.0",

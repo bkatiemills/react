@@ -1,4 +1,5 @@
 import { Popup, CircleMarker} from 'react-leaflet'
+import GeometryUtil from "leaflet-geometryutil";
 
 let helpers = {}
 
@@ -9,7 +10,7 @@ helpers.onPolyCreate = function(payload){
 }
 
 helpers.onPolyDelete = function(payload){
-	this.setState({polygon: [], refreshData: true})
+	this.setState({polygon: [], maxDayspan: this.defaultDayspan, startDate: this.earlier, endDate: this.today, refreshData: true})
 }
 
 helpers.onPolyEdit = function(payload){
@@ -20,7 +21,40 @@ helpers.fetchPolygon = function(coords){
 	// coords == array of {lng: xx, lat: xx}, such as returned by getLatLngs
 	let vertexes = coords.map(x => [x.lng, x.lat])
 	vertexes.push(vertexes[0])
-	this.setState({polygon: vertexes, refreshData: true})    	
+	let maxdays = helpers.calculateDayspan.bind(this)(vertexes)
+
+	if(maxdays < this.state.maxDayspan){
+		// rethink the end date in case they drew a bigger polygon and the date range needs to be forcibly contracted
+		let timebox = helpers.setDate.bind(this)('startDate', document.getElementById('startDate').valueAsNumber, maxdays, true)
+
+		this.setState({
+			polygon: vertexes, 
+			maxDayspan: maxdays,
+			endDate: timebox[1], 
+			refreshData: true})
+	} else {
+		this.setState({
+			polygon: vertexes, 
+			maxDayspan: maxdays,
+			refreshData: true})
+	}
+}
+
+helpers.estimateArea = function(vertexes){
+	// given the coordinates from a geojson polygon, return the estimated area in sq km
+	return GeometryUtil.geodesicArea(vertexes.map(x => {return({lng: x[0], lat: x[1]})}))/1000000
+}
+
+helpers.calculateDayspan = function(vertexes){
+	// vertexes == coordinates entry from a geojson polygon
+	let area = helpers.estimateArea(vertexes)
+	if(area >= this.maxArea){
+		return this.minDays
+	} else if (area < this.minArea){
+		return this.maxDays
+	} else {
+		return Math.floor(this.maxDays - (area-this.minArea)/(this.maxArea-this.minArea)*(this.maxDays-this.minDays))
+	}
 }
 
 // leaflet draw callbacks
@@ -36,6 +70,10 @@ helpers.onDrawStop = function(payload){
 
 helpers.clearLeafletDraw = function(){
 	if(Object.keys(this.fgRef.current._layers).length > 0){
+		if(this.defaultPolygon){
+			// eslint-disable-next-line
+			this.state.polygon = this.defaultPolygon
+		}
 		let layerID = Object.keys(this.fgRef.current._layers)[0]
 		let layer = this.fgRef.current._layers[layerID]
 		this.fgRef.current.clearLayers(layer)
@@ -232,9 +270,10 @@ helpers.setQueryString = function(entityParams){
 
 // input setters
 
-helpers.setDate = function(date, v, maxdays){
+helpers.setDate = function(date, v, maxdays, noop){
 	// when setting dates from the UI, don't let the user ask for a timespan longer than some cutoff. 
 	// If they do, move the other time bound to match.
+	// If noop == true, just return the computes start and end times without invoking a state change.
 	let start = new Date(this.state.startDate)
 	let end = new Date(this.state.endDate)
 	let delta = end.getTime() - start.getTime()
@@ -264,7 +303,11 @@ helpers.setDate = function(date, v, maxdays){
     s.startDate = start
     s.endDate = end
     s.refreshData = true
-    this.setState(s)
+    if(noop){
+    	return [start, end]
+    } else {
+	    this.setState(s)
+	  }
 }
 
 helpers.setToken = function(key, v, message){
