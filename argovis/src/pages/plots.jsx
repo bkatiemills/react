@@ -222,7 +222,7 @@ class AVPlots extends React.Component {
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">
 										<div className="form-text">
-						  					<span>x-axis variable</span>
+						  					<span><b>x-axis variable</b></span>
 										</div>
 			      						<Autosuggest
 									      	id='xKeyAS'
@@ -235,26 +235,33 @@ class AVPlots extends React.Component {
 									        inputProps={{placeholder: 'x-axis', value: this.state.xKey, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of x axis variable'), id: 'xKey'}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
-										<div className="input-group mb-3" style={{'marginTop':'1em'}}>
-											<div className="input-group-prepend">
-											  <span className="input-group-text" id="basic-addon1">min</span>
+			      						<div className='row'>
+			      							<div className='col-5' style={{'paddingRight': '0px'}}>
+												<div className="form-text">
+								  					<span>min</span>
+												</div>
+												<input type="text" className="form-control minmax" placeholder="Auto" value={this.state.xmin} onChange={e => {this.setState({xmin:e.target.value})}} aria-label="xmin" aria-describedby="basic-addon1"></input>
 											</div>
-											<input type="text" className="form-control" style={{'marginRight': '0.5em'}} placeholder="Auto" value={this.state.xmin} onChange={e => {this.setState({xmin:e.target.value})}} aria-label="xmin" aria-describedby="basic-addon1"></input>
-											
-											<div className="input-group-prepend">
-											  <span className="input-group-text" id="basic-addon1">max</span>
+											<div className='col-5' style={{'paddingRight': '0px'}}>
+												<div className="form-text">
+								  					<span>max</span>
+												</div>
+												<input type="text" className="form-control minmax" placeholder="Auto" value={this.state.xmax} onChange={e => {this.setState({xmax:e.target.value})}} aria-label="xmax" aria-describedby="basic-addon1"></input>
 											</div>
-											<input type="text" className="form-control" placeholder="Auto" value={this.state.xmax} onChange={e => {this.setState({xmax:e.target.value})}} aria-label="xmax" aria-describedby="basic-addon1"></input>
-										</div>
-										<div className="form-check">
-											<input className="form-check-input" checked={this.state.reverseX} onChange={(v) => helpers.toggle.bind(this)(v, 'reverseX')} type="checkbox" id='reverseX'></input>
-											<label className="form-check-label" htmlFor='reverseX'>Reverse</label>
+											<div className='col-2'>
+												<div className="form-text">
+								  					<span>rev.</span>
+												</div>
+												<input className="form-check-input" checked={this.state.reverseX} onChange={(v) => helpers.toggle.bind(this)(v, 'reverseX')} type="checkbox" id='reverseX'></input>
+											</div>
 										</div>
 									</div>
 
+									<hr/>
+
 									<div className="form-floating mb-3">
 										<div className="form-text">
-						  					<span>y-axis variable</span>
+						  					<span><b>y-axis variable</b></span>
 										</div>
 			      						<Autosuggest
 									      	id='yKeyAS'
@@ -267,25 +274,33 @@ class AVPlots extends React.Component {
 									        inputProps={{placeholder: 'y-axis', value: this.state.yKey, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of y axis variable'), id: 'yKey'}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
-										<div className="input-group mb-3" style={{'marginTop':'1em'}}>
-										  <div className="input-group-prepend">
-										    <span className="input-group-text" id="basic-addon1">min</span>
-										  </div>
-										  <input type="text" className="form-control" style={{'marginRight': '0.5em'}} placeholder="Auto" value={this.state.ymin} onChange={e => {this.setState({ymin:e.target.value})}} aria-label="ymin" aria-describedby="basic-addon1"></input>
-										  <div className="input-group-prepend">
-										    <span className="input-group-text" id="basic-addon1">max</span>
-										  </div>
-										  <input type="text" className="form-control" placeholder="Auto" value={this.state.ymax} onChange={e => {this.setState({ymax:e.target.value})}} aria-label="ymax" aria-describedby="basic-addon1"></input>
-										</div>
-										<div className="form-check">
-											<input className="form-check-input" checked={this.state.reverseY} onChange={(v) => helpers.toggle.bind(this)(v, 'reverseY')} type="checkbox" id='reverseY'></input>
-											<label className="form-check-label" htmlFor='reverseY'>Reverse</label>
+			      						<div className='row'>
+			      							<div className='col-5' style={{'paddingRight': '0px'}}>
+												<div className="form-text">
+								  					<span>min</span>
+												</div>
+												<input type="text" className="form-control minmax" placeholder="Auto" value={this.state.ymin} onChange={e => {this.setState({ymin:e.target.value})}} aria-label="ymin" aria-describedby="basic-addon1"></input>
+											</div>
+											<div className='col-5' style={{'paddingRight': '0px'}}>
+												<div className="form-text">
+								  					<span>max</span>
+												</div>
+												<input type="text" className="form-control minmax" placeholder="Auto" value={this.state.ymax} onChange={e => {this.setState({ymax:e.target.value})}} aria-label="ymax" aria-describedby="basic-addon1"></input>
+											</div>
+											<div className='col-2'>
+												<div className="form-text">
+								  					<span>rev.</span>
+												</div>
+												<input className="form-check-input" checked={this.state.reverseY} onChange={(v) => helpers.toggle.bind(this)(v, 'reverseY')} type="checkbox" id='reverseY'></input>
+											</div>
 										</div>
 									</div>
 
+									<hr/>
+
 									<div className="form-floating mb-3">
 										<div className="form-text">
-						  					<span>color variable</span>
+						  					<span><b>color variable</b></span>
 										</div>
 			      						<Autosuggest
 									      	id='cKeyAS'
@@ -295,23 +310,28 @@ class AVPlots extends React.Component {
 									        shouldRenderSuggestions={x=>true}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'cKey')}
-									        inputProps={{placeholder: 'c-axis', value: this.state.cKey, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of color axis variable'), id: 'cKey'}}
+									        inputProps={{placeholder: 'color axis', value: this.state.cKey, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of color axis variable'), id: 'cKey'}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
-										<div className="input-group mb-3" style={{'marginTop':'1em'}}>
-											<div className="input-group-prepend">
-											  <span className="input-group-text" id="basic-addon1">min</span>
+			      						<div className='row'>
+			      							<div className='col-5' style={{'paddingRight': '0px'}}>
+												<div className="form-text">
+								  					<span>min</span>
+												</div>
+												<input type="text" className="form-control minmax" placeholder="Auto" value={this.state.cmin} onChange={e => {this.setState({cmin:e.target.value})}} aria-label="cmin" aria-describedby="basic-addon1"></input>
 											</div>
-											<input type="text" className="form-control" style={{'marginRight': '0.5em'}} placeholder="Auto" value={this.state.cmin} onChange={e => {this.setState({cmin:e.target.value})}} aria-label="cmin" aria-describedby="basic-addon1"></input>
-											
-											<div className="input-group-prepend">
-											  <span className="input-group-text" id="basic-addon1">max</span>
+											<div className='col-5' style={{'paddingRight': '0px'}}>
+												<div className="form-text">
+								  					<span>max</span>
+												</div>
+												<input type="text" className="form-control minmax" placeholder="Auto" value={this.state.cmax} onChange={e => {this.setState({cmax:e.target.value})}} aria-label="cmax" aria-describedby="basic-addon1"></input>
 											</div>
-											<input type="text" className="form-control" placeholder="Auto" value={this.state.cmax} onChange={e => {this.setState({cmax:e.target.value})}} aria-label="cmax" aria-describedby="basic-addon1"></input>
-										</div>
-										<div className="form-check">
-											<input className="form-check-input" checked={this.state.reverseC} onChange={(v) => helpers.toggle.bind(this)(v, 'reverseC')} type="checkbox" id='reverseC'></input>
-											<label className="form-check-label" htmlFor='reverseC'>Reverse</label>
+											<div className='col-2'>
+												<div className="form-text">
+								  					<span>rev.</span>
+												</div>
+												<input className="form-check-input" checked={this.state.reverseC} onChange={(v) => helpers.toggle.bind(this)(v, 'reverseC')} type="checkbox" id='reverseC'></input>
+											</div>
 										</div>
 										<div className="form-text">
 						  					<span>color scale</span>
@@ -329,9 +349,11 @@ class AVPlots extends React.Component {
 			      						/>
 									</div>
 
+									<hr/>
+
 									<div className="form-floating mb-3">
 										<div className="form-text">
-						  					<span>z-axis variable</span>
+						  					<span><b>z-axis variable</b></span>
 										</div>
 			      						<Autosuggest
 									      	id='zKeyAS'
@@ -345,18 +367,26 @@ class AVPlots extends React.Component {
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 										<div className={this.state.zKey === '[2D plot]' ? "input-group mb-3 hidden": "input-group mb-3"} style={{'marginTop':'1em'}}>
-										  <div className="input-group-prepend">
-										    <span className="input-group-text" id="basic-addon1">min</span>
-										  </div>
-										  <input type="text" className="form-control" style={{'marginRight': '0.5em'}} placeholder="Auto" value={this.state.zmin} onChange={e => {this.setState({zmin:e.target.value})}} aria-label="zmin" aria-describedby="basic-addon1"></input>
-										  <div className="input-group-prepend">
-										    <span className="input-group-text" id="basic-addon1">max</span>
-										  </div>
-										  <input type="text" className="form-control" placeholder="Auto" value={this.state.zmax} onChange={e => {this.setState({zmax:e.target.value})}} aria-label="zmax" aria-describedby="basic-addon1"></input>
-										</div>
-										<div className={this.state.zKey === '[2D plot]' ? "input-group mb-3 hidden": "input-group mb-3"}>
-											<input className="form-check-input" checked={this.state.reverseZ} onChange={(v) => helpers.toggle.bind(this)(v, 'reverseZ')} type="checkbox" id='reverseZ'></input>
-											<label className="form-check-label" htmlFor='reverseZ'>&nbsp;Reverse</label>
+				      						<div className='row'>
+				      							<div className='col-5' style={{'paddingRight': '0px'}}>
+													<div className="form-text">
+									  					<span>min</span>
+													</div>
+													<input type="text" className="form-control minmax" placeholder="Auto" value={this.state.zmin} onChange={e => {this.setState({zmin:e.target.value})}} aria-label="zmin" aria-describedby="basic-addon1"></input>
+												</div>
+												<div className='col-5' style={{'paddingRight': '0px'}}>
+													<div className="form-text">
+									  					<span>max</span>
+													</div>
+													<input type="text" className="form-control minmax" placeholder="Auto" value={this.state.zmax} onChange={e => {this.setState({zmax:e.target.value})}} aria-label="zmax" aria-describedby="basic-addon1"></input>
+												</div>
+												<div className='col-2'>
+													<div className="form-text">
+									  					<span>rev.</span>
+													</div>
+													<input className="form-check-input" checked={this.state.reverseZ} onChange={(v) => helpers.toggle.bind(this)(v, 'reverseZ')} type="checkbox" id='reverseZ'></input>
+												</div>
+											</div>
 										</div>
 									</div>
 								</div>

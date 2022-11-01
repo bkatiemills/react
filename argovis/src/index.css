@@ -47,3 +47,12 @@ div.autocomplete-item{
 .highlightSuggestion {
   background-color: #98fb98 !important;
 }
+
+.minmax {
+  height: 2em;
+  margin-right: 0.25em;
+}
+
+hr {
+  border-top: 2px solid rgba(0, 0, 0, 1);
+}
