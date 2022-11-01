@@ -18,18 +18,25 @@ class AVPlots extends React.Component {
 			xKey: '',
 			yKey: '',
 			zKey: '',
+			cKey: '',
 			xKeySuggestions: [],
 			yKeySuggestions: [],
 			zKeySuggestions: [],
+			cKeySuggestions: [],
+			cscaleSuggestions: [],
 			xmin: '',
 			xmax: '',
 			ymin: '',
 			ymax: '',
 			zmin: '',
 			zmax: '',
+			cmin: '',
+			cmax: '',
+			cscale: 'Viridis',
 			reverseX: false,
 			reverseY: false,
 			reverseZ: false,
+			reverseC: false,
 			title: '',
 			data: [{}],
 			metadata: {},
@@ -40,7 +47,7 @@ class AVPlots extends React.Component {
 		}
 
 		this.apiPrefix = 'http://3.88.185.52:8080/'
-		this.vocab = {xKey: [], yKey: [], zKey: []}
+		this.vocab = {xKey: [], yKey: [], zKey: [], cKey: [], cscale: ['Blackbody','Bluered','Blues','Cividis','Earth','Electric','Greens','Greys','Hot','Jet','Picnic','Portland','Rainbow','RdBu','Reds','Viridis','YlGnBu','YlOrRd']}
 		this.statusReporting = React.createRef()
 		this.showAll = true // show all autoselect options when field is focused and empty
 
@@ -63,6 +70,7 @@ class AVPlots extends React.Component {
 	        	this.vocab['xKey'] = vars
 	        	this.vocab['yKey'] = vars
 	        	this.vocab['zKey'] = ['[2D plot]'].concat(vars)
+	        	this.vocab['cKey'] = vars
 
 	        	let m = Promise.all(this.generateMetadataURLs(metakeys).map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 					Promise.all(responses.map(mres => mres.json())).then(metadata => {
@@ -79,7 +87,8 @@ class AVPlots extends React.Component {
 			        		points: mappoints,
 			        		xKey: 'temperature',
 			        		yKey: 'salinity',
-			        		zKey: '[2D plot]'
+			        		zKey: '[2D plot]',
+			        		cKey: 'latitude'
 			        	})
 					})
 				})
@@ -206,7 +215,7 @@ class AVPlots extends React.Component {
 		return(
 			<>
 				<div className='row'>
-					<div className='col-3 overflow-auto'>
+					<div className='col-3 overflow-auto' style={{'height':'90vh'}}>
 						<fieldset ref={this.formRef}>
 							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
 							<div className='mapSearchInputs'>
@@ -276,6 +285,52 @@ class AVPlots extends React.Component {
 
 									<div className="form-floating mb-3">
 										<div className="form-text">
+						  					<span>color variable</span>
+										</div>
+			      						<Autosuggest
+									      	id='cKeyAS'
+									        suggestions={this.state.cKeySuggestions}
+									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'cKeySuggestions')}
+									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'cKeySuggestions')}
+									        shouldRenderSuggestions={x=>true}
+									        getSuggestionValue={helpers.getSuggestionValue}
+									        renderSuggestion={helpers.renderSuggestion.bind(this, 'cKey')}
+									        inputProps={{placeholder: 'c-axis', value: this.state.cKey, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of color axis variable'), id: 'cKey'}}
+									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
+			      						/>
+										<div className="input-group mb-3" style={{'marginTop':'1em'}}>
+											<div className="input-group-prepend">
+											  <span className="input-group-text" id="basic-addon1">min</span>
+											</div>
+											<input type="text" className="form-control" style={{'marginRight': '0.5em'}} placeholder="Auto" value={this.state.cmin} onChange={e => {this.setState({cmin:e.target.value})}} aria-label="cmin" aria-describedby="basic-addon1"></input>
+											
+											<div className="input-group-prepend">
+											  <span className="input-group-text" id="basic-addon1">max</span>
+											</div>
+											<input type="text" className="form-control" placeholder="Auto" value={this.state.cmax} onChange={e => {this.setState({cmax:e.target.value})}} aria-label="cmax" aria-describedby="basic-addon1"></input>
+										</div>
+										<div className="form-check">
+											<input className="form-check-input" checked={this.state.reverseC} onChange={(v) => helpers.toggle.bind(this)(v, 'reverseC')} type="checkbox" id='reverseC'></input>
+											<label className="form-check-label" htmlFor='reverseC'>Reverse</label>
+										</div>
+										<div className="form-text">
+						  					<span>color scale</span>
+										</div>
+			      						<Autosuggest
+									      	id='cscaleAS'
+									        suggestions={this.state.cscaleSuggestions}
+									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'cscaleSuggestions')}
+									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'cscaleSuggestions')}
+									        shouldRenderSuggestions={x=>true}
+									        getSuggestionValue={helpers.getSuggestionValue}
+									        renderSuggestion={helpers.renderSuggestion.bind(this, 'cscale')}
+									        inputProps={{placeholder: 'color scale', value: this.state.cscale, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of color scale variable'), id: 'cscale'}}
+									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
+			      						/>
+									</div>
+
+									<div className="form-floating mb-3">
+										<div className="form-text">
 						  					<span>z-axis variable</span>
 										</div>
 			      						<Autosuggest
@@ -319,14 +374,26 @@ class AVPlots extends React.Component {
 					{/* plots */}
 					<div className='col-9'>
 					    <Plot
-					      data={this.state.data.map(d => {
+					      data={this.state.data.map((d,i) => {
 					        return {
 					          x: d[this.state.xKey],
 					          y: d[this.state.yKey],
 					          z: this.state.zKey === '[2D plot]' ? [] : d[this.state.zKey],
 					          type: this.state.zKey === '[2D plot]' ? 'scatter2d' : 'scatter3d',
 					          mode: 'markers',
-					          marker: {size: 2},
+					          marker: {
+					          	size: 2,
+					          	color: d[this.state.cKey],
+					          	colorscale: this.state.cscale,
+					          	cmin: this.generateRange(this.state.cmin, this.state.cmax, this.state.cKey, false)[0],
+					          	cmax: this.generateRange(this.state.cmin, this.state.cmax, this.state.cKey, false)[1],
+					          	showscale: i===0,
+					          	reversescale: this.state.reverseC,
+					          	colorbar: {
+					          		title: this.state.cKey,
+					          		titleside: 'right',
+					          	}
+					          },
 					          name: d._id,
 					          visible: this.state.traces[d._id] ? this.state.traces[d._id].visible : true
 					        }
@@ -360,7 +427,7 @@ class AVPlots extends React.Component {
 						      	}
 						    }
 					      }}
-					      style={{width: '100%', height: '90%'}}
+					      style={{width: '100%', height: '90vh'}}
 					      config={{
 					      	showTips: false
 					      }}

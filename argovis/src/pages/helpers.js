@@ -351,6 +351,7 @@ helpers.onSuggestionsClearRequested = function(suggestionList){
 }
 
 helpers.getSuggestions = function(value, vocabKey){
+	console.log('>>>>', vocabKey)
   const inputValue = value.trim().toLowerCase();
   const inputLength = inputValue.length;
   const notoken = this.showAll ? this.vocab[vocabKey] : [] 

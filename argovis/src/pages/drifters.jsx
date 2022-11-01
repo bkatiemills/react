@@ -12,6 +12,13 @@ class DriftersExplore extends React.Component {
 
 		let q = new URLSearchParams(window.location.search) // parse out query string
 
+		// limits for polygon / time coupling
+		this.minDays = 0 // note the url construction always allows for one extra day than endDate-startDate
+		this.maxDays = 365
+		this.minArea = 100000
+		this.maxArea = 1000000
+		this.defaultDayspan = 0
+
 		this.defaultPolygon = [[-62.57812500000001,52.482780222078226],[-84.37500000000001,34.016241889667036],[-87.18750000000001,15.623036831528264],[-64.33593750000001,13.923403897723347],[-40.42968750000001,46.07323062540835],[-62.57812500000001,52.482780222078226]]
 		// default state, pulling in query string specifications
 		this.state = {
@@ -24,11 +31,11 @@ class DriftersExplore extends React.Component {
 			refreshData: false,
 			points: [],
 			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : this.defaultPolygon,
-			urls: []
+			urls: [],
+			maxDayspan: q.has('polygon') ? helpers.calculateDayspan.bind(this)(JSON.parse(q.get('polygon'))) : this.defaultDayspan
 		}
 
-		this.maxDayspan = 0 // note the url construction always allows for one extra day than endDate-startDate
-		helpers.mungeTime.bind(this)(q, this.maxDayspan, '2020-01-01')
+		helpers.mungeTime.bind(this)(q, this.state.maxDayspan, '2020-01-01')
 
         // some other useful class variables
         this.fgRef = React.createRef()
@@ -109,15 +116,15 @@ class DriftersExplore extends React.Component {
 									</div>
 									<h6>Time Range</h6>
 									<div className="form-floating mb-3">
-										<input type="date" disabled={this.state.observingEntity} className="form-control" id="startDate" value={this.state.startDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('startDate', v.target.valueAsNumber, this.maxDayspan)}></input>
+										<input type="date" disabled={this.state.observingEntity} className="form-control" id="startDate" value={this.state.startDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('startDate', v.target.valueAsNumber, this.state.maxDayspan)}></input>
 										<label htmlFor="startDate">Start Date</label>
 									</div>
 									<div className="form-floating mb-3">
-										<input type="date" disabled={this.state.observingEntity} className="form-control" id="endDate" value={this.state.endDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('endDate', v.target.valueAsNumber, this.maxDayspan)}></input>
+										<input type="date" disabled={this.state.observingEntity} className="form-control" id="endDate" value={this.state.endDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('endDate', v.target.valueAsNumber, this.state.maxDayspan)}></input>
 										<label htmlFor="endDate">End Date</label>
 									</div>
 									<div id="dateRangeHelp" className="form-text">
-					  					<p>Max day range: {this.maxDayspan+1}</p>
+					  					<p>Max day range: {this.state.maxDayspan+1}</p>
 									</div>
 								</div>
 

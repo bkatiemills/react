@@ -12,6 +12,13 @@ class TCExplore extends React.Component {
 
 		let q = new URLSearchParams(window.location.search) // parse out query string
 
+		// limits for polygon / time coupling
+		this.minDays = 30 // note the url construction always allows for one extra day than endDate-startDate
+		this.maxDays = 365
+		this.minArea = 1000000
+		this.maxArea = 10000000
+		this.defaultDayspan = 30
+
 		// default state, pulling in query string specifications
 		this.state = {
 			observingEntity: false,
@@ -21,11 +28,11 @@ class TCExplore extends React.Component {
 			refreshData: false,
 			points: [],
 			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [],
-			urls: []
+			urls: [],
+			maxDayspan: 30
 		}
 
-		this.maxDayspan = 30
-		helpers.mungeTime.bind(this)(q, this.maxDayspan, '2020-08-31')
+		helpers.mungeTime.bind(this)(q, this.state.maxDayspan, '2020-08-31')
 
         // some other useful class variables
         this.fgRef = React.createRef()
@@ -106,15 +113,15 @@ class TCExplore extends React.Component {
 									</div>
 									<h6>Time Range</h6>
 									<div className="form-floating mb-3">
-										<input type="date" disabled={this.state.observingEntity} className="form-control" id="startDate" value={this.state.startDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('startDate', v.target.valueAsNumber, this.maxDayspan)}></input>
+										<input type="date" disabled={this.state.observingEntity} className="form-control" id="startDate" value={this.state.startDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('startDate', v.target.valueAsNumber, this.state.maxDayspan)}></input>
 										<label htmlFor="startDate">Start Date</label>
 									</div>
 									<div className="form-floating mb-3">
-										<input type="date" disabled={this.state.observingEntity} className="form-control" id="endDate" value={this.state.endDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('endDate', v.target.valueAsNumber, this.maxDayspan)}></input>
+										<input type="date" disabled={this.state.observingEntity} className="form-control" id="endDate" value={this.state.endDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('endDate', v.target.valueAsNumber, this.state.maxDayspan)}></input>
 										<label htmlFor="endDate">End Date</label>
 									</div>
 									<div id="dateRangeHelp" className="form-text">
-					  					<p>Max day range: {this.maxDayspan+1}</p>
+					  					<p>Max day range: {this.state.maxDayspan+1}</p>
 									</div>
 								</div>
 
