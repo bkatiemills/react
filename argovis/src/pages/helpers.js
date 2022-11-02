@@ -351,7 +351,6 @@ helpers.onSuggestionsClearRequested = function(suggestionList){
 }
 
 helpers.getSuggestions = function(value, vocabKey){
-	console.log('>>>>', vocabKey)
   const inputValue = value.trim().toLowerCase();
   const inputLength = inputValue.length;
   const notoken = this.showAll ? this.vocab[vocabKey] : [] 
@@ -398,6 +397,29 @@ helpers.mungeTime = function(q, nDays, defaultEnd){
 	    	this.state.endDate = q.get('endDate')
     	} 
     }
+}
+
+helpers.generateTimetics = function(minMSSE, maxMSSE){
+	// given the min and max ms since epoch for a time range, 
+	// generate a list of tick labels and the msse values they correspond to, for labeling the appropriate plot axis
+
+  let nTicks = 6
+  if(minMSSE === '' || !isFinite(minMSSE)) minMSSE = 0
+  if(maxMSSE === '' || !isFinite(maxMSSE)) maxMSSE = 1000
+
+  let tickvals = []
+  let ticktext = []
+
+  let dtick = Math.floor((maxMSSE - minMSSE) / (nTicks-1))
+
+  for(let i=0; i<nTicks; i++){
+  	tickvals[i] = minMSSE + i*dtick
+  	ticktext[i] = new Date(tickvals[i])
+  	ticktext[i] = ticktext[i].toISOString().slice(0,10)
+  }
+
+  return [ticktext, tickvals]
+
 }
 
 export default helpers

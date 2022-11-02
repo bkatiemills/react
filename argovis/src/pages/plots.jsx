@@ -110,7 +110,8 @@ class AVPlots extends React.Component {
 		}
 		t['longitude'] = Array(profile.data.length).fill(profile.geolocation.coordinates[0],0)
 		t['latitude'] = Array(profile.data.length).fill(profile.geolocation.coordinates[1],0)
-		t['timestamp'] = Array(profile.data.length).fill(profile.timestamp,0)
+		let msse = (new Date(profile.timestamp).getTime() ) // handle times internally as ms since epoch
+		t['timestamp'] = Array(profile.data.length).fill(msse,0)
 		t['_id'] = profile._id
 		t['metadata'] = profile.metadata
 		t['source'] = profile.source
@@ -149,6 +150,18 @@ class AVPlots extends React.Component {
 		// returns an array [minimum, maximum] as defined by <min> and <max>,
 		// unless min and or max is null, in which case an appropriate limit is computed from <dataKey>
 
+		// turn a human string time into something sensible 
+		if(dataKey === 'timestamp'){
+			if(min !== ''){
+				min = new Date(min)
+				min = min.getTime()
+			}
+			if(max !== ''){
+				max = new Date(max)
+				max = max.getTime()
+			}
+		}
+
 		if(min !== '' && max !== ''){
 			if(reverse){
 				return [max, min]
@@ -182,6 +195,16 @@ class AVPlots extends React.Component {
 				ymin: event["yaxis.range[0]"] ? event["yaxis.range[0]"]: '',
 				ymax: event["yaxis.range[1]"] ? event["yaxis.range[1]"]: ''
 			})
+		} else if(JSON.stringify(Object.keys(event).sort()) === '["xaxis.range[0]","xaxis.range[1]"]'){
+			this.setState({
+				xmin: event["xaxis.range[0]"] ? event["xaxis.range[0]"]: '',
+				xmax: event["xaxis.range[1]"] ? event["xaxis.range[1]"]: ''
+			})
+		} else if(JSON.stringify(Object.keys(event).sort()) === '["yaxis.range[0]","yaxis.range[1]"]'){
+			this.setState({
+				ymin: event["yaxis.range[0]"] ? event["yaxis.range[0]"]: '',
+				ymax: event["yaxis.range[1]"] ? event["yaxis.range[1]"]: ''
+			})
 		}
 	}
 
@@ -212,6 +235,12 @@ class AVPlots extends React.Component {
 
 	render(){
 		console.log(this.state)
+		let xrange = this.generateRange(this.state.xmin, this.state.xmax, this.state.xKey, this.state.reverseX)
+		let yrange = this.generateRange(this.state.ymin, this.state.ymax, this.state.yKey, this.state.reverseY)
+		let zrange = this.generateRange(this.state.zmin, this.state.zmax, this.state.zKey, this.state.reverseZ)
+		let crange = this.generateRange(this.state.cmin, this.state.cmax, this.state.cKey, false)
+		let colortics = helpers.generateTimetics(crange[0], crange[1])
+
 		return(
 			<>
 				<div className='row'>
@@ -247,13 +276,13 @@ class AVPlots extends React.Component {
 												<div className="form-text">
 								  					<span>min</span>
 												</div>
-												<input type="text" className="form-control minmax" placeholder="Auto" value={this.state.xmin} onChange={e => {this.setState({xmin:e.target.value})}} aria-label="xmin" aria-describedby="basic-addon1"></input>
+												<input type={this.state.xKey === 'timestamp' ? "date" : "text"} className="form-control minmax" placeholder="Auto" value={this.state.xmin} onChange={e => {this.setState({xmin:e.target.value})}} aria-label="xmin" aria-describedby="basic-addon1"></input>
 											</div>
 											<div className='col-5' style={{'paddingRight': '0px'}}>
 												<div className="form-text">
 								  					<span>max</span>
 												</div>
-												<input type="text" className="form-control minmax" placeholder="Auto" value={this.state.xmax} onChange={e => {this.setState({xmax:e.target.value})}} aria-label="xmax" aria-describedby="basic-addon1"></input>
+												<input type={this.state.xKey === 'timestamp' ? "date" : "text"} className="form-control minmax" placeholder="Auto" value={this.state.xmax} onChange={e => {this.setState({xmax:e.target.value})}} aria-label="xmax" aria-describedby="basic-addon1"></input>
 											</div>
 											<div className='col-2'>
 												<div className="form-text">
@@ -286,13 +315,13 @@ class AVPlots extends React.Component {
 												<div className="form-text">
 								  					<span>min</span>
 												</div>
-												<input type="text" className="form-control minmax" placeholder="Auto" value={this.state.ymin} onChange={e => {this.setState({ymin:e.target.value})}} aria-label="ymin" aria-describedby="basic-addon1"></input>
+												<input type={this.state.yKey === 'timestamp' ? "date" : "text"} className="form-control minmax" placeholder="Auto" value={this.state.ymin} onChange={e => {this.setState({ymin:e.target.value})}} aria-label="ymin" aria-describedby="basic-addon1"></input>
 											</div>
 											<div className='col-5' style={{'paddingRight': '0px'}}>
 												<div className="form-text">
 								  					<span>max</span>
 												</div>
-												<input type="text" className="form-control minmax" placeholder="Auto" value={this.state.ymax} onChange={e => {this.setState({ymax:e.target.value})}} aria-label="ymax" aria-describedby="basic-addon1"></input>
+												<input type={this.state.yKey === 'timestamp' ? "date" : "text"} className="form-control minmax" placeholder="Auto" value={this.state.ymax} onChange={e => {this.setState({ymax:e.target.value})}} aria-label="ymax" aria-describedby="basic-addon1"></input>
 											</div>
 											<div className='col-2'>
 												<div className="form-text">
@@ -325,13 +354,13 @@ class AVPlots extends React.Component {
 												<div className="form-text">
 								  					<span>min</span>
 												</div>
-												<input type="text" className="form-control minmax" placeholder="Auto" value={this.state.cmin} onChange={e => {this.setState({cmin:e.target.value})}} aria-label="cmin" aria-describedby="basic-addon1"></input>
+												<input type={this.state.cKey === 'timestamp' ? "date" : "text"} className="form-control minmax" placeholder="Auto" value={this.state.cmin} onChange={e => {this.setState({cmin:e.target.value})}} aria-label="cmin" aria-describedby="basic-addon1"></input>
 											</div>
 											<div className='col-5' style={{'paddingRight': '0px'}}>
 												<div className="form-text">
 								  					<span>max</span>
 												</div>
-												<input type="text" className="form-control minmax" placeholder="Auto" value={this.state.cmax} onChange={e => {this.setState({cmax:e.target.value})}} aria-label="cmax" aria-describedby="basic-addon1"></input>
+												<input type={this.state.cKey === 'timestamp' ? "date" : "text"} className="form-control minmax" placeholder="Auto" value={this.state.cmax} onChange={e => {this.setState({cmax:e.target.value})}} aria-label="cmax" aria-describedby="basic-addon1"></input>
 											</div>
 											<div className='col-2'>
 												<div className="form-text">
@@ -379,13 +408,13 @@ class AVPlots extends React.Component {
 													<div className="form-text">
 									  					<span>min</span>
 													</div>
-													<input type="text" className="form-control minmax" placeholder="Auto" value={this.state.zmin} onChange={e => {this.setState({zmin:e.target.value})}} aria-label="zmin" aria-describedby="basic-addon1"></input>
+													<input type={this.state.zKey === 'timestamp' ? "date" : "text"} className="form-control minmax" placeholder="Auto" value={this.state.zmin} onChange={e => {this.setState({zmin:e.target.value})}} aria-label="zmin" aria-describedby="basic-addon1"></input>
 												</div>
 												<div className='col-5' style={{'paddingRight': '0px'}}>
 													<div className="form-text">
 									  					<span>max</span>
 													</div>
-													<input type="text" className="form-control minmax" placeholder="Auto" value={this.state.zmax} onChange={e => {this.setState({zmax:e.target.value})}} aria-label="zmax" aria-describedby="basic-addon1"></input>
+													<input type={this.state.zKey === 'timestamp' ? "date" : "text"} className="form-control minmax" placeholder="Auto" value={this.state.zmax} onChange={e => {this.setState({zmax:e.target.value})}} aria-label="zmax" aria-describedby="basic-addon1"></input>
 												</div>
 												<div className='col-2'>
 													<div className="form-text">
@@ -415,13 +444,16 @@ class AVPlots extends React.Component {
 					          	size: 2,
 					          	color: d[this.state.cKey],
 					          	colorscale: this.state.cscale,
-					          	cmin: this.generateRange(this.state.cmin, this.state.cmax, this.state.cKey, false)[0],
-					          	cmax: this.generateRange(this.state.cmin, this.state.cmax, this.state.cKey, false)[1],
+					          	cmin: crange[0],
+					          	cmax: crange[1],
 					          	showscale: i===0,
 					          	reversescale: this.state.reverseC,
 					          	colorbar: {
 					          		title: this.state.cKey,
-					          		titleside: 'right',
+					          		titleside: 'left',
+					          		tickmode: this.state.cKey === 'timestamp' ? 'array' : 'auto',
+					          		ticktext: colortics[0],
+					          		tickvals: colortics[1]
 					          	}
 					          },
 					          name: d._id,
@@ -434,26 +466,31 @@ class AVPlots extends React.Component {
 					      	autosize: true, 
 					      	showlegend: false,
 							xaxis: {
-							  title: {text: this.state.xKey},
-							  range: this.generateRange(this.state.xmin, this.state.xmax, this.state.xKey, this.state.reverseX)
+								title: {text: this.state.xKey},
+								range: xrange,
+								type: this.state.xKey === 'timestamp' ? 'date' : '-'
 							},
 							yaxis: {
-							  title: {text: this.state.yKey},
-							  range: this.generateRange(this.state.ymin, this.state.ymax, this.state.yKey, this.state.reverseY)
+								title: {text: this.state.yKey},
+								range: yrange,
+								type: this.state.yKey === 'timestamp' ? 'date' : '-'
 							},
 						    margin: {t: 30, l: 0},
 					      	scene: {
 	    				      	xaxis:{
 	    				      		title: {text: this.state.xKey},
-	    				      		range: this.generateRange(this.state.xmin, this.state.xmax, this.state.xKey, this.state.reverseX)
+	    				      		range: xrange,
+	    				      		type: this.state.xKey === 'timestamp' ? 'date' : '-'
 	    				      	},
 						      	yaxis:{
 						      		title: {text: this.state.yKey},
-						      		range: this.generateRange(this.state.ymin, this.state.ymax, this.state.yKey, this.state.reverseY)
+						      		range: yrange,
+						      		type: this.state.yKey === 'timestamp' ? 'date' : '-'
 						      	},
 						      	zaxis:{
 						      		title: {text: this.state.zKey},
-						      		range: this.generateRange(this.state.zmin, this.state.zmax, this.state.zKey, this.state.reverseZ)
+						      		range: zrange,
+						      		type: this.state.zKey === 'timestamp' ? 'date' : '-'
 						      	}
 						    }
 					      }}
