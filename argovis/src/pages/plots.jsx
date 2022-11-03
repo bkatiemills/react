@@ -50,6 +50,11 @@ class AVPlots extends React.Component {
 		this.vocab = {xKey: [], yKey: [], zKey: [], cKey: [], cscale: ['Blackbody','Bluered','Blues','Cividis','Earth','Electric','Greens','Greys','Hot','Jet','Picnic','Portland','Rainbow','RdBu','Reds','Viridis','YlGnBu','YlOrRd']}
 		this.statusReporting = React.createRef()
 		this.showAll = true // show all autoselect options when field is focused and empty
+		this.units = {
+			'longitude': 'deg',
+			'latitude': 'deg',
+			'temperature': 'C'
+		}
 
 		let x = Promise.all(this.generateURLs().map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 			Promise.all(responses.map(res => res.json())).then(data => {
@@ -59,8 +64,8 @@ class AVPlots extends React.Component {
 					traces[p[i]._id] = {'visible': true}
 				}
 				let metakeys = Array.from(new Set(p.map(x=>x['metadata'])))
-				let vars = this.getDataKeys(p)
-				p = p.map(d => this.transpose(d))
+				let vars = ['month'].concat(this.getDataKeys(p))
+				p = p.map(d => this.transpose.bind(this)(d))
 				let mappoints = p.map(point => {
 					return(
 						<CircleMarker key={point._id+Math.random()} center={[point.latitude[0], point.longitude[0]]} radius={1} color={'yellow'}/>
@@ -103,15 +108,18 @@ class AVPlots extends React.Component {
 	transpose(profile){
 		// given a <profile> object returned with data from the API and compression=all,
 		// transpose the data record into an object keyed by data_key, and values as depth-ordered list of measurements
-
 		let t = {}
 		for(let i=0; i<profile.data_keys.length; i++){
 			t[profile.data_keys[i]] = profile.data.map(x => x[i])
+			if(!this.units.hasOwnProperty(profile.data_keys[i])){
+				this.units[profile.data_keys[i]] = profile.units[i]
+			}
 		}
 		t['longitude'] = Array(profile.data.length).fill(profile.geolocation.coordinates[0],0)
 		t['latitude'] = Array(profile.data.length).fill(profile.geolocation.coordinates[1],0)
-		let msse = (new Date(profile.timestamp).getTime() ) // handle times internally as ms since epoch
-		t['timestamp'] = Array(profile.data.length).fill(msse,0)
+		let msse = new Date(profile.timestamp) // handle times internally as ms since epoch
+		t['timestamp'] = Array(profile.data.length).fill(msse.getTime(),0)
+		t['month'] = Array(profile.data.length).fill((msse.getMonth()+1),0)
 		t['_id'] = profile._id
 		t['metadata'] = profile.metadata
 		t['source'] = profile.source
@@ -231,6 +239,14 @@ class AVPlots extends React.Component {
 			s.showAll = true
 		}
 		this.setState(s)
+	}
+
+	generateAxisTitle(key){
+		if(this.units.hasOwnProperty(key)){
+			return key + ' [' + this.units[key] +']'
+		} else {
+			return key
+		}
 	}
 
 	render(){
@@ -432,7 +448,7 @@ class AVPlots extends React.Component {
 
 					{/* plots */}
 					<div className='col-9'>
-					    <Plot
+					    <Plot key={Math.random()}
 					      data={this.state.data.map((d,i) => {
 					        return {
 					          x: d[this.state.xKey],
@@ -449,7 +465,7 @@ class AVPlots extends React.Component {
 					          	showscale: i===0,
 					          	reversescale: this.state.reverseC,
 					          	colorbar: {
-					          		title: this.state.cKey,
+					          		title: this.generateAxisTitle(this.state.cKey),
 					          		titleside: 'left',
 					          		tickmode: this.state.cKey === 'timestamp' ? 'array' : 'auto',
 					          		ticktext: colortics[0],
@@ -466,29 +482,29 @@ class AVPlots extends React.Component {
 					      	autosize: true, 
 					      	showlegend: false,
 							xaxis: {
-								title: {text: this.state.xKey},
+								title: this.generateAxisTitle(this.state.xKey),
 								range: xrange,
 								type: this.state.xKey === 'timestamp' ? 'date' : '-'
 							},
 							yaxis: {
-								title: {text: this.state.yKey},
+								title: this.generateAxisTitle(this.state.yKey),
 								range: yrange,
-								type: this.state.yKey === 'timestamp' ? 'date' : '-'
+								type: this.state.yKey === 'timestamp' ? 'date' : '-',
 							},
-						    margin: {t: 30, l: 0},
+						    margin: {t: 30},
 					      	scene: {
 	    				      	xaxis:{
-	    				      		title: {text: this.state.xKey},
+	    				      		title: this.generateAxisTitle(this.state.xKey),
 	    				      		range: xrange,
 	    				      		type: this.state.xKey === 'timestamp' ? 'date' : '-'
 	    				      	},
 						      	yaxis:{
-						      		title: {text: this.state.yKey},
+						      		title: this.generateAxisTitle(this.state.yKey),
 						      		range: yrange,
 						      		type: this.state.yKey === 'timestamp' ? 'date' : '-'
 						      	},
 						      	zaxis:{
-						      		title: {text: this.state.zKey},
+						      		title: this.generateAxisTitle(this.state.zKey),
 						      		range: zrange,
 						      		type: this.state.zKey === 'timestamp' ? 'date' : '-'
 						      	}
