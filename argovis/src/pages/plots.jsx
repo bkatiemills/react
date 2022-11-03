@@ -64,7 +64,7 @@ class AVPlots extends React.Component {
 					traces[p[i]._id] = {'visible': true}
 				}
 				let metakeys = Array.from(new Set(p.map(x=>x['metadata'])))
-				let vars = ['month'].concat(this.getDataKeys(p))
+				let vars = ['month', 'year'].concat(this.getDataKeys(p))
 				p = p.map(d => this.transpose.bind(this)(d))
 				let mappoints = p.map(point => {
 					return(
@@ -120,6 +120,7 @@ class AVPlots extends React.Component {
 		let msse = new Date(profile.timestamp) // handle times internally as ms since epoch
 		t['timestamp'] = Array(profile.data.length).fill(msse.getTime(),0)
 		t['month'] = Array(profile.data.length).fill((msse.getMonth()+1),0)
+		t['year'] = Array(profile.data.length).fill(msse.getFullYear(),0)
 		t['_id'] = profile._id
 		t['metadata'] = profile.metadata
 		t['source'] = profile.source
