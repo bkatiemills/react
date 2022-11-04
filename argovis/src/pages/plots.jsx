@@ -296,6 +296,19 @@ class AVPlots extends React.Component {
 		}
 
 		if(this.state.refreshData){
+
+			// discourage color scale from drawing any number of times other than exactly one
+			let scaleDrawn = false
+			let needsScale = function(isVisible){
+				if(!scaleDrawn && isVisible){
+					scaleDrawn = true
+					return true
+				} else {
+					return false
+				}
+			}
+
+			// generate data and layout
 			this.data = this.state.data.map((d,i) => {
 					        return {
 					          x: d[this.state.xKey],
@@ -309,7 +322,7 @@ class AVPlots extends React.Component {
 					          	colorscale: this.state.cscale,
 					          	cmin: crange[0],
 					          	cmax: crange[1],
-					          	showscale: i===0,
+					          	showscale: needsScale(this.state.traces[d._id] ? this.state.traces[d._id].visible : true),
 					          	reversescale: this.state.reverseC,
 					          	colorbar: {
 					          		title: this.generateAxisTitle(this.state.cKey),
