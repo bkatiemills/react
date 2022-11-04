@@ -177,9 +177,9 @@ class AVPlots extends React.Component {
 
 		if(min !== '' && max !== ''){
 			if(reverse){
-				return [max, min]
+				return [Number(max), Number(min)]
 			} else {
-				return [min, max]
+				return [Number(min), Number(max)]
 			}
 		}
 
@@ -188,8 +188,8 @@ class AVPlots extends React.Component {
 		let dataMin = Math.min(...([].concat(...data)).filter(x=>typeof x === 'number') )
 		let dataMax = Math.max(...([].concat(...data)).filter(x=>typeof x === 'number') )
 		let buffer = (dataMax - dataMin)*0.05
-		range[0] = min === '' ? dataMin - buffer : min
-		range[1] = max === '' ? dataMax + buffer : max
+		range[0] = min === '' ? dataMin - buffer : Number(min)
+		range[1] = max === '' ? dataMax + buffer : Number(max)
 
 		if(reverse){
 			return [range[1], range[0]]
@@ -287,7 +287,9 @@ class AVPlots extends React.Component {
 		let xrange = this.generateRange(this.state.xmin, this.state.xmax, this.state.xKey, this.state.reverseX)
 		let yrange = this.generateRange(this.state.ymin, this.state.ymax, this.state.yKey, this.state.reverseY)
 		let zrange = this.generateRange(this.state.zmin, this.state.zmax, this.state.zKey, this.state.reverseZ)
-		let crange = this.generateRange(this.state.cmin, this.state.cmax, this.state.cKey, false)
+		let crange = this.generateRange(this.state.cmin, this.state.cmax, this.state.cKey, this.state.reverseC)
+		console.log(crange)
+
 		let colortics = [[],[]]
 		if(this.state.cKey === 'timestamp'){
 			colortics = helpers.generateTimetics(crange[0], crange[1])
