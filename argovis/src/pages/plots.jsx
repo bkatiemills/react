@@ -43,7 +43,8 @@ class AVPlots extends React.Component {
 			traces: {},
 			showAll: true,
 			argoPlatform: q.has('argoPlatform') ? q.get('argoPlatform') : '',
-			points: []
+			points: [],
+			refreshData: true
 		}
 
 		this.apiPrefix = 'http://3.88.185.52:8080/'
@@ -102,7 +103,10 @@ class AVPlots extends React.Component {
 	}
 
     componentDidUpdate(prevProps, prevState, snapshot){
-    	helpers.manageStatus.bind(this)('ready')
+    	this.state.refreshData = false
+    	if(prevState.refreshData){
+	    	helpers.manageStatus.bind(this)('ready')
+	    }
     }
 
 	transpose(profile){
@@ -220,6 +224,7 @@ class AVPlots extends React.Component {
 	toggleTrace(id){
 		let s = {...this.state}
 		s.traces[id].visible = !s.traces[id].visible
+		s.refreshData = true
 		this.setState(s)
 	}
 
@@ -239,6 +244,7 @@ class AVPlots extends React.Component {
 			s.traces = traces
 			s.showAll = true
 		}
+		s.refreshData = true
 		this.setState(s)
 	}
 
@@ -250,6 +256,24 @@ class AVPlots extends React.Component {
 		}
 	}
 
+	onAutosuggestChange(message, fieldID, event, change){
+		let key = fieldID
+		let v = change.newValue
+		let s = {...this.state}
+		
+		s[key] = v
+		if(this.vocab[key] && !this.vocab[key].includes(v)){
+			helpers.manageStatus.bind(this)('error', message)
+			s.refreshData = false
+	  	} else {
+		  	helpers.manageStatus.bind(this)('ready')
+			s.refreshData = true
+			s[key.slice(0,1)+'min'] = ''
+			s[key.slice(0,1)+'max'] = ''
+		}
+		this.setState(s)
+	}
+
 	render(){
 		console.log(this.state)
 		let xrange = this.generateRange(this.state.xmin, this.state.xmax, this.state.xKey, this.state.reverseX)
@@ -258,12 +282,76 @@ class AVPlots extends React.Component {
 		let crange = this.generateRange(this.state.cmin, this.state.cmax, this.state.cKey, false)
 		let colortics = helpers.generateTimetics(crange[0], crange[1])
 
+		if(this.state.refreshData){
+			this.data = this.state.data.map((d,i) => {
+					        return {
+					          x: d[this.state.xKey],
+					          y: d[this.state.yKey],
+					          z: this.state.zKey === '[2D plot]' ? [] : d[this.state.zKey],
+					          type: this.state.zKey === '[2D plot]' ? 'scatter2d' : 'scatter3d',
+					          mode: 'markers',
+					          marker: {
+					          	size: 2,
+					          	color: d[this.state.cKey],
+					          	colorscale: this.state.cscale,
+					          	cmin: crange[0],
+					          	cmax: crange[1],
+					          	showscale: i===0,
+					          	reversescale: this.state.reverseC,
+					          	colorbar: {
+					          		title: this.generateAxisTitle(this.state.cKey),
+					          		titleside: 'left',
+					          		tickmode: this.state.cKey === 'timestamp' ? 'array' : 'auto',
+					          		ticktext: colortics[0],
+					          		tickvals: colortics[1]
+					          	}
+					          },
+					          name: d._id,
+					          visible: this.state.traces[d._id] ? this.state.traces[d._id].visible : true
+					        }
+					      })
+
+			this.layout = {
+					      	datarevision: Math.random(),
+					      	autosize: true, 
+					      	showlegend: false,
+							xaxis: {
+								title: this.generateAxisTitle(this.state.xKey),
+								range: xrange,
+								type: this.state.xKey === 'timestamp' ? 'date' : '-'
+							},
+							yaxis: {
+								title: this.generateAxisTitle(this.state.yKey),
+								range: yrange,
+								type: this.state.yKey === 'timestamp' ? 'date' : '-',
+							},
+						    margin: {t: 30},
+					      	scene: {
+	    				      	xaxis:{
+	    				      		title: this.generateAxisTitle(this.state.xKey),
+	    				      		range: xrange,
+	    				      		type: this.state.xKey === 'timestamp' ? 'date' : '-'
+	    				      	},
+						      	yaxis:{
+						      		title: this.generateAxisTitle(this.state.yKey),
+						      		range: yrange,
+						      		type: this.state.yKey === 'timestamp' ? 'date' : '-'
+						      	},
+						      	zaxis:{
+						      		title: this.generateAxisTitle(this.state.zKey),
+						      		range: zrange,
+						      		type: this.state.zKey === 'timestamp' ? 'date' : '-'
+						      	}
+						    }
+					      }
+		}
+
 		return(
 			<>
-				<div className='row'>
+				<div className='row' style={{'width':'100vw'}}>
 					<div className='col-3'>
 						<fieldset ref={this.formRef}>
-							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
+							<span id='statusBanner' ref={this.statusReporting} className={'statusBanner busy'}>Downloading...</span>
 							<MapContainer style={{'height': '30vh'}} center={[0,0]} zoom={0} scrollWheelZoom={true}>
 								<TileLayer
 								attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -271,8 +359,9 @@ class AVPlots extends React.Component {
 								/>
 								{this.state.points}
 							</MapContainer>
-							<div className='mapSearchInputs overflow-auto' style={{'height':'55vh'}}>
+							<div className='mapSearchInputs overflow-scroll' style={{'height':'55vh'}}>
 								<div className='verticalGroup'>
+									<h5>Axis Controls</h5>
 									<div className="form-floating mb-3">
 										<div className="form-text">
 						  					<span><b>x-axis variable</b></span>
@@ -285,7 +374,7 @@ class AVPlots extends React.Component {
 									        shouldRenderSuggestions={x=>true}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'xKey')}
-									        inputProps={{placeholder: 'x-axis', value: this.state.xKey, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of x axis variable'), id: 'xKey'}}
+									        inputProps={{placeholder: 'x-axis', value: this.state.xKey, onChange: this.onAutosuggestChange.bind(this, 'Check value of x axis variable', 'xKey'), id: 'xKey'}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 			      						<div className='row'>
@@ -324,7 +413,7 @@ class AVPlots extends React.Component {
 									        shouldRenderSuggestions={x=>true}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'yKey')}
-									        inputProps={{placeholder: 'y-axis', value: this.state.yKey, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of y axis variable'), id: 'yKey'}}
+									        inputProps={{placeholder: 'y-axis', value: this.state.yKey, onChange: this.onAutosuggestChange.bind(this, 'Check value of y axis variable', 'yKey'), id: 'yKey'}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 			      						<div className='row'>
@@ -363,7 +452,7 @@ class AVPlots extends React.Component {
 									        shouldRenderSuggestions={x=>true}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'cKey')}
-									        inputProps={{placeholder: 'color axis', value: this.state.cKey, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of color axis variable'), id: 'cKey'}}
+									        inputProps={{placeholder: 'color axis', value: this.state.cKey, onChange: this.onAutosuggestChange.bind(this, 'Check value of color axis variable', 'cKey'), id: 'cKey'}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 			      						<div className='row'>
@@ -397,7 +486,7 @@ class AVPlots extends React.Component {
 									        shouldRenderSuggestions={x=>true}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'cscale')}
-									        inputProps={{placeholder: 'color scale', value: this.state.cscale, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of color scale variable'), id: 'cscale'}}
+									        inputProps={{placeholder: 'color scale', value: this.state.cscale, onChange: this.onAutosuggestChange.bind(this, 'Check value of color scale variable', 'cscale'), id: 'cscale'}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 									</div>
@@ -416,7 +505,7 @@ class AVPlots extends React.Component {
 									        shouldRenderSuggestions={x=>true}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'zKey')}
-									        inputProps={{placeholder: 'z-axis', value: this.state.zKey, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of z axis variable'), id: 'zKey'}}
+									        inputProps={{placeholder: 'z-axis', value: this.state.zKey, onChange: this.onAutosuggestChange.bind(this, 'Check value of z axis variable', 'zKey'), id: 'zKey'}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 										<div className={this.state.zKey === '[2D plot]' ? "input-group mb-3 hidden": "input-group mb-3"} style={{'marginTop':'1em'}}>
@@ -449,77 +538,19 @@ class AVPlots extends React.Component {
 
 					{/* plots */}
 					<div className='col-9'>
-					    <Plot key={Math.random()}
-					      data={this.state.data.map((d,i) => {
-					        return {
-					          x: d[this.state.xKey],
-					          y: d[this.state.yKey],
-					          z: this.state.zKey === '[2D plot]' ? [] : d[this.state.zKey],
-					          type: this.state.zKey === '[2D plot]' ? 'scatter2d' : 'scatter3d',
-					          mode: 'markers',
-					          marker: {
-					          	size: 2,
-					          	color: d[this.state.cKey],
-					          	colorscale: this.state.cscale,
-					          	cmin: crange[0],
-					          	cmax: crange[1],
-					          	showscale: i===0,
-					          	reversescale: this.state.reverseC,
-					          	colorbar: {
-					          		title: this.generateAxisTitle(this.state.cKey),
-					          		titleside: 'left',
-					          		tickmode: this.state.cKey === 'timestamp' ? 'array' : 'auto',
-					          		ticktext: colortics[0],
-					          		tickvals: colortics[1]
-					          	}
-					          },
-					          name: d._id,
-					          visible: this.state.traces[d._id] ? this.state.traces[d._id].visible : true
-					        }
-					      })}
+					    <Plot
+					      data={this.data}
 					      onRelayout={e=>this.zoomSync(e)}
-					      layout={{
-					      	datarevision: Math.random(),
-					      	autosize: true, 
-					      	showlegend: false,
-							xaxis: {
-								title: this.generateAxisTitle(this.state.xKey),
-								range: xrange,
-								type: this.state.xKey === 'timestamp' ? 'date' : '-'
-							},
-							yaxis: {
-								title: this.generateAxisTitle(this.state.yKey),
-								range: yrange,
-								type: this.state.yKey === 'timestamp' ? 'date' : '-',
-							},
-						    margin: {t: 30},
-					      	scene: {
-	    				      	xaxis:{
-	    				      		title: this.generateAxisTitle(this.state.xKey),
-	    				      		range: xrange,
-	    				      		type: this.state.xKey === 'timestamp' ? 'date' : '-'
-	    				      	},
-						      	yaxis:{
-						      		title: this.generateAxisTitle(this.state.yKey),
-						      		range: yrange,
-						      		type: this.state.yKey === 'timestamp' ? 'date' : '-'
-						      	},
-						      	zaxis:{
-						      		title: this.generateAxisTitle(this.state.zKey),
-						      		range: zrange,
-						      		type: this.state.zKey === 'timestamp' ? 'date' : '-'
-						      	}
-						    }
-					      }}
+					      layout={this.layout}
 					      style={{width: '100%', height: '90vh'}}
-					      config={{
-					      	showTips: false
-					      }}
+					      config={{showTips: false}}
 					    />
 					</div>
 				</div>
-				<div className='row'>
-					<div className='col-12' style={{'paddingLeft': '2em', 'paddingRight': '5em', 'height': '50vh', 'overflow': 'auto'}}>
+				<hr/>
+				<div className='row' style={{'width':'100vw'}}>
+					<div className='col-12' style={{'paddingLeft': '2em', 'paddingRight': '5em', 'height': '50vh', 'overflow': 'scroll'}}>
+						<h5>Trace Metadata</h5>
 						<table className='table'>
 							<thead style={{'position': 'sticky', 'top': 0, 'backgroundColor': '#FFFFFF'}}>
 							    <tr>

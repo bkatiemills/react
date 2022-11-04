@@ -314,12 +314,11 @@ helpers.setToken = function(key, v, message){
 	// key: state key labeling this input token
 	// v: new value being considered
 	let s = {...this.state}
-	
-		s[key] = v
+	s[key] = v
 	if(v && this.vocab[key] && !this.vocab[key].includes(v)){
 		helpers.manageStatus.bind(this)('error', message)
 		s.refreshData = false
-    } else {
+  } else {
 		s.refreshData = true
 	}
 	this.setState(s)
@@ -334,8 +333,8 @@ helpers.toggle = function(v){
 
 // autosuggest callbacks
 
-helpers.onAutosuggestChange = function(message, event, change){
-	helpers.setToken.bind(this)(event.target.id, change.newValue, message)
+helpers.onAutosuggestChange = function(message, fieldID, event, change){
+	helpers.setToken.bind(this)(fieldID, change.newValue, message)
 }
 
 helpers.onSuggestionsFetchRequested = function(suggestionList, update){
