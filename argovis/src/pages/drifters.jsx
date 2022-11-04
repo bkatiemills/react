@@ -100,7 +100,7 @@ class DriftersExplore extends React.Component {
 		console.log(this.state)
 		return(
 			<>
-				<div className='row'>
+				<div className='row' style={{'width':'100vw'}}>
 					<div className='col-3 overflow-auto'>
 						<fieldset ref={this.formRef}>
 							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>

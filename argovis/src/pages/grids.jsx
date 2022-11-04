@@ -208,7 +208,7 @@ class Grids extends React.Component {
 	render(){
 		return(
 			<div>
-				<div className='row'>	
+				<div className='row' style={{'width':'100vw'}}>	
 					{/*search option sidebar*/}
 					<div className='col-3 overflow-auto'>
 						<span ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
