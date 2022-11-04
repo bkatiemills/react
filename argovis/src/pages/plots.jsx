@@ -274,13 +274,24 @@ class AVPlots extends React.Component {
 		this.setState(s)
 	}
 
+	resetAxes(event){
+		let s = {...this.state}
+		s.refreshData = true
+		s[event.target.id.slice(0,1)+'min'] = ''
+		s[event.target.id.slice(0,1)+'max'] = ''
+		this.setState(s)
+	}
+
 	render(){
 		console.log(this.state)
 		let xrange = this.generateRange(this.state.xmin, this.state.xmax, this.state.xKey, this.state.reverseX)
 		let yrange = this.generateRange(this.state.ymin, this.state.ymax, this.state.yKey, this.state.reverseY)
 		let zrange = this.generateRange(this.state.zmin, this.state.zmax, this.state.zKey, this.state.reverseZ)
 		let crange = this.generateRange(this.state.cmin, this.state.cmax, this.state.cKey, false)
-		let colortics = helpers.generateTimetics(crange[0], crange[1])
+		let colortics = [[],[]]
+		if(this.state.cKey === 'timestamp'){
+			colortics = helpers.generateTimetics(crange[0], crange[1])
+		}
 
 		if(this.state.refreshData){
 			this.data = this.state.data.map((d,i) => {
@@ -378,23 +389,46 @@ class AVPlots extends React.Component {
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 			      						<div className='row'>
-			      							<div className='col-5' style={{'paddingRight': '0px'}}>
+			      							<div className='col-6' style={{'paddingRight': '0px'}}>
 												<div className="form-text">
 								  					<span>min</span>
 												</div>
-												<input type={this.state.xKey === 'timestamp' ? "date" : "text"} className="form-control minmax" placeholder="Auto" value={this.state.xmin} onChange={e => {this.setState({xmin:e.target.value})}} aria-label="xmin" aria-describedby="basic-addon1"></input>
+												<input 
+													type={this.state.xKey === 'timestamp' ? "date" : "text"} 
+													className="form-control minmax" 
+													placeholder="Auto" 
+													value={this.state.xmin} 
+													onChange={e => {this.setState({xmin:e.target.value})}} 
+													onBlur={e => {this.setState({xmin:e.target.defaultValue, refreshData: true})}}
+													onKeyPress={e => {if(e.key==='Enter'){this.setState({xmin:e.target.defaultValue, refreshData: true})}}}
+													aria-label="xmin" 
+													aria-describedby="basic-addon1"/>
 											</div>
-											<div className='col-5' style={{'paddingRight': '0px'}}>
+											<div className='col-6' style={{'paddingRight': '0px'}}>
 												<div className="form-text">
 								  					<span>max</span>
 												</div>
-												<input type={this.state.xKey === 'timestamp' ? "date" : "text"} className="form-control minmax" placeholder="Auto" value={this.state.xmax} onChange={e => {this.setState({xmax:e.target.value})}} aria-label="xmax" aria-describedby="basic-addon1"></input>
+												<input 
+													type={this.state.xKey === 'timestamp' ? "date" : "text"} 
+													className="form-control minmax" 
+													placeholder="Auto" 
+													value={this.state.xmax} 
+													onChange={e => {this.setState({xmax:e.target.value})}} 
+													onBlur={e => {this.setState({xmax:e.target.defaultValue, refreshData: true})}}
+													onKeyPress={e => {if(e.key==='Enter'){this.setState({xmax:e.target.defaultValue, refreshData: true})}}}
+													aria-label="xmax" 
+													aria-describedby="basic-addon1"/>
 											</div>
-											<div className='col-2'>
+										</div>
+										<div className='row'>
+											<div className='col-5'>
 												<div className="form-text">
-								  					<span>rev.</span>
+								  					<span>Reverse x axis</span>
 												</div>
 												<input className="form-check-input" checked={this.state.reverseX} onChange={(v) => helpers.toggle.bind(this)(v, 'reverseX')} type="checkbox" id='reverseX'></input>
+											</div>
+											<div className='col-7' style={{'textAlign':'right'}}>
+												<button type="button" className="btn btn-outline-primary" style={{'marginTop':'0.75em'}} onClick={event => this.resetAxes(event)} id='xreset'>Reset x Limits</button>
 											</div>
 										</div>
 									</div>
@@ -417,23 +451,46 @@ class AVPlots extends React.Component {
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 			      						<div className='row'>
-			      							<div className='col-5' style={{'paddingRight': '0px'}}>
+			      							<div className='col-6' style={{'paddingRight': '0px'}}>
 												<div className="form-text">
 								  					<span>min</span>
 												</div>
-												<input type={this.state.yKey === 'timestamp' ? "date" : "text"} className="form-control minmax" placeholder="Auto" value={this.state.ymin} onChange={e => {this.setState({ymin:e.target.value})}} aria-label="ymin" aria-describedby="basic-addon1"></input>
+												<input 
+													type={this.state.yKey === 'timestamp' ? "date" : "text"} 
+													className="form-control minmax" 
+													placeholder="Auto" 
+													value={this.state.ymin} 
+													onChange={e => {this.setState({ymin:e.target.value})}} 
+													onBlur={e => {this.setState({ymin:e.target.defaultValue, refreshData: true})}}
+													onKeyPress={e => {if(e.key==='Enter'){this.setState({ymin:e.target.defaultValue, refreshData: true})}}}
+													aria-label="ymin" 
+													aria-describedby="basic-addon1"/>
 											</div>
-											<div className='col-5' style={{'paddingRight': '0px'}}>
+											<div className='col-6' style={{'paddingRight': '0px'}}>
 												<div className="form-text">
 								  					<span>max</span>
 												</div>
-												<input type={this.state.yKey === 'timestamp' ? "date" : "text"} className="form-control minmax" placeholder="Auto" value={this.state.ymax} onChange={e => {this.setState({ymax:e.target.value})}} aria-label="ymax" aria-describedby="basic-addon1"></input>
+												<input 
+													type={this.state.yKey === 'timestamp' ? "date" : "text"} 
+													className="form-control minmax" 
+													placeholder="Auto" 
+													value={this.state.ymax} 
+													onChange={e => {this.setState({ymax:e.target.value})}} 
+													onBlur={e => {this.setState({ymax:e.target.defaultValue, refreshData: true})}}
+													onKeyPress={e => {if(e.key==='Enter'){this.setState({ymax:e.target.defaultValue, refreshData: true})}}}
+													aria-label="ymax" 
+													aria-describedby="basic-addon1"/>
 											</div>
-											<div className='col-2'>
+										</div>
+										<div className='row'>
+											<div className='col-5'>
 												<div className="form-text">
-								  					<span>rev.</span>
+								  					<span>Reverse y axis</span>
 												</div>
 												<input className="form-check-input" checked={this.state.reverseY} onChange={(v) => helpers.toggle.bind(this)(v, 'reverseY')} type="checkbox" id='reverseY'></input>
+											</div>
+											<div className='col-7' style={{'textAlign':'right'}}>
+												<button type="button" className="btn btn-outline-primary" style={{'marginTop':'0.75em'}} onClick={event => this.resetAxes(event)} id='yreset'>Reset y Limits</button>
 											</div>
 										</div>
 									</div>
@@ -456,23 +513,46 @@ class AVPlots extends React.Component {
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 			      						<div className='row'>
-			      							<div className='col-5' style={{'paddingRight': '0px'}}>
+			      							<div className='col-6' style={{'paddingRight': '0px'}}>
 												<div className="form-text">
 								  					<span>min</span>
 												</div>
-												<input type={this.state.cKey === 'timestamp' ? "date" : "text"} className="form-control minmax" placeholder="Auto" value={this.state.cmin} onChange={e => {this.setState({cmin:e.target.value})}} aria-label="cmin" aria-describedby="basic-addon1"></input>
+												<input 
+													type={this.state.cKey === 'timestamp' ? "date" : "text"} 
+													className="form-control minmax" 
+													placeholder="Auto" 
+													value={this.state.cmin} 
+													onChange={e => {this.setState({cmin:e.target.value})}} 
+													onBlur={e => {this.setState({cmin:e.target.defaultValue, refreshData: true})}}
+													onKeyPress={e => {if(e.key==='Enter'){this.setState({cmin:e.target.defaultValue, refreshData: true})}}}
+													aria-label="cmin" 
+													aria-describedby="basic-addon1"/>
 											</div>
-											<div className='col-5' style={{'paddingRight': '0px'}}>
+											<div className='col-6' style={{'paddingRight': '0px'}}>
 												<div className="form-text">
 								  					<span>max</span>
 												</div>
-												<input type={this.state.cKey === 'timestamp' ? "date" : "text"} className="form-control minmax" placeholder="Auto" value={this.state.cmax} onChange={e => {this.setState({cmax:e.target.value})}} aria-label="cmax" aria-describedby="basic-addon1"></input>
+												<input 
+													type={this.state.cKey === 'timestamp' ? "date" : "text"} 
+													className="form-control minmax" 
+													placeholder="Auto" 
+													value={this.state.cmax} 
+													onChange={e => {this.setState({cmax:e.target.value})}} 
+													onBlur={e => {this.setState({cmax:e.target.defaultValue, refreshData: true})}}
+													onKeyPress={e => {if(e.key==='Enter'){this.setState({cmax:e.target.defaultValue, refreshData: true})}}}
+													aria-label="cmax" 
+													aria-describedby="basic-addon1"/>
 											</div>
-											<div className='col-2'>
+										</div>
+										<div className='row'>
+											<div className='col-5'>
 												<div className="form-text">
-								  					<span>rev.</span>
+								  					<span>Reverse color axis</span>
 												</div>
 												<input className="form-check-input" checked={this.state.reverseC} onChange={(v) => helpers.toggle.bind(this)(v, 'reverseC')} type="checkbox" id='reverseC'></input>
+											</div>
+											<div className='col-7' style={{'textAlign':'right'}}>
+												<button type="button" className="btn btn-outline-primary" style={{'marginTop':'0.75em'}} onClick={event => this.resetAxes(event)} id='creset'>Reset color Limits</button>
 											</div>
 										</div>
 										<div className="form-text">
@@ -510,23 +590,46 @@ class AVPlots extends React.Component {
 			      						/>
 										<div className={this.state.zKey === '[2D plot]' ? "input-group mb-3 hidden": "input-group mb-3"} style={{'marginTop':'1em'}}>
 				      						<div className='row'>
-				      							<div className='col-5' style={{'paddingRight': '0px'}}>
+				      							<div className='col-6' style={{'paddingRight': '0px'}}>
 													<div className="form-text">
 									  					<span>min</span>
 													</div>
-													<input type={this.state.zKey === 'timestamp' ? "date" : "text"} className="form-control minmax" placeholder="Auto" value={this.state.zmin} onChange={e => {this.setState({zmin:e.target.value})}} aria-label="zmin" aria-describedby="basic-addon1"></input>
+													<input 
+														type={this.state.zKey === 'timestamp' ? "date" : "text"} 
+														className="form-control minmax" 
+														placeholder="Auto" 
+														value={this.state.zmin} 
+														onChange={e => {this.setState({zmin:e.target.value})}} 
+														onBlur={e => {this.setState({zmin:e.target.defaultValue, refreshData: true})}}
+														onKeyPress={e => {if(e.key==='Enter'){this.setState({zmin:e.target.defaultValue, refreshData: true})}}}
+														aria-label="zmin" 
+														aria-describedby="basic-addon1"/>
 												</div>
-												<div className='col-5' style={{'paddingRight': '0px'}}>
+												<div className='col-6' style={{'paddingRight': '0px'}}>
 													<div className="form-text">
 									  					<span>max</span>
 													</div>
-													<input type={this.state.zKey === 'timestamp' ? "date" : "text"} className="form-control minmax" placeholder="Auto" value={this.state.zmax} onChange={e => {this.setState({zmax:e.target.value})}} aria-label="zmax" aria-describedby="basic-addon1"></input>
+													<input 
+														type={this.state.zKey === 'timestamp' ? "date" : "text"} 
+														className="form-control minmax" 
+														placeholder="Auto" 
+														value={this.state.zmax} 
+														onChange={e => {this.setState({zmax:e.target.value})}} 
+														onBlur={e => {this.setState({zmax:e.target.defaultValue, refreshData: true})}}
+														onKeyPress={e => {if(e.key==='Enter'){this.setState({zmax:e.target.defaultValue, refreshData: true})}}}
+														aria-label="zmax" 
+														aria-describedby="basic-addon1"/>
 												</div>
-												<div className='col-2'>
+											</div>
+											<div className='row'>
+												<div className='col-5'>
 													<div className="form-text">
-									  					<span>rev.</span>
+									  					<span>Reverse z axis</span>
 													</div>
 													<input className="form-check-input" checked={this.state.reverseZ} onChange={(v) => helpers.toggle.bind(this)(v, 'reverseZ')} type="checkbox" id='reverseZ'></input>
+												</div>
+												<div className='col-7' style={{'textAlign':'right'}}>
+													<button type="button" className="btn btn-outline-primary" style={{'marginTop':'0.75em'}} onClick={event => this.resetAxes(event)} id='zreset'>Reset z Limits</button>
 												</div>
 											</div>
 										</div>
