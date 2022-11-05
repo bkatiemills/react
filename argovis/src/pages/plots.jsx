@@ -44,6 +44,7 @@ class AVPlots extends React.Component {
 			showAll: true,
 			argoPlatform: q.has('argoPlatform') ? q.get('argoPlatform') : '',
 			points: [],
+			connectingLines: false,
 			refreshData: true
 		}
 
@@ -282,13 +283,22 @@ class AVPlots extends React.Component {
 		this.setState(s)
 	}
 
+	resetAllAxes(event){
+		let s = {...this.state}
+		s.refreshData = true
+		let resets = ['xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax', 'cmin', 'cmax']
+		for(let i=0; i<resets.length; i++){
+			s[resets[i]] = ''
+		}
+		this.setState(s)
+	}
+
 	render(){
 		console.log(this.state)
 		let xrange = this.generateRange(this.state.xmin, this.state.xmax, this.state.xKey, this.state.reverseX)
 		let yrange = this.generateRange(this.state.ymin, this.state.ymax, this.state.yKey, this.state.reverseY)
 		let zrange = this.generateRange(this.state.zmin, this.state.zmax, this.state.zKey, this.state.reverseZ)
 		let crange = this.generateRange(this.state.cmin, this.state.cmax, this.state.cKey, this.state.reverseC)
-		console.log(crange)
 
 		let colortics = [[],[]]
 		if(this.state.cKey === 'timestamp'){
@@ -315,7 +325,10 @@ class AVPlots extends React.Component {
 					          y: d[this.state.yKey],
 					          z: this.state.zKey === '[2D plot]' ? [] : d[this.state.zKey],
 					          type: this.state.zKey === '[2D plot]' ? 'scatter2d' : 'scatter3d',
-					          mode: 'markers',
+					          mode: this.state.connectingLines ? 'markers+lines' : 'markers',
+					          line: {
+					          	color: 'grey'
+					          },
 					          marker: {
 					          	size: 2,
 					          	color: d[this.state.cKey],
@@ -646,6 +659,23 @@ class AVPlots extends React.Component {
 												<div className='col-7' style={{'textAlign':'right'}}>
 													<button type="button" className="btn btn-outline-primary" style={{'marginTop':'0.75em'}} onClick={event => this.resetAxes(event)} id='zreset'>Reset z Limits</button>
 												</div>
+											</div>
+										</div>
+									</div>
+
+									<hr/>
+
+									<h5>Global Options</h5>
+									<div className="form-floating mb-3">
+										<div className='row'>
+											<div className='col-5'>
+												<div className="form-text">
+								  					<span>Connecting lines</span>
+												</div>
+												<input className="form-check-input" checked={this.state.connectingLines} onChange={(v) => helpers.toggle.bind(this)(v, 'connectingLines')} type="checkbox" id='connectingLines'></input>
+											</div>
+											<div className='col-7' style={{'textAlign':'right'}}>
+												<button type="button" className="btn btn-outline-primary" style={{'marginTop':'0.75em'}} onClick={event => this.resetAllAxes(event)} id='allreset'>Reset all axes</button>
 											</div>
 										</div>
 									</div>
