@@ -57,16 +57,29 @@ class AVPlots extends React.Component {
 			'latitude': 'deg',
 			'temperature': 'C'
 		}
+		this.header = []
+		this.rows = []
 
 		let x = Promise.all(this.generateURLs().map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 			Promise.all(responses.map(res => res.json())).then(data => {
+				// keep raw json blob for download
+				this.json = new Blob([JSON.stringify(data)], {type: 'text/json'})
+				this.json = window.URL.createObjectURL(this.json)
+
 				let p = [].concat(...data)
+				// default all traces to visible
 				let traces = {}
 				for(let i=0; i<p.length; i++){
 					traces[p[i]._id] = {'visible': true}
 				}
+
+				// get a list of metadata we'll need
 				let metakeys = Array.from(new Set(p.map(x=>x['metadata'])))
+
+				// set up vocab lists
 				let vars = ['month', 'year'].concat(this.getDataKeys(p))
+
+				// transpose data for traces
 				p = p.map(d => this.transpose.bind(this)(d))
 				let mappoints = p.map(point => {
 					return(
@@ -83,9 +96,57 @@ class AVPlots extends React.Component {
 					Promise.all(responses.map(mres => mres.json())).then(metadata => {
 						metadata = [].concat(...metadata)
 						let meta = {}
+
+						// metadata lookup table
 						for(let i=0; i<metadata.length; i++){
 							meta[metadata[i]._id] = metadata[i]
 						}
+
+						// prep csv data, and transforms to go from csv -> html table
+						let profiles = [].concat(...data)
+						this.header = ['ID', 'Longitude', 'Latitude', 'Timestamp', 'DAC', 'Original Files']
+						this.rows = profiles.map(d => {
+							return [
+								d._id, // keep data record id first element in each array
+								d.geolocation.coordinates[0],
+								d.geolocation.coordinates[1],
+								d.timestamp,
+								meta[d.metadata].data_center,
+								d.source.map(s => s.url)
+							]
+						})
+						this.transforms = [
+							id=>id,
+							lon=>lon,
+							lat=>lat,
+							timestamp=>timestamp,
+							datacenter=>datacenter,
+							urls => urls.map(u=>{
+										if(u.includes('profiles/S')){
+											return(<a key={Math.random()} className="btn btn-success" style={{'marginRight':'0.5em'}} href={u} role="button">BGC</a>)
+										} else {
+											return(<a key={Math.random()} className="btn btn-primary" href={u} role="button">Core</a>)
+										}
+									})
+						]
+						// break source links out into their own columns for the csv
+						let rows = this.rows.map(r => {
+							let row = r.slice(0,-1)
+							let urls = r[5]
+							let core = urls.filter(u => !u.includes('profiles/S'))[0]
+							let synth = urls.filter(u => u.includes('profiles/S'))
+							if(synth.length > 0){
+								synth = synth[0]
+							} else {
+								synth = ''
+							}
+							return row.concat(core).concat(synth)
+						})
+						this.csv = this.header.slice(0,-1).concat('Original core file').concat('Original synthetic file').join(',') + '\n'
+						this.csv += rows.map(r => JSON.stringify(r).replaceAll('\"', '').replaceAll('[', '').replaceAll(']', '')).join('\n')
+						this.csv = new Blob([this.csv], {type: 'text/csv'})
+						this.csv = window.URL.createObjectURL(this.csv)
+
 			        	this.setState({
 			        		data:p, 
 			        		variables: vars, 
@@ -698,7 +759,9 @@ class AVPlots extends React.Component {
 				<hr/>
 				<div className='row' style={{'width':'100vw'}}>
 					<div className='col-12' style={{'paddingLeft': '2em', 'paddingRight': '5em', 'height': '50vh', 'overflow': 'scroll'}}>
-						<h5>Trace Metadata</h5>
+						<h5>Profiles</h5>
+						<a className="btn btn-primary" role='button' style={{'marginRight': '1em'}} href={this.csv} download={'argo'+this.state.argoPlatform+'.csv'}>Download Table CSV</a>
+						<a className="btn btn-primary" role='button' href={this.json} download={'argo'+this.state.argoPlatform+'.json'}>Download Complete JSON</a>
 						<table className='table'>
 							<thead style={{'position': 'sticky', 'top': 0, 'backgroundColor': '#FFFFFF'}}>
 							    <tr>
@@ -706,41 +769,19 @@ class AVPlots extends React.Component {
 							    		<span style={{'marginRight':'0.5em'}}>Show</span>
 										<input className="form-check-input" checked={this.state.showAll} onChange={(v) => this.toggleAll() } type="checkbox"></input>
 							    	</th>
-									<th scope="col">ID</th>
-									<th scope="col">Original Files</th>
-									<th scope="col">Longitude</th>
-									<th scope="col">Latitude</th>
-									<th scope="col">Timestamp</th>
-									<th scope="col">DAC</th>
+							    	{this.header.map(item => {return <th key={Math.random()} scope="col">{item}</th>})}
 							    </tr>
 							</thead>
 							<tbody>
-								{this.state.data.map(d => {
-									if(d && JSON.stringify(d) !== '{}'){
-										return(
-											<tr key={Math.random()}>
-												<td>
-													<input key={d._id} className="form-check-input" checked={this.state.traces[d._id].visible} onChange={(v) => this.toggleTrace(d._id)} type="checkbox" id={d._id}></input>
-												</td>
-												<td>{d._id}</td>
-												<td>
-													{d.source.map(s => {
-														if(s.url.includes('profiles/S')){
-															return(<a key={Math.random()} className="btn btn-success" style={{'marginRight':'0.5em'}} href={s.url} role="button">BGC</a>)
-														} else {
-															return(<a key={Math.random()} className="btn btn-primary" href={s.url} role="button">Core</a>)
-														}
-													})}
-												</td>
-												<td>{d.longitude[0]}</td>
-												<td>{d.latitude[0]}</td>
-												<td>{d.timestamp[0]}</td>
-												<td>{this.state.metadata[d.metadata].data_center}</td>
-											</tr>
-										)
-									} else {
-										return ''
-									}
+								{this.rows.map(r => {
+									return(
+										<tr key={Math.random()}>
+											<td>
+												<input className="form-check-input" checked={this.state.traces[r[0]].visible} onChange={(v) => this.toggleTrace(r[0])} type="checkbox" id={r[0]}></input>
+											</td>
+											{r.map((item,i) => {return <td key={Math.random()}>{this.transforms[i](item)}</td>})}
+										</tr>
+									)
 								})}
 							</tbody>
 						</table>
