@@ -242,26 +242,26 @@ helpers.circlefy = function(points){
 	}
 }
 
-helpers.setQueryString = function(entityParams){
+helpers.setQueryString = function(){
 	let queryManagement = new URL(window.location)
 
-	queryManagement.searchParams.set('startDate', this.state.startDate)
-	queryManagement.searchParams.set('endDate', this.state.endDate)
+	//queryManagement.searchParams.set('startDate', this.state.startDate)
+	//queryManagement.searchParams.set('endDate', this.state.endDate)
 
 	let qparams = this.customQueryParams
 	for(let i=0; i<qparams.length; i++){
 		if(this.state[qparams[i]]){
-			queryManagement.searchParams.set(qparams[i], this.state[qparams[i]])
+			queryManagement.searchParams.set(qparams[i], Array.isArray(this.state[qparams[i]]) ? JSON.stringify(this.state[qparams[i]]) : this.state[qparams[i]] )
 		} else{
 			queryManagement.searchParams.delete(qparams[i])
 		}
 	} 
 
-	if(JSON.stringify(this.state.polygon) !== '[]'){
-		queryManagement.searchParams.set('polygon', JSON.stringify(this.state.polygon))
-	} else {
-		queryManagement.searchParams.delete('polygon')
-	}
+	// if(JSON.stringify(this.state.polygon) !== '[]'){
+	// 	queryManagement.searchParams.set('polygon', JSON.stringify(this.state.polygon))
+	// } else {
+	// 	queryManagement.searchParams.delete('polygon')
+	// }
 
 	window.argoPrevious = queryManagement.search // keep track of query string changes so we know when to refresh
 

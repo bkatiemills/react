@@ -53,7 +53,7 @@ class ArgoExplore extends React.Component {
         this.apiPrefix = 'http://3.88.185.52:8080/'
         this.vocab = {}
         this.dataset = 'argo'
-        this.customQueryParams = ['argocore', 'argobgc', 'argodeep', 'argoPlatform']
+        this.customQueryParams = ['startDate', 'endDate', 'polygon', 'argocore', 'argobgc', 'argodeep', 'argoPlatform']
 
         // populate vocabularies, and trigger first render
         fetch(this.apiPrefix + 'argo/vocabulary?parameter=platform', {headers:{'x-argokey': this.state.apiKey}})

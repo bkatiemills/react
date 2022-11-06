@@ -15,28 +15,28 @@ class AVPlots extends React.Component {
 		// default state, pulling in query string specifications
 		this.state = {
 			apiKey: 'guest',
-			xKey: '',
-			yKey: '',
-			zKey: '',
-			cKey: '',
+			xKey: q.has('xKey') ? q.get('xKey') : '',
+			yKey: q.has('yKey') ? q.get('yKey') : '',
+			zKey: q.has('zKey') ? q.get('zKey') : '',
+			cKey: q.has('cKey') ? q.get('cKey') : '',
 			xKeySuggestions: [],
 			yKeySuggestions: [],
 			zKeySuggestions: [],
 			cKeySuggestions: [],
 			cscaleSuggestions: [],
-			xmin: '',
-			xmax: '',
-			ymin: '',
-			ymax: '',
-			zmin: '',
-			zmax: '',
-			cmin: '',
-			cmax: '',
-			cscale: 'Viridis',
-			reverseX: false,
-			reverseY: false,
-			reverseZ: false,
-			reverseC: false,
+			xmin: q.has('xmin') ? q.get('xmin') : '',
+			xmax: q.has('xmax') ? q.get('xmax') : '',
+			ymin: q.has('ymin') ? q.get('ymin') : '',
+			ymax: q.has('ymax') ? q.get('ymax') : '',
+			zmin: q.has('zmin') ? q.get('zmin') : '',
+			zmax: q.has('zmax') ? q.get('zmax') : '',
+			cmin: q.has('cmin') ? q.get('cmin') : '',
+			cmax: q.has('cmax') ? q.get('cmax') : '',
+			cscale:  q.has('cscale') ? q.get('cscale') : 'Viridis',
+			reverseX: q.has('reverseX') ? q.get('reverseX') === 'true' : false,
+			reverseY: q.has('reverseY') ? q.get('reverseY') === 'true' : false,
+			reverseZ: q.has('reverseZ') ? q.get('reverseZ') === 'true' : false,
+			reverseC: q.has('reverseC') ? q.get('reverseC') === 'true' : false,
 			title: '',
 			data: [{}],
 			metadata: {},
@@ -44,7 +44,7 @@ class AVPlots extends React.Component {
 			showAll: true,
 			argoPlatform: q.has('argoPlatform') ? q.get('argoPlatform') : '',
 			points: [],
-			connectingLines: false,
+			connectingLines: q.has('connectingLines') ? q.get('connectingLines') === 'true' : false,
 			refreshData: true
 		}
 
@@ -59,6 +59,14 @@ class AVPlots extends React.Component {
 		}
 		this.header = []
 		this.rows = []
+		this.customQueryParams = [
+			'argoPlatform', 
+			'xKey', 'xmin', 'xmax', 'reverseX', 
+			'yKey', 'ymin', 'ymax', 'reverseY',
+			'zKey', 'zmin', 'zmax', 'reverseZ',
+			'cKey', 'cmin', 'cmax', 'reverseC',
+			'cscale', 'connectingLines'
+		]
 
 		let x = Promise.all(this.generateURLs().map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 			Promise.all(responses.map(res => res.json())).then(data => {
@@ -153,10 +161,10 @@ class AVPlots extends React.Component {
 			        		metadata: meta,
 			        		traces: traces,
 			        		points: mappoints,
-			        		xKey: 'temperature',
-			        		yKey: 'salinity',
-			        		zKey: '[2D plot]',
-			        		cKey: 'latitude'
+			        		xKey: this.state.xKey ? this.state.xKey : 'temperature',
+			        		yKey: this.state.yKey ? this.state.yKey : 'salinity',
+			        		zKey: this.state.zKey ? this.state.zKey : '[2D plot]',
+			        		cKey: this.state.cKey ? this.state.cKey : 'latitude'
 			        	})
 					})
 				})
@@ -169,6 +177,7 @@ class AVPlots extends React.Component {
     	if(prevState.refreshData){
 	    	helpers.manageStatus.bind(this)('ready')
 	    }
+	    helpers.setQueryString.bind(this)()
     }
 
 	transpose(profile){
