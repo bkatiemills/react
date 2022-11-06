@@ -32,7 +32,8 @@ class ArgoExplore extends React.Component {
 			points: [],
 			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [],
 			maxDayspan: q.has('polygon') ? helpers.calculateDayspan.bind(this)(JSON.parse(q.get('polygon'))) : this.defaultDayspan,
-			urls: []
+			urls: [],
+			depthRequired: q.has('depthRequired') ? q.get('depthRequired') : 0
 		}
 
 		helpers.mungeTime.bind(this)(q, this.state.maxDayspan)
@@ -53,7 +54,7 @@ class ArgoExplore extends React.Component {
         this.apiPrefix = 'http://3.88.185.52:8080/'
         this.vocab = {}
         this.dataset = 'argo'
-        this.customQueryParams = ['startDate', 'endDate', 'polygon', 'argocore', 'argobgc', 'argodeep', 'argoPlatform']
+        this.customQueryParams = ['startDate', 'endDate', 'polygon', 'argocore', 'argobgc', 'argodeep', 'argoPlatform', 'depthRequired']
 
         // populate vocabularies, and trigger first render
         fetch(this.apiPrefix + 'argo/vocabulary?parameter=platform', {headers:{'x-argokey': this.state.apiKey}})
@@ -153,6 +154,7 @@ class ArgoExplore extends React.Component {
 						  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
 										</div>
 									</div>
+
 									<h6>Time range</h6>
 									<div className="form-floating mb-3">
 										<input type="date" disabled={this.state.observingEntity} className="form-control" id="startDate" value={this.state.startDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('startDate', v.target.valueAsNumber, this.state.maxDayspan, false)}></input>
@@ -164,6 +166,23 @@ class ArgoExplore extends React.Component {
 									</div>
 									<div id="dateRangeHelp" className="form-text">
 					  					<p>Max day range: {this.state.maxDayspan+1}</p>
+									</div>
+
+									<h6>Depth</h6>
+									<div className="form-floating mb-3">
+										<input 
+											id="depth"
+											type="text"
+											disabled={this.state.observingEntity} 
+											className="form-control" 
+											placeholder="0" 
+											value={this.state.depthRequired} 
+											onChange={e => {this.setState({depthRequired:e.target.value})}} 
+											onBlur={e => {this.setState({depthRequired:e.target.defaultValue, refreshData: true})}}
+											onKeyPress={e => {if(e.key==='Enter'){this.setState({depthRequired:e.target.defaultValue, refreshData: true})}}}
+											aria-label="depthRequired" 
+											aria-describedby="basic-addon1"/>
+										<label htmlFor="depth">Require levels deeper than [m]:</label>
 									</div>
 								</div>
 

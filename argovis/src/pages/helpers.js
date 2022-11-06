@@ -47,6 +47,11 @@ helpers.estimateArea = function(vertexes){
 
 helpers.calculateDayspan = function(vertexes){
 	// vertexes == coordinates entry from a geojson polygon
+
+	if(JSON.stringify(vertexes) === '[]'){
+		return this.minDays
+	}
+
 	let area = helpers.estimateArea(vertexes)
 	if(area >= this.maxArea){
 		return this.minDays
@@ -195,6 +200,10 @@ helpers.generateTemporoSpatialURL = function(route){
 
 	let url = this.apiPrefix + route + '?compression=minimal'
 
+	if(this.state.depthRequired){
+		url += '&presRange=' + this.state.depthRequired + ',20000'
+	}
+
 	if(this.state.startDate !== ''){
 		url += '&startDate=' + this.state.startDate + 'T00:00:00Z'
 	}
@@ -220,7 +229,6 @@ helpers.generateTemporoSpatialURL = function(route){
 		}
 		url += '&polygon=[' + tidypoly.map(x => '['+x[0]+','+x[1]+']').join(',') + ']'
 	}    
-
 	return url	
 }
 
