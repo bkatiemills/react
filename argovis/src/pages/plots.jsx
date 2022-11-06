@@ -323,7 +323,7 @@ class AVPlots extends React.Component {
 		}
 	}
 
-	onAutosuggestChange(message, fieldID, event, change){
+	onAutosuggestChange(message, fieldID, resetLimits, event, change){
 		let key = fieldID
 		let v = change.newValue
 		let s = {...this.state}
@@ -335,8 +335,10 @@ class AVPlots extends React.Component {
 	  	} else {
 		  	helpers.manageStatus.bind(this)('ready')
 			s.refreshData = true
-			s[key.slice(0,1)+'min'] = ''
-			s[key.slice(0,1)+'max'] = ''
+			if(resetLimits){
+				s[key.slice(0,1)+'min'] = ''
+				s[key.slice(0,1)+'max'] = ''
+			}
 		}
 		this.setState(s)
 	}
@@ -479,7 +481,7 @@ class AVPlots extends React.Component {
 									        shouldRenderSuggestions={x=>true}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'xKey')}
-									        inputProps={{placeholder: 'x-axis', value: this.state.xKey, onChange: this.onAutosuggestChange.bind(this, 'Check value of x axis variable', 'xKey'), id: 'xKey'}}
+									        inputProps={{placeholder: 'x-axis', value: this.state.xKey, onChange: this.onAutosuggestChange.bind(this, 'Check value of x axis variable', 'xKey', true), id: 'xKey'}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 			      						<div className='row'>
@@ -541,7 +543,7 @@ class AVPlots extends React.Component {
 									        shouldRenderSuggestions={x=>true}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'yKey')}
-									        inputProps={{placeholder: 'y-axis', value: this.state.yKey, onChange: this.onAutosuggestChange.bind(this, 'Check value of y axis variable', 'yKey'), id: 'yKey'}}
+									        inputProps={{placeholder: 'y-axis', value: this.state.yKey, onChange: this.onAutosuggestChange.bind(this, 'Check value of y axis variable', 'yKey', true), id: 'yKey'}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 			      						<div className='row'>
@@ -603,7 +605,7 @@ class AVPlots extends React.Component {
 									        shouldRenderSuggestions={x=>true}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'cKey')}
-									        inputProps={{placeholder: 'color axis', value: this.state.cKey, onChange: this.onAutosuggestChange.bind(this, 'Check value of color axis variable', 'cKey'), id: 'cKey'}}
+									        inputProps={{placeholder: 'color axis', value: this.state.cKey, onChange: this.onAutosuggestChange.bind(this, 'Check value of color axis variable', 'cKey', true), id: 'cKey'}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 			      						<div className='row'>
@@ -660,7 +662,7 @@ class AVPlots extends React.Component {
 									        shouldRenderSuggestions={x=>true}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'cscale')}
-									        inputProps={{placeholder: 'color scale', value: this.state.cscale, onChange: this.onAutosuggestChange.bind(this, 'Check value of color scale variable', 'cscale'), id: 'cscale'}}
+									        inputProps={{placeholder: 'color scale', value: this.state.cscale, onChange: this.onAutosuggestChange.bind(this, 'Check value of color scale variable', 'cscale', false), id: 'cscale'}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 									</div>
@@ -679,7 +681,7 @@ class AVPlots extends React.Component {
 									        shouldRenderSuggestions={x=>true}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'zKey')}
-									        inputProps={{placeholder: 'z-axis', value: this.state.zKey, onChange: this.onAutosuggestChange.bind(this, 'Check value of z axis variable', 'zKey'), id: 'zKey'}}
+									        inputProps={{placeholder: 'z-axis', value: this.state.zKey, onChange: this.onAutosuggestChange.bind(this, 'Check value of z axis variable', 'zKey', true), id: 'zKey'}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 										<div className={this.state.zKey === '[2D plot]' ? "input-group mb-3 hidden": "input-group mb-3"} style={{'marginTop':'1em'}}>
