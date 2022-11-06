@@ -40,8 +40,8 @@ class AVPlots extends React.Component {
 			title: '',
 			data: [{}],
 			metadata: {},
-			traces: {},
-			showAll: true,
+			showAll:  q.has('showAll') ? q.get('showAll') === 'true' : false,
+			counterTraces: q.has('counterTraces') ? q.get('counterTraces') : [], // trace IDs with a show status opposite to showAll
 			argoPlatform: q.has('argoPlatform') ? q.get('argoPlatform') : '',
 			points: [],
 			connectingLines: q.has('connectingLines') ? q.get('connectingLines') === 'true' : false,
@@ -65,7 +65,8 @@ class AVPlots extends React.Component {
 			'yKey', 'ymin', 'ymax', 'reverseY',
 			'zKey', 'zmin', 'zmax', 'reverseZ',
 			'cKey', 'cmin', 'cmax', 'reverseC',
-			'cscale', 'connectingLines'
+			'cscale', 'connectingLines', 
+			'showAll', 'counterTraces'
 		]
 
 		let x = Promise.all(this.generateURLs().map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
@@ -75,11 +76,6 @@ class AVPlots extends React.Component {
 				this.json = window.URL.createObjectURL(this.json)
 
 				let p = [].concat(...data)
-				// default all traces to visible
-				let traces = {}
-				for(let i=0; i<p.length; i++){
-					traces[p[i]._id] = {'visible': true}
-				}
 
 				// get a list of metadata we'll need
 				let metakeys = Array.from(new Set(p.map(x=>x['metadata'])))
@@ -159,7 +155,6 @@ class AVPlots extends React.Component {
 			        		data:p, 
 			        		variables: vars, 
 			        		metadata: meta,
-			        		traces: traces,
 			        		points: mappoints,
 			        		xKey: this.state.xKey ? this.state.xKey : 'temperature',
 			        		yKey: this.state.yKey ? this.state.yKey : 'salinity',
@@ -294,27 +289,28 @@ class AVPlots extends React.Component {
 
 	toggleTrace(id){
 		let s = {...this.state}
-		s.traces[id].visible = !s.traces[id].visible
+		if(s.counterTraces.includes(id)){
+			s.counterTraces.splice(s.counterTraces.indexOf(id), 1)
+		} else {
+			s.counterTraces = s.counterTraces.concat(id)
+		}
+
 		s.refreshData = true
 		this.setState(s)
 	}
 
+	showTrace(id){
+		if(this.state.counterTraces.includes(id)){
+			return !this.state.showAll
+		} else {
+			return this.state.showAll
+		}
+	}
+
 	toggleAll(){
 		let s = {...this.state}
-		let traces = {}
-		if(this.state.showAll){
-			for(let i=0; i<this.state.data.length; i++){
-				traces[this.state.data[i]._id] = {'visible': false}
-			}
-			s.traces = traces
-			s.showAll = false
-		} else {
-			for(let i=0; i<this.state.data.length; i++){
-				traces[this.state.data[i]._id] = {'visible': true}
-			}
-			s.traces = traces
-			s.showAll = true
-		}
+		s.showAll = !s.showAll
+		s.counterTraces = []
 		s.refreshData = true
 		this.setState(s)
 	}
@@ -405,7 +401,7 @@ class AVPlots extends React.Component {
 					          	colorscale: this.state.cscale,
 					          	cmin: crange[0],
 					          	cmax: crange[1],
-					          	showscale: needsScale(this.state.traces[d._id] ? this.state.traces[d._id].visible : true),
+					          	showscale: needsScale(this.showTrace(d._id)),
 					          	reversescale: this.state.reverseC,
 					          	colorbar: {
 					          		title: this.generateAxisTitle(this.state.cKey),
@@ -416,7 +412,7 @@ class AVPlots extends React.Component {
 					          	}
 					          },
 					          name: d._id,
-					          visible: this.state.traces[d._id] ? this.state.traces[d._id].visible : true
+					          visible: this.state.counterTraces.includes(d._id) ? !this.state.showAll : this.state.showAll
 					        }
 					      })
 
@@ -787,7 +783,7 @@ class AVPlots extends React.Component {
 									return(
 										<tr key={Math.random()}>
 											<td>
-												<input className="form-check-input" checked={this.state.traces[r[0]].visible} onChange={(v) => this.toggleTrace(r[0])} type="checkbox" id={r[0]}></input>
+												<input className="form-check-input" checked={this.showTrace(r[0])} onChange={(v) => this.toggleTrace(r[0])} type="checkbox" id={r[0]}></input>
 											</td>
 											{r.map((item,i) => {return <td key={Math.random()}>{this.transforms[i](item)}</td>})}
 										</tr>
