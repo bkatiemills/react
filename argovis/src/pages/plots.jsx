@@ -32,7 +32,7 @@ class AVPlots extends React.Component {
 			zmax: q.has('zmax') ? q.get('zmax') : '',
 			cmin: q.has('cmin') ? q.get('cmin') : '',
 			cmax: q.has('cmax') ? q.get('cmax') : '',
-			cscale:  q.has('cscale') ? q.get('cscale') : 'Viridis',
+			cscale:  q.has('cscale') ? q.get('cscale') : 'Electric',
 			reverseX: q.has('reverseX') ? q.get('reverseX') === 'true' : false,
 			reverseY: q.has('reverseY') ? q.get('reverseY') === 'true' : false,
 			reverseZ: q.has('reverseZ') ? q.get('reverseZ') === 'true' : false,
@@ -339,6 +339,16 @@ class AVPlots extends React.Component {
 				s[key.slice(0,1)+'min'] = ''
 				s[key.slice(0,1)+'max'] = ''
 			}
+			if(key === 'cKey'){
+				// define some default color schemes
+				if(v === 'temperature'){
+					s.cscale = 'Hot'
+				} else if (v === 'salinity'){
+					s.cscale = 'Viridis'
+				} else {
+					s.cscale = 'Electric'
+				}
+			}
 		}
 		this.setState(s)
 	}
@@ -401,8 +411,8 @@ class AVPlots extends React.Component {
 					          	size: 2,
 					          	color: d[this.state.cKey],
 					          	colorscale: this.state.cscale,
-					          	cmin: crange[0],
-					          	cmax: crange[1],
+					          	cmin: Math.min(crange[0], crange[1]),
+					          	cmax: Math.max(crange[0], crange[1]),
 					          	showscale: needsScale(this.showTrace(d._id)),
 					          	reversescale: this.state.reverseC,
 					          	colorbar: {
