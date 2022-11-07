@@ -34,7 +34,8 @@ class ShipsExplore extends React.Component {
 			points: [],
 			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [],
 			urls: [],
-			maxDayspan: q.has('polygon') ? helpers.calculateDayspan.bind(this)(JSON.parse(q.get('polygon'))) : this.defaultDayspan
+			maxDayspan: q.has('polygon') ? helpers.calculateDayspan.bind(this)(JSON.parse(q.get('polygon'))) : this.defaultDayspan,
+			depthRequired: q.has('depthRequired') ? q.get('depthRequired') : 0
 		}
 
 		helpers.mungeTime.bind(this)(q, this.state.maxDayspan, '1993-07-31')
@@ -56,7 +57,7 @@ class ShipsExplore extends React.Component {
         this.vocab = {}
         this.wocelineLookup = {}
         this.dataset = 'cchdo'
-        this.customQueryParams = ['woce', 'goship', 'other', 'woceline', 'cruise']
+        this.customQueryParams = ['startDate', 'endDate', 'polygon', 'depthRequired', 'woce', 'goship', 'other', 'woceline', 'cruise']
 
         // populate vocabularies, and trigger first render
         let vocabURLs = [this.apiPrefix + 'summary?id=cchdo_occupancies', this.apiPrefix + 'cchdo/vocabulary?parameter=cchdo_cruise']
@@ -179,6 +180,23 @@ class ShipsExplore extends React.Component {
 									</div>
 									<div id="dateRangeHelp" className="form-text">
 					  					<p>Max day range: {this.state.maxDayspan+1}</p>
+									</div>
+
+									<h6>Depth</h6>
+									<div className="form-floating mb-3">
+										<input 
+											id="depth"
+											type="text"
+											disabled={this.state.observingEntity} 
+											className="form-control" 
+											placeholder="0" 
+											value={this.state.depthRequired} 
+											onChange={e => {this.setState({depthRequired:e.target.value})}} 
+											onBlur={e => {this.setState({depthRequired:e.target.defaultValue, refreshData: true})}}
+											onKeyPress={e => {if(e.key==='Enter'){this.setState({depthRequired:e.target.defaultValue, refreshData: true})}}}
+											aria-label="depthRequired" 
+											aria-describedby="basic-addon1"/>
+										<label htmlFor="depth">Require levels deeper than [m]:</label>
 									</div>
 								</div>
 

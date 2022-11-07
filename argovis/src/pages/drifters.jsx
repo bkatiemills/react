@@ -46,7 +46,7 @@ class DriftersExplore extends React.Component {
         this.vocab = {}
         this.lookupLabel = {}
         this.dataset = 'drifter'
-        this.customQueryParams =  ['wmo', 'platform']
+        this.customQueryParams =  ['startDate', 'endDate', 'polygon', 'wmo', 'platform']
 
         // populate vocabularies, and trigger first render
         let vocabURLs = [this.apiPrefix + 'drifters/vocabulary?parameter=wmo', this.apiPrefix + 'drifters/vocabulary?parameter=platform']

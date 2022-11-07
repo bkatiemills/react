@@ -43,7 +43,7 @@ class TCExplore extends React.Component {
         this.vocab = {}
         this.lookupLabel = {}
         this.dataset = 'tc'
-        this.customQueryParams =  ['tcName']
+        this.customQueryParams =  ['startDate', 'endDate', 'polygon', 'tcName']
 
         // populate vocabularies, and trigger first render
         fetch(this.apiPrefix + 'summary?id=tc_labels', {headers:{'x-argokey': this.state.apiKey}})
