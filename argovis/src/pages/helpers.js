@@ -269,14 +269,16 @@ helpers.setQueryString = function(){
 
 // input setters
 
-helpers.setDate = function(date, v, maxdays, noop){
+helpers.setDate = function(date, v, maxdays, noop, noup){
 	// when setting dates from the UI, don't let the user ask for a timespan longer than some cutoff. 
 	// If they do, move the other time bound to match.
 	// If noop == true, just return the computes start and end times without invoking a state change.
+	// If noup == true, do the state update without refreshing data
 	let start = new Date(this.state.startDate)
 	let end = new Date(this.state.endDate)
 	let delta = end.getTime() - start.getTime()
 	let cutoff = maxdays*24*60*60*1000
+	console.log('qqqq', v)
 	if(isNaN(v)){
 		return
 	} else{
@@ -301,7 +303,10 @@ helpers.setDate = function(date, v, maxdays, noop){
     let s = {...this.state}
     s.startDate = start
     s.endDate = end
-    s.refreshData = true
+    if(!noup){
+		  s.refreshData = true
+		}
+		console.log('set date', s)
     if(noop){
     	return [start, end]
     } else {

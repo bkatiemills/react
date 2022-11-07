@@ -116,11 +116,31 @@ class DriftersExplore extends React.Component {
 									</div>
 									<h6>Time Range</h6>
 									<div className="form-floating mb-3">
-										<input type="date" disabled={this.state.observingEntity} className="form-control" id="startDate" value={this.state.startDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('startDate', v.target.valueAsNumber, this.state.maxDayspan)}></input>
+										<input 
+											type="date" 
+											disabled={this.state.observingEntity} 
+											className="form-control" 
+											id="startDate" 
+											value={this.state.startDate} 
+											placeholder="" 
+											onChange={v => helpers.setDate.bind(this)('startDate', v.target.valueAsNumber, this.state.maxDayspan, false, true)}
+											onBlur={e => helpers.setDate.bind(this)('startDate', e.target.valueAsNumber, this.state.maxDayspan, false, false)}
+											onKeyPress={e => {if(e.key==='Enter'){helpers.setDate.bind(this)('startDate', e.target.valueAsNumber, this.state.maxDayspan, false, false)}}}
+										/>
 										<label htmlFor="startDate">Start Date</label>
 									</div>
 									<div className="form-floating mb-3">
-										<input type="date" disabled={this.state.observingEntity} className="form-control" id="endDate" value={this.state.endDate} placeholder="" onChange={(v) => helpers.setDate.bind(this)('endDate', v.target.valueAsNumber, this.state.maxDayspan)}></input>
+										<input 
+											type="date" 
+											disabled={this.state.observingEntity} 
+											className="form-control" 
+											id="startDate" 
+											value={this.state.endDate} 
+											placeholder="" 
+											onChange={v => helpers.setDate.bind(this)('endDate', v.target.valueAsNumber, this.state.maxDayspan, false, true)}
+											onBlur={e => helpers.setDate.bind(this)('endDate', e.target.valueAsNumber, this.state.maxDayspan, false, false)}
+											onKeyPress={e => {if(e.key==='Enter'){helpers.setDate.bind(this)('endDate', e.target.valueAsNumber, this.state.maxDayspan, false, false)}}}
+										/>
 										<label htmlFor="endDate">End Date</label>
 									</div>
 									<div id="dateRangeHelp" className="form-text">
