@@ -35,7 +35,7 @@ class DriftersExplore extends React.Component {
 			maxDayspan: q.has('polygon') ? helpers.calculateDayspan.bind(this)(JSON.parse(q.get('polygon'))) : this.defaultDayspan
 		}
 
-		helpers.mungeTime.bind(this)(q, this.state.maxDayspan, '2020-01-01')
+		helpers.mungeTime.bind(this)(q, this.state.maxDayspan+1, '2020-01-01') // +1 since we include the end date here.
 
         // some other useful class variables
         this.fgRef = React.createRef()

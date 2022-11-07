@@ -38,7 +38,7 @@ class ShipsExplore extends React.Component {
 			depthRequired: q.has('depthRequired') ? q.get('depthRequired') : 0
 		}
 
-		helpers.mungeTime.bind(this)(q, this.state.maxDayspan, '1993-07-31')
+		helpers.mungeTime.bind(this)(q, this.state.maxDayspan+1, '1993-07-31') // +1 since we include the end date here.
 
         // if no query string specified at all or no categories selected turn on all cchdo categories
         if(!window.location.search || !q.has('woce') && !q.has('goship') && !q.has('other') ){
@@ -211,7 +211,10 @@ class ShipsExplore extends React.Component {
 											className="form-control" 
 											placeholder="0" 
 											value={this.state.depthRequired} 
-											onChange={e => {this.setState({depthRequired:e.target.value})}} 
+											onChange={e => {
+												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
+												this.setState({depthRequired:e.target.value})}
+											} 
 											onBlur={e => {this.setState({depthRequired:e.target.defaultValue, refreshData: true})}}
 											onKeyPress={e => {if(e.key==='Enter'){this.setState({depthRequired:e.target.defaultValue, refreshData: true})}}}
 											aria-label="depthRequired" 

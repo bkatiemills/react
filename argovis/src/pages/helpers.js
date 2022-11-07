@@ -165,7 +165,8 @@ helpers.manageStatus = function(newStatus, messageArg){
 		downloading: ['Downloading...', 'busy'],
 		rendering: ['Rendering...', 'busy'],
 		needsRefresh: ['Refresh map when ready', 'busy'],
-		error: [messageArg, 'error']
+		error: [messageArg, 'error'],
+		actionRequired: [messageArg, 'busy']
 	}
 
 	for(let key in statuses){
@@ -278,7 +279,7 @@ helpers.setDate = function(date, v, maxdays, noop, noup){
 	let end = new Date(this.state.endDate)
 	let delta = end.getTime() - start.getTime()
 	let cutoff = maxdays*24*60*60*1000
-	console.log('qqqq', v)
+
 	if(isNaN(v)){
 		return
 	} else{
@@ -305,8 +306,10 @@ helpers.setDate = function(date, v, maxdays, noop, noup){
     s.endDate = end
     if(!noup){
 		  s.refreshData = true
+		} else {
+			helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
 		}
-		console.log('set date', s)
+
     if(noop){
     	return [start, end]
     } else {

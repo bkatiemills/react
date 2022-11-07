@@ -169,9 +169,6 @@ class AVPlots extends React.Component {
 
     componentDidUpdate(prevProps, prevState, snapshot){
     	this.state.refreshData = false
-    	if(prevState.refreshData){
-	    	helpers.manageStatus.bind(this)('ready')
-	    }
 	    helpers.setQueryString.bind(this)()
     }
 
@@ -461,6 +458,9 @@ class AVPlots extends React.Component {
 						      	}
 						    }
 					      }
+			if(this.statusReporting.current){
+		    	helpers.manageStatus.bind(this)('ready')
+		    }
 		}
 
 		return(
@@ -504,7 +504,10 @@ class AVPlots extends React.Component {
 													className="form-control minmax" 
 													placeholder="Auto" 
 													value={this.state.xmin} 
-													onChange={e => {this.setState({xmin:e.target.value})}} 
+													onChange={e => {
+														helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
+														this.setState({xmin:e.target.value})}
+													} 
 													onBlur={e => {this.setState({xmin:e.target.defaultValue, refreshData: true})}}
 													onKeyPress={e => {if(e.key==='Enter'){this.setState({xmin:e.target.defaultValue, refreshData: true})}}}
 													aria-label="xmin" 
@@ -519,7 +522,10 @@ class AVPlots extends React.Component {
 													className="form-control minmax" 
 													placeholder="Auto" 
 													value={this.state.xmax} 
-													onChange={e => {this.setState({xmax:e.target.value})}} 
+													onChange={e => {
+														helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
+														this.setState({xmax:e.target.value})}
+													} 
 													onBlur={e => {this.setState({xmax:e.target.defaultValue, refreshData: true})}}
 													onKeyPress={e => {if(e.key==='Enter'){this.setState({xmax:e.target.defaultValue, refreshData: true})}}}
 													aria-label="xmax" 
@@ -566,7 +572,10 @@ class AVPlots extends React.Component {
 													className="form-control minmax" 
 													placeholder="Auto" 
 													value={this.state.ymin} 
-													onChange={e => {this.setState({ymin:e.target.value})}} 
+													onChange={e => {
+														helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
+														this.setState({ymin:e.target.value})}
+													} 
 													onBlur={e => {this.setState({ymin:e.target.defaultValue, refreshData: true})}}
 													onKeyPress={e => {if(e.key==='Enter'){this.setState({ymin:e.target.defaultValue, refreshData: true})}}}
 													aria-label="ymin" 
@@ -581,7 +590,10 @@ class AVPlots extends React.Component {
 													className="form-control minmax" 
 													placeholder="Auto" 
 													value={this.state.ymax} 
-													onChange={e => {this.setState({ymax:e.target.value})}} 
+													onChange={e => {
+														helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
+														this.setState({ymax:e.target.value})}
+													} 
 													onBlur={e => {this.setState({ymax:e.target.defaultValue, refreshData: true})}}
 													onKeyPress={e => {if(e.key==='Enter'){this.setState({ymax:e.target.defaultValue, refreshData: true})}}}
 													aria-label="ymax" 
@@ -628,7 +640,10 @@ class AVPlots extends React.Component {
 													className="form-control minmax" 
 													placeholder="Auto" 
 													value={this.state.cmin} 
-													onChange={e => {this.setState({cmin:e.target.value})}} 
+													onChange={e => {
+														helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
+														this.setState({cmin:e.target.value})}
+													}  
 													onBlur={e => {this.setState({cmin:e.target.defaultValue, refreshData: true})}}
 													onKeyPress={e => {if(e.key==='Enter'){this.setState({cmin:e.target.defaultValue, refreshData: true})}}}
 													aria-label="cmin" 
@@ -643,7 +658,10 @@ class AVPlots extends React.Component {
 													className="form-control minmax" 
 													placeholder="Auto" 
 													value={this.state.cmax} 
-													onChange={e => {this.setState({cmax:e.target.value})}} 
+													onChange={e => {
+														helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
+														this.setState({cmax:e.target.value})}
+													} 
 													onBlur={e => {this.setState({cmax:e.target.defaultValue, refreshData: true})}}
 													onKeyPress={e => {if(e.key==='Enter'){this.setState({cmax:e.target.defaultValue, refreshData: true})}}}
 													aria-label="cmax" 
@@ -705,7 +723,10 @@ class AVPlots extends React.Component {
 														className="form-control minmax" 
 														placeholder="Auto" 
 														value={this.state.zmin} 
-														onChange={e => {this.setState({zmin:e.target.value})}} 
+														onChange={e => {
+															helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
+															this.setState({zmin:e.target.value})}
+														} 
 														onBlur={e => {this.setState({zmin:e.target.defaultValue, refreshData: true})}}
 														onKeyPress={e => {if(e.key==='Enter'){this.setState({zmin:e.target.defaultValue, refreshData: true})}}}
 														aria-label="zmin" 
@@ -720,7 +741,10 @@ class AVPlots extends React.Component {
 														className="form-control minmax" 
 														placeholder="Auto" 
 														value={this.state.zmax} 
-														onChange={e => {this.setState({zmax:e.target.value})}} 
+														onChange={e => {
+															helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
+															this.setState({zmax:e.target.value})}
+														}  
 														onBlur={e => {this.setState({zmax:e.target.defaultValue, refreshData: true})}}
 														onKeyPress={e => {if(e.key==='Enter'){this.setState({zmax:e.target.defaultValue, refreshData: true})}}}
 														aria-label="zmax" 
