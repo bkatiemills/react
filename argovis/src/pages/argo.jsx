@@ -131,7 +131,7 @@ class ArgoExplore extends React.Component {
 		      Long / Lat: {point[1]} / {point[2]} <br />
 		      Date: {point[3]} <br />
 		      Data Sources: {point[4]} <br />
-		      <a target="_blank" rel="noreferrer" href={'/plots?showAll=true&argoPlatform='+point[0].split('_')[0]}>Profile Page</a>
+		      <a target="_blank" rel="noreferrer" href={'/plots/argo?showAll=true&argoPlatform='+point[0].split('_')[0]}>Platform Page</a>
 		    </Popup>
     	)
     }

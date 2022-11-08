@@ -82,13 +82,14 @@ class TCExplore extends React.Component {
     genTooltip(point){
     	// given an array <point> corresponding to a single point returned by an API data route with compression=minimal,
     	// return the jsx for an appropriate tooltip for this point.
-
+    	console.log(point)
     	return(
 		    <Popup>
 		      ID: {point[0]} <br />
 		      Long / Lat: {point[1]} / {point[2]} <br />
 		      Date: {point[3]} <br />
-		      Data Sources: {point[4]}
+		      Data Sources: {point[4]} <br />
+		      <a target="_blank" rel="noreferrer" href={'/plots/tc?showAll=true&tcName=MARIA'}>Cyclone Page</a>
 		    </Popup>
     	)
     }
