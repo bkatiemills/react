@@ -15,7 +15,7 @@ class TCPlots extends React.Component {
         .then(response => response.json())
         .then(data => {
         	let name = data[0].summary.filter(x=>x._id==this.state.tcMeta)[0].label
-        	this.setState({title: name})
+        	this.state.title = name
         })
 
 		helpers.downloadData.bind(this)('timestamp', 'surface_pressure', '[2D plot]', 'wind', true)

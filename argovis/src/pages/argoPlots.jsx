@@ -10,6 +10,8 @@ class ArgoPlots extends React.Component {
 
 		helpers.initPlottingPage.bind(this)(['argoPlatform'])
 
+		this.state.title = 'Argo platform ' + this.state.argoPlatform
+
 		helpers.downloadData.bind(this)('temperature', 'salinity', '[2D plot]', 'timestamp')
 	}
 
