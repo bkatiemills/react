@@ -82,7 +82,7 @@ class ArgoPlots extends React.Component {
 	}
 
 	render(){
-		helpers.prepPlotlyState.bind(this)()
+		helpers.prepPlotlyState.bind(this)(2)
 
 		return(
 			<>

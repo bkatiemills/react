@@ -140,7 +140,7 @@ helpers.componentDidUpdate = function(){
 					for(let i=0; i<data.length; i++){
 						if(data[i].length>0 && data[i][0].code !== 404){
 							timestamps = timestamps.concat(data[i].map(x => x[3]))
-							newPoints = newPoints.concat(data[i].map(x => x.concat([this.dataset]))) // so there's something in the source position for everything other than argo
+							newPoints = newPoints.concat(data[i])
 						}
 					}
 					newPoints = helpers.circlefy.bind(this)(newPoints)
@@ -246,7 +246,7 @@ helpers.circlefy = function(points){
 	}
 	else {
 		points = points.map(point => {return(
-		  <CircleMarker key={point[0]+Math.random()} center={[point[2], point[1]]} radius={1} color={this.chooseColor(point[4])}>
+		  <CircleMarker key={point[0]+Math.random()} center={[point[2], point[1]]} radius={1} color={this.chooseColor(point)}>
 		  	{this.genTooltip(point)}
 		  </CircleMarker>
 		)})
@@ -410,6 +410,22 @@ helpers.transpose = function(profile){
 	return t
 }
 
+helpers.mergePoints = function(points){
+	// given an array of objects returned by helpers.transpose,
+	// combine them into a single object where all keys are concatenated into arrays
+	// appropriate for making a single trace out of what otherwise would have been n single-point traces
+	let m = {}
+	for(let i=0; i<Object.keys(points[0]).length; i++){
+		let key = Object.keys(points[0])[i]
+		let a = []
+		for(let k=0; k<points.length; k++){
+			a = a.concat(points[k][key])
+		}
+		m[key] = a
+	} 
+	return m
+}
+
 helpers.getDataKeys = function(data){
 	// given an array of profile objects <data>. return a global list of keys, plus coordinates
 
@@ -567,19 +583,19 @@ helpers.resetAllAxes = function(event){
 	this.setState(s)
 }
 
-helpers.prepPlotlyState = function(){
-		console.log(this.state)
-		let xrange = helpers.generateRange.bind(this)(this.state.xmin, this.state.xmax, this.state.xKey, this.state.reverseX)
-		let yrange = helpers.generateRange.bind(this)(this.state.ymin, this.state.ymax, this.state.yKey, this.state.reverseY)
-		let zrange = helpers.generateRange.bind(this)(this.state.zmin, this.state.zmax, this.state.zKey, this.state.reverseZ)
-		let crange = helpers.generateRange.bind(this)(this.state.cmin, this.state.cmax, this.state.cKey, this.state.reverseC)
+helpers.prepPlotlyState = function(markerSize){
+	console.log(this.state)
+	let xrange = helpers.generateRange.bind(this)(this.state.xmin, this.state.xmax, this.state.xKey, this.state.reverseX)
+	let yrange = helpers.generateRange.bind(this)(this.state.ymin, this.state.ymax, this.state.yKey, this.state.reverseY)
+	let zrange = helpers.generateRange.bind(this)(this.state.zmin, this.state.zmax, this.state.zKey, this.state.reverseZ)
+	let crange = helpers.generateRange.bind(this)(this.state.cmin, this.state.cmax, this.state.cKey, this.state.reverseC)
 
-		let colortics = [[],[]]
-		if(this.state.cKey === 'timestamp'){
-			colortics = helpers.generateTimetics(crange[0], crange[1])
-		}
+	let colortics = [[],[]]
+	if(this.state.cKey === 'timestamp'){
+		colortics = helpers.generateTimetics(crange[0], crange[1])
+	}
 
-		if(this.state.refreshData){
+	if(this.state.refreshData){
 
 			// discourage color scale from drawing any number of times other than exactly one
 			let scaleDrawn = false
@@ -594,74 +610,74 @@ helpers.prepPlotlyState = function(){
 
 			// generate data and layout
 			this.data = this.state.data.map((d,i) => {
-					        return {
-					          x: d[this.state.xKey],
-					          y: d[this.state.yKey],
-					          z: this.state.zKey === '[2D plot]' ? [] : d[this.state.zKey],
-					          type: this.state.zKey === '[2D plot]' ? 'scatter2d' : 'scatter3d',
-					          mode: this.state.connectingLines ? 'markers+lines' : 'markers',
-					          line: {
-					          	color: 'grey'
-					          },
-					          marker: {
-					          	size: 2,
-					          	color: d[this.state.cKey],
-					          	colorscale: this.state.cscale,
-					          	cmin: Math.min(crange[0], crange[1]),
-					          	cmax: Math.max(crange[0], crange[1]),
-					          	showscale: needsScale(helpers.showTrace.bind(this)(d._id)),
-					          	reversescale: this.state.reverseC,
-					          	colorbar: {
-					          		title: helpers.generateAxisTitle.bind(this)(this.state.cKey),
-					          		titleside: 'left',
-					          		tickmode: this.state.cKey === 'timestamp' ? 'array' : 'auto',
-					          		ticktext: colortics[0],
-					          		tickvals: colortics[1]
-					          	}
-					          },
-					          name: d._id,
-					          visible: this.state.counterTraces.includes(d._id) ? !this.state.showAll : this.state.showAll
-					        }
-					      })
+				return {
+					x: d[this.state.xKey],
+					y: d[this.state.yKey],
+					z: this.state.zKey === '[2D plot]' ? [] : d[this.state.zKey],
+					type: this.state.zKey === '[2D plot]' ? 'scatter2d' : 'scatter3d',
+					mode: this.state.connectingLines ? 'markers+lines' : 'markers',
+					line: {
+						color: 'grey'
+					},
+					marker: {
+						size: markerSize,
+						color: d[this.state.cKey],
+						colorscale: this.state.cscale,
+						cmin: Math.min(crange[0], crange[1]),
+						cmax: Math.max(crange[0], crange[1]),
+						showscale: needsScale(helpers.showTrace.bind(this)(d._id)),
+						reversescale: this.state.reverseC,
+						colorbar: {
+							title: helpers.generateAxisTitle.bind(this)(this.state.cKey),
+							titleside: 'left',
+							tickmode: this.state.cKey === 'timestamp' ? 'array' : 'auto',
+							ticktext: colortics[0],
+							tickvals: colortics[1]
+						}
+					},
+					name: d._id,
+					visible: this.state.counterTraces.includes(d._id) ? !this.state.showAll : this.state.showAll
+				}
+			})
 
 			this.layout = {
-					      	datarevision: Math.random(),
-					      	autosize: true, 
-					      	showlegend: false,
-							xaxis: {
-								title: helpers.generateAxisTitle.bind(this)(this.state.xKey),
-								range: xrange,
-								type: this.state.xKey === 'timestamp' ? 'date' : '-'
-							},
-							yaxis: {
-								title: helpers.generateAxisTitle.bind(this)(this.state.yKey),
-								range: yrange,
-								type: this.state.yKey === 'timestamp' ? 'date' : '-',
-							},
-						    margin: {t: 30},
-					      	scene: {
-	    				      	xaxis:{
-	    				      		title: helpers.generateAxisTitle.bind(this)(this.state.xKey),
-	    				      		range: xrange,
-	    				      		type: this.state.xKey === 'timestamp' ? 'date' : '-'
-	    				      	},
-						      	yaxis:{
-						      		title: helpers.generateAxisTitle.bind(this)(this.state.yKey),
-						      		range: yrange,
-						      		type: this.state.yKey === 'timestamp' ? 'date' : '-'
-						      	},
-						      	zaxis:{
-						      		title: helpers.generateAxisTitle.bind(this)(this.state.zKey),
-						      		range: zrange,
-						      		type: this.state.zKey === 'timestamp' ? 'date' : '-'
-						      	}
-						    }
-					      }
+				datarevision: Math.random(),
+				autosize: true, 
+				showlegend: false,
+				xaxis: {
+					title: helpers.generateAxisTitle.bind(this)(this.state.xKey),
+					range: xrange,
+					type: this.state.xKey === 'timestamp' ? 'date' : '-'
+				},
+				yaxis: {
+					title: helpers.generateAxisTitle.bind(this)(this.state.yKey),
+					range: yrange,
+					type: this.state.yKey === 'timestamp' ? 'date' : '-',
+				},
+				margin: {t: 30},
+				scene: {
+					xaxis:{
+						title: helpers.generateAxisTitle.bind(this)(this.state.xKey),
+						range: xrange,
+						type: this.state.xKey === 'timestamp' ? 'date' : '-'
+					},
+					yaxis:{
+						title: helpers.generateAxisTitle.bind(this)(this.state.yKey),
+						range: yrange,
+						type: this.state.yKey === 'timestamp' ? 'date' : '-'
+					},
+					zaxis:{
+						title: helpers.generateAxisTitle.bind(this)(this.state.zKey),
+						range: zrange,
+						type: this.state.zKey === 'timestamp' ? 'date' : '-'
+					}
+				}
+			}
 			if(this.statusReporting.current){
-		    	helpers.manageStatus.bind(this)('ready')
-		    }
+				helpers.manageStatus.bind(this)('ready')
+			}
 		}
-}
+	}
 
 helpers.plotHTML = function(){
 	return(
@@ -988,6 +1004,7 @@ helpers.plotHTML = function(){
 
 			{/* plots */}
 			<div className='col-9'>
+					<h5 style={{'marginTop':'0.5em'}}>{this.state.title}</h5>
 			    <Plot
 			      data={this.data}
 			      onRelayout={e=>helpers.zoomSync.bind(this)(e)}
@@ -1065,7 +1082,7 @@ helpers.initPlottingPage = function(customParams){
 
 }
 
-helpers.downloadData = function(defaultX, defaultY, defaultZ, defaultC){
+helpers.downloadData = function(defaultX, defaultY, defaultZ, defaultC, mergePoints){
 	let x = Promise.all(this.generateURLs().map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 		Promise.all(responses.map(res => res.json())).then(data => {
 			// keep raw json blob for download
@@ -1082,11 +1099,16 @@ helpers.downloadData = function(defaultX, defaultY, defaultZ, defaultC){
 
 			// transpose data for traces
 			p = p.map(d => helpers.transpose.bind(this)(d))
+
 			let mappoints = p.map(point => {
 				return(
-					<CircleMarker key={point._id+Math.random()} center={[point.latitude[0], point.longitude[0]]} radius={1} color={'yellow'}/>
+					<CircleMarker key={point._id+Math.random()} center={[point.latitude[0], point.longitude[0]]} radius={1} color={'red'}/>
 					)
 			})
+
+			if(mergePoints){
+				p = [helpers.mergePoints(p)]
+			}
 
 			this.vocab['xKey'] = vars
 			this.vocab['yKey'] = vars

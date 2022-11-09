@@ -109,14 +109,14 @@ class ArgoExplore extends React.Component {
 	    }
     }
 
-    chooseColor(datasources){
-    	if(datasources.includes('argo_bgc')){
+    chooseColor(point){
+    	if(point[4].includes('argo_bgc')){
     		return 'green'
     	}
-    	else if(datasources.includes('argo_deep')){
+    	else if(point[4].includes('argo_deep')){
     		return 'blue'
     	}
-    	else if(datasources.includes('argo_core')){
+    	else if(point[4].includes('argo_core')){
 	    	return 'yellow'
 	    }
     }
@@ -213,15 +213,15 @@ class ArgoExplore extends React.Component {
 									<h6>Subsets</h6>
 									<div className="form-check">
 										<input className="form-check-input" checked={this.state.argocore} onChange={(v) => helpers.toggle.bind(this)(v, 'argocore')} type="checkbox" id='argocore'></input>
-										<label className="form-check-label" htmlFor='argocore'>Display Argo Core <span style={{'color':this.chooseColor(['argo_core']), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
+										<label className="form-check-label" htmlFor='argocore'>Display Argo Core <span style={{'color':this.chooseColor([,,,,['argo_core']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 									<div className="form-check">
 										<input className="form-check-input" checked={this.state.argobgc} onChange={(v) => helpers.toggle.bind(this)(v, 'argobgc')} type="checkbox" id='argobgc'></input>
-										<label className="form-check-label" htmlFor='argobgc'>Display Argo BGC <span style={{'color':this.chooseColor(['argo_bgc']), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
+										<label className="form-check-label" htmlFor='argobgc'>Display Argo BGC <span style={{'color':this.chooseColor([,,,,['argo_bgc']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 									<div className="form-check">
 										<input className="form-check-input" checked={this.state.argodeep} onChange={(v) => helpers.toggle.bind(this)(v, 'argodeep')} type="checkbox" id='argodeep'></input>
-										<label className="form-check-label" htmlFor='argodeep'>Display Argo Deep <span style={{'color':this.chooseColor(['argo_deep']), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
+										<label className="form-check-label" htmlFor='argodeep'>Display Argo Deep <span style={{'color':this.chooseColor([,,,,['argo_deep']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 								</div>
 

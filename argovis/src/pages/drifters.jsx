@@ -78,7 +78,7 @@ class DriftersExplore extends React.Component {
     	}
     }	
 
-    chooseColor(datasources){
+    chooseColor(point){
     	return 'black'
     }
 
@@ -91,7 +91,7 @@ class DriftersExplore extends React.Component {
 		      ID: {point[0]} <br />
 		      Long / Lat: {point[1]} / {point[2]} <br />
 		      Date: {point[3]} <br />
-		      Data Sources: {point[4]}
+		      WMO: {point[4]}
 		    </Popup>
     	)
     }
