@@ -11,6 +11,7 @@ import ShipsExplore from "./pages/ships"
 import ArgoPlots from "./pages/argoPlots"
 import TCPlots from "./pages/tcPlots"
 import DrifterPlots from "./pages/drifterPlots"
+import ShipPlots from "./pages/shipPlots"
 
 export default function App() {
   useEffect(() => {    
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="plots/argo" element={<ArgoPlots />} />
           <Route path="plots/tc" element={<TCPlots />} />
           <Route path="plots/drifters" element={<DrifterPlots />} />
+          <Route path="plots/ships" element={<ShipPlots />} />
         </Route>
       </Routes>
     </BrowserRouter>

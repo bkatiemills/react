@@ -247,7 +247,7 @@ helpers.circlefy = function(points){
 	else {
 		points = points.map(point => {return(
 		  <CircleMarker key={point[0]+Math.random()} center={[point[2], point[1]]} radius={1} color={this.chooseColor(point)}>
-		  	{this.genTooltip(point)}
+		  	{this.genTooltip.bind(this)(point)}
 		  </CircleMarker>
 		)})
 		return points
@@ -479,24 +479,38 @@ helpers.generateRange = function(min, max, dataKey, reverse){
 helpers.zoomSync = function(event){
 	// when plotly generates an <event> from click-and-drag zoom,
 	// make sure the manual inputs keep up
-	if(JSON.stringify(Object.keys(event).sort()) === '["xaxis.range[0]","xaxis.range[1]","yaxis.range[0]","yaxis.range[1]"]'){
-		this.setState({
-			xmin: event["xaxis.range[0]"] ? event["xaxis.range[0]"]: '',
-			xmax: event["xaxis.range[1]"] ? event["xaxis.range[1]"]: '',
-			ymin: event["yaxis.range[0]"] ? event["yaxis.range[0]"]: '',
-			ymax: event["yaxis.range[1]"] ? event["yaxis.range[1]"]: ''
-		})
-	} else if(JSON.stringify(Object.keys(event).sort()) === '["xaxis.range[0]","xaxis.range[1]"]'){
-		this.setState({
-			xmin: event["xaxis.range[0]"] ? event["xaxis.range[0]"]: '',
-			xmax: event["xaxis.range[1]"] ? event["xaxis.range[1]"]: ''
-		})
-	} else if(JSON.stringify(Object.keys(event).sort()) === '["yaxis.range[0]","yaxis.range[1]"]'){
-		this.setState({
-			ymin: event["yaxis.range[0]"] ? event["yaxis.range[0]"]: '',
-			ymax: event["yaxis.range[1]"] ? event["yaxis.range[1]"]: ''
-		})
+	console.log(event)
+	let s = {...this.state}
+
+	if(event.hasOwnProperty("xaxis.range[0]")){
+		s.xmin = event["xaxis.range[0]"]
+		if(s.xKey === 'timestamp'){
+			s.xmin = s.xmin.slice(0,10)
+		}
 	}
+
+	if(event.hasOwnProperty("xaxis.range[1]")){
+		s.xmax = event["xaxis.range[1]"]
+		if(s.xKey === 'timestamp'){
+			s.xmax = s.xmax.slice(0,10)
+		}
+	}
+
+	if(event.hasOwnProperty("yaxis.range[0]")){
+		s.ymin = event["yaxis.range[0]"]
+		if(s.yKey === 'timestamp'){
+			s.ymin = s.ymin.slice(0,10)
+		}
+	}
+
+	if(event.hasOwnProperty("yaxis.range[1]")){
+		s.ymax = event["yaxis.range[1]"]
+		if(s.yKey === 'timestamp'){
+			s.ymax = s.ymax.slice(0,10)
+		}
+	}
+
+	this.setState(s)
 }
 
 helpers.toggleTrace = function(id){
@@ -584,7 +598,7 @@ helpers.resetAllAxes = function(event){
 }
 
 helpers.prepPlotlyState = function(markerSize){
-	console.log(this.state)
+
 	let xrange = helpers.generateRange.bind(this)(this.state.xmin, this.state.xmax, this.state.xKey, this.state.reverseX)
 	let yrange = helpers.generateRange.bind(this)(this.state.ymin, this.state.ymax, this.state.yKey, this.state.reverseY)
 	let zrange = helpers.generateRange.bind(this)(this.state.zmin, this.state.zmax, this.state.zKey, this.state.reverseZ)
@@ -596,7 +610,7 @@ helpers.prepPlotlyState = function(markerSize){
 	}
 
 	if(this.state.refreshData){
-
+			
 			// discourage color scale from drawing any number of times other than exactly one
 			let scaleDrawn = false
 			let needsScale = function(isVisible){
@@ -614,7 +628,8 @@ helpers.prepPlotlyState = function(markerSize){
 					x: d[this.state.xKey],
 					y: d[this.state.yKey],
 					z: this.state.zKey === '[2D plot]' ? [] : d[this.state.zKey],
-					type: this.state.zKey === '[2D plot]' ? 'scatter2d' : 'scatter3d',
+					type: this.state.zKey === '[2D plot]' ? 'scattergl' : 'scatter3d',
+					connectgaps: true,
 					mode: this.state.connectingLines ? 'markers+lines' : 'markers',
 					line: {
 						color: 'grey'

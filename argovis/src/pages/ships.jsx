@@ -56,6 +56,7 @@ class ShipsExplore extends React.Component {
         this.apiPrefix = 'http://3.88.185.52:8080/'
         this.vocab = {}
         this.wocelineLookup = {}
+        this.wocegroupLookup = {}
         this.dataset = 'cchdo'
         this.customQueryParams = ['startDate', 'endDate', 'polygon', 'depthRequired', 'woce', 'goship', 'other', 'woceline', 'cruise']
 
@@ -64,13 +65,15 @@ class ShipsExplore extends React.Component {
 		Promise.all(vocabURLs.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 			Promise.all(responses.map(res => res.json())).then(data => {
 				this.vocab['woceline'] = Object.keys(data[0][0].summary).map(key => {
+					this.wocegroupLookup[key] = {}
 					return data[0][0].summary[key].map((x,i) => {
 						let label = key + ' - ' + String(x.startDate.slice(0,7) )
-						this.wocelineLookup[label] = data[0][0].summary[key][i]
+						this.wocelineLookup[label] = data[0][0].summary[key][i]			// for lookups by <woceline - start yyyy-mm>
+						this.wocegroupLookup[key][label] = [new Date(data[0][0].summary[key][i].startDate), new Date(data[0][0].summary[key][i].endDate)]   // for lookups by woceline
 						return label
 					}) 
 				})
-				console.log(this.wocelineLookup)
+				console.log(this.wocegroupLookup)
 				this.vocab['woceline'] = [].concat(...this.vocab['woceline'])
 				this.vocab['cruise'] = data[1].map(x=>String(x))
 				this.setState({refreshData:true})
@@ -129,7 +132,6 @@ class ShipsExplore extends React.Component {
     }
 
     chooseColor(point){
-    	console.log(point)
     	if(point[4].includes('cchdo_woce')){
     		return 'green'
     	} else if(point[4].includes('cchdo_go-ship')){
@@ -139,17 +141,40 @@ class ShipsExplore extends React.Component {
 	    }
     }
 
+    determineWoceGroup(woce, date){
+    	// given the woce tag and date of a measurement,
+    	// determine the start and end date of the group of measurements this measurement belongs to
+
+    	let groups = this.wocegroupLookup[woce]
+    	for(let i=0; i<Object.keys(groups).length; i++){
+    		let key = Object.keys(groups)[i]
+    		if(date >= groups[key][0] && date <= groups[key][1]){
+    			return groups[key].concat(key)
+    		}
+    	}
+    }
+
     genTooltip(point){
     	// given an array <point> corresponding to a single point returned by an API data route with compression=minimal,
     	// return the jsx for an appropriate tooltip for this point.
+
+    	// determine the woceline occupancies for this point, if any; give an extra hour on either end to capture edges. 
+    	let woceoccupy = point[5].map(x => {
+    		let timespan = this.determineWoceGroup(x, new Date(point[3]))
+    		timespan[0].setHours(timespan[0].getHours() - 1)
+    		timespan[1].setHours(timespan[1].getHours() + 1)
+    		return [x].concat(timespan)
+    	})
 
     	return(
 		    <Popup>
 		      ID: {point[0]} <br />
 		      Long / Lat: {point[1]} / {point[2]} <br />
 		      Date: {point[3]} <br />
-		      WOCE Lines: {point[5].join(', ')} <br />
-		      Cruise: {point[6]} <br />
+		      {woceoccupy.map(x => {
+		      	return(<><a key={Math.random()} target="_blank" rel="noreferrer" href={'/plots/ships?showAll=true&woceline='+x[0]+'&startDate=' + x[1].toISOString().replace('.000Z', 'Z') + '&endDate=' + x[2].toISOString().replace('.000Z', 'Z')}>{'Plots for ' + x[3]}</a><br /></>)
+		      })}
+		      <a target="_blank" rel="noreferrer" href={'/plots/ships?showAll=true&cruise='+point[6]}>{'Plots for cruise ' + point[6]}</a><br />
 		      Data Sources: {point[4]}
 		    </Popup>
     	)
