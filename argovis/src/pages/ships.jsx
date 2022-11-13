@@ -167,16 +167,24 @@ class ShipsExplore extends React.Component {
     		return [x].concat(timespan)
     	})
 
+    	let regionLink = ''
+      	if(JSON.stringify(this.state.polygon) !== '[]'){
+      		let endDate = new Date(this.state.endDate)
+      		endDate.setDate(endDate.getDate() + 1)
+      		regionLink = <a target="_blank" rel="noreferrer" href={'/plots/ships?showAll=true&startDate=' + this.state.startDate + 'T00:00:00Z&endDate='+ endDate.toISOString().replace('.000Z', 'Z') +'&polygon='+JSON.stringify(this.state.polygon)}>Regional Selection Page</a>		
+      	}
+
     	return(
 		    <Popup>
 		      ID: {point[0]} <br />
 		      Long / Lat: {point[1]} / {point[2]} <br />
 		      Date: {point[3]} <br />
+		      Data Sources: {point[4]} <br />
 		      {woceoccupy.map(x => {
 		      	return(<><a key={Math.random()} target="_blank" rel="noreferrer" href={'/plots/ships?showAll=true&woceline='+x[0]+'&startDate=' + x[1].toISOString().replace('.000Z', 'Z') + '&endDate=' + x[2].toISOString().replace('.000Z', 'Z')}>{'Plots for ' + x[3]}</a><br /></>)
 		      })}
 		      <a target="_blank" rel="noreferrer" href={'/plots/ships?showAll=true&cruise='+point[6]}>{'Plots for cruise ' + point[6]}</a><br />
-		      Data Sources: {point[4]}
+		      {regionLink}
 		    </Popup>
     	)
     }

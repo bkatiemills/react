@@ -9,12 +9,14 @@ class DrifterPlots extends React.Component {
 		document.title = 'Argovis - drifter plots'
 		super(props);
 
-		helpers.initPlottingPage.bind(this)(['wmo', 'platform'])
+		helpers.initPlottingPage.bind(this)(['wmo', 'platform', 'startDate', 'endDate', 'polygon'])
 
 		if(this.state.wmo){
 			this.state.title = 'Drifter WMO ' + this.state.wmo
 		} else if(this.state.platform){
 			this.state.title = 'Drifter platform ' + this.state.platform
+		} else if(this.state.polygon){
+			this.state.title = 'Drifter regional search, ' + this.state.startDate.slice(0,10) + ' to ' + this.state.endDate.slice(0,10)
 		}
 
 		helpers.downloadData.bind(this)('sst', 'sst1', '[2D plot]', 'timestamp', true)
@@ -39,8 +41,10 @@ class DrifterPlots extends React.Component {
 			urls = urls.concat(this.apiPrefix + 'drifters/?compression=array&data=all&wmo=' + this.state.wmo)
 		} else if(this.state.platform){
 			urls = urls.concat(this.apiPrefix + 'drifters/?compression=array&data=all&platform=' + this.state.platform)
-		}
-		console.log(urls)
+		} else if(this.state.polygon && this.state.startDate && this.state.endDate){
+			urls = urls.concat(this.apiPrefix + 'drifters/?compression=array&data=all&startDate=' + this.state.startDate + '&endDate=' + this.state.endDate + '&polygon=' + this.state.polygon)
+		} 
+
 		return urls
 	}
 

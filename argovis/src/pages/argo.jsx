@@ -126,6 +126,13 @@ class ArgoExplore extends React.Component {
     	// given an array <point> corresponding to a single point returned by an API data route with compression=minimal,
     	// return the jsx for an appropriate tooltip for this point.
 
+    	let regionLink = ''
+      	if(JSON.stringify(this.state.polygon) !== '[]'){
+      		let endDate = new Date(this.state.endDate)
+      		endDate.setDate(endDate.getDate() + 1)
+      		regionLink = <><br /><a target="_blank" rel="noreferrer" href={'/plots/argo?showAll=true&startDate=' + this.state.startDate + 'T00:00:00Z&endDate='+ endDate.toISOString().replace('.000Z', 'Z') +'&polygon='+JSON.stringify(this.state.polygon)}>Regional Selection Page</a></>		
+      	}
+
     	return(
 		    <Popup>
 		      ID: {point[0]} <br />
@@ -133,6 +140,7 @@ class ArgoExplore extends React.Component {
 		      Date: {point[3]} <br />
 		      Data Sources: {point[4].join(', ')} <br />
 		      <a target="_blank" rel="noreferrer" href={'/plots/argo?showAll=true&argoPlatform='+point[0].split('_')[0]}>Platform Page</a>
+		      {regionLink}
 		    </Popup>
     	)
     }

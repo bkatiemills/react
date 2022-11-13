@@ -9,9 +9,13 @@ class ArgoPlots extends React.Component {
 		document.title = 'Argovis - Argo plots'
 		super(props);
 
-		helpers.initPlottingPage.bind(this)(['argoPlatform'])
+		helpers.initPlottingPage.bind(this)(['argoPlatform', 'polygon', 'startDate', 'endDate'])
 
-		this.state.title = 'Argo platform ' + this.state.argoPlatform
+		if(this.state.argoPlatform){
+			this.state.title = 'Argo platform ' + this.state.argoPlatform
+		} else if (this.state.polygon && this.state.startDate && this.state.endDate){
+			this.state.title = 'Argo regional search, ' + this.state.startDate.slice(0,10) + ' to ' + this.state.endDate.slice(0,10)
+		}
 
 		helpers.downloadData.bind(this)('temperature', 'salinity', '[2D plot]', 'timestamp')
 	}
@@ -75,7 +79,9 @@ class ArgoPlots extends React.Component {
 
 		if(this.state.argoPlatform){
 			urls = urls.concat(this.apiPrefix + 'argo/?compression=array&data=all&platform=' + this.state.argoPlatform)
-		}
+		} else if(this.state.polygon && this.state.startDate && this.state.endDate){
+			urls = urls.concat(this.apiPrefix + 'argo/?compression=array&data=all&startDate=' + this.state.startDate + '&endDate=' + this.state.endDate + '&polygon=' + this.state.polygon)
+		} 
 
 		return urls
 	}
@@ -138,6 +144,14 @@ class ArgoPlots extends React.Component {
 	render(){
 		helpers.prepPlotlyState.bind(this)(2)
 
+		let linkouts = <></>
+		if(this.state.argoPlatform){
+			linkouts = <>
+				<a className="btn btn-primary" role='button' style={{'marginRight': '1em'}} href={'https://www.ocean-ops.org/board/wa/Platform?ref='+this.state.argoPlatform} target="_blank" rel="noopener noreferrer">{'Ocean Ops Page for float ID '+this.state.argoPlatform}</a>
+				<a className="btn btn-primary" role='button' style={{'marginRight': '1em'}} href={'https://fleetmonitoring.euro-argo.eu/float/'+this.state.argoPlatform} target="_blank" rel="noopener noreferrer">{'Fleet Monitoring Page for float ID '+this.state.argoPlatform}</a>				
+			</>
+		}
+
 		return(
 			<>
 				{helpers.plotHTML.bind(this)()}
@@ -147,8 +161,7 @@ class ArgoPlots extends React.Component {
 						<h5>Profiles</h5>
 						<a className="btn btn-primary" role='button' style={{'marginRight': '1em'}} href={this.csv} download={'argo'+this.state.argoPlatform+'.csv'}>Download Table CSV</a>
 						<a className="btn btn-primary" role='button' style={{'marginRight': '1em'}} href={this.json} download={'argo'+this.state.argoPlatform+'.json'}>Download Complete JSON</a>
-						<a className="btn btn-primary" role='button' style={{'marginRight': '1em'}} href={'https://www.ocean-ops.org/board/wa/Platform?ref='+this.state.argoPlatform} target="_blank" rel="noopener noreferrer">{'Ocean Ops Page for float ID '+this.state.argoPlatform}</a>
-						<a className="btn btn-primary" role='button' style={{'marginRight': '1em'}} href={'https://fleetmonitoring.euro-argo.eu/float/'+this.state.argoPlatform} target="_blank" rel="noopener noreferrer">{'Fleet Monitoring Page for float ID '+this.state.argoPlatform}</a>
+						{linkouts}
 						<table className='table'>
 							<thead style={{'position': 'sticky', 'top': 0, 'backgroundColor': '#FFFFFF'}}>
 							    <tr>
