@@ -8,6 +8,7 @@ import helpers from'./helpers'
 class ArgoExplore extends React.Component {
 
 	constructor(props) {
+		document.title = 'Argovis - Explore Argo profiles'
 		super(props);
 
 		let q = new URLSearchParams(window.location.search) // parse out query string
@@ -138,8 +139,10 @@ class ArgoExplore extends React.Component {
 
 	render(){
 		console.log(this.state)
+
 		return(
 			<>
+				<title>Explore Argo</title>
 				<div className='row' style={{'width':'100vw'}}>
 					<div className='col-3 overflow-auto'>
 						<fieldset ref={this.formRef}>

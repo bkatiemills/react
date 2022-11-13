@@ -479,7 +479,7 @@ helpers.generateRange = function(min, max, dataKey, reverse){
 helpers.zoomSync = function(event){
 	// when plotly generates an <event> from click-and-drag zoom,
 	// make sure the manual inputs keep up
-	console.log(event)
+
 	let s = {...this.state}
 
 	if(event.hasOwnProperty("xaxis.range[0]")){
@@ -568,7 +568,7 @@ helpers.onPlotAutosuggestChange = function(message, fieldID, resetLimits, event,
 		if(key === 'cKey'){
 			// define some default color schemes
 			if(v === 'temperature'){
-				s.cscale = 'Hot'
+				s.cscale = 'Thermal'
 			} else if (v === 'salinity'){
 				s.cscale = 'Viridis'
 			} else {
@@ -597,6 +597,45 @@ helpers.resetAllAxes = function(event){
 	this.setState(s)
 }
 
+helpers.genericTooltip = function(data){
+	// generic tooltip constructor for plotting pages
+
+	if(JSON.stringify(data) === '{}'){
+		return []
+	}
+	let tooltips = []
+	for(let i=0; i<data.timestamp.length; i++){
+		let text = ''
+		text += 'Record ID ' + data['_id'][i] + '<br><br>'
+		text += 'Longitude / Latitude: ' + data['longitude'][i] + ' / ' + data['latitude'][i] + '<br>'
+		text += 'Timestamp: ' + new Date(data['timestamp'][i]) + '<br><br>'
+		let defaultItems = ['longitude', 'latitude', 'timestamp', 'pressure']
+		if(!defaultItems.includes(this.state.xKey)){
+			if(data.hasOwnProperty(this.state.xKey)){
+				text += this.state.xKey + ': ' + data[this.state.xKey][i] + ' ' + this.units[this.state.xKey] + '<br>'
+			}
+		}
+		if(!defaultItems.includes(this.state.yKey)){
+			if(data.hasOwnProperty(this.state.yKey)){
+				text += this.state.yKey + ': ' + data[this.state.yKey][i] + ' ' + this.units[this.state.yKey] + '<br>'
+			}
+		}
+		if(!defaultItems.includes(this.state.zKey) && this.state.zKey !== '[2d plot]'){
+			if(data.hasOwnProperty(this.state.zKey)){
+				text += this.state.zKey + ': ' + data[this.state.zKey][i] + ' ' + this.units[this.state.zKey] + '<br>'
+			}
+		}
+		if(!defaultItems.includes(this.state.cKey)){
+			if(data.hasOwnProperty(this.state.cKey)){
+				text += this.state.cKey + ': ' + data[this.state.cKey][i] + ' ' + this.units[this.state.cKey] + '<br>'
+			}
+		}
+		tooltips.push(text)
+	}
+
+	return tooltips
+}
+
 helpers.prepPlotlyState = function(markerSize){
 
 	let xrange = helpers.generateRange.bind(this)(this.state.xmin, this.state.xmax, this.state.xKey, this.state.reverseX)
@@ -622,12 +661,22 @@ helpers.prepPlotlyState = function(markerSize){
 				}
 			}
 
+			let sum = 0
+			this.state.data.map(d => {
+				if(d[this.state.xKey]){
+					sum += d[this.state.xKey].length
+				}
+			})
+
 			// generate data and layout
 			this.data = this.state.data.map((d,i) => {
+
 				return {
 					x: d[this.state.xKey],
 					y: d[this.state.yKey],
 					z: this.state.zKey === '[2D plot]' ? [] : d[this.state.zKey],
+					text: this.genTooltip.bind(this)(d),
+					hoverinfo: 'text',
 					type: this.state.zKey === '[2D plot]' ? 'scattergl' : 'scatter3d',
 					connectgaps: true,
 					mode: this.state.connectingLines ? 'markers+lines' : 'markers',
@@ -637,7 +686,7 @@ helpers.prepPlotlyState = function(markerSize){
 					marker: {
 						size: markerSize,
 						color: d[this.state.cKey],
-						colorscale: this.state.cscale,
+						colorscale: this.state.cscale === 'Thermal' ? [[0,'rgb(3, 35, 51)'], [0.09,'rgb(13, 48, 100)'], [0.18,'rgb(53, 50, 155)'], [0.27,'rgb(93, 62, 153)'], [0.36,'rgb(126, 77, 143)'], [0.45,'rgb(158, 89, 135)'], [0.54,'rgb(193, 100, 121)'], [0.63,'rgb(225, 113, 97)'], [0.72,'rgb(246, 139, 69)'], [0.81,'rgb(251, 173, 60)'], [0.90,'rgb(246, 211, 70)'], [1,'rgb(231, 250, 90)']] : this.state.cscale,
 						cmin: Math.min(crange[0], crange[1]),
 						cmax: Math.max(crange[0], crange[1]),
 						showscale: needsScale(helpers.showTrace.bind(this)(d._id)),
@@ -1071,7 +1120,7 @@ helpers.initPlottingPage = function(customParams){
 	}
 
 	this.apiPrefix = 'http://3.88.185.52:8080/'
-	this.vocab = {xKey: [], yKey: [], zKey: [], cKey: [], cscale: ['Blackbody','Bluered','Blues','Cividis','Earth','Electric','Greens','Greys','Hot','Jet','Picnic','Portland','Rainbow','RdBu','Reds','Viridis','YlGnBu','YlOrRd']}
+	this.vocab = {xKey: [], yKey: [], zKey: [], cKey: [], cscale: ['Blackbody','Bluered','Blues','Cividis','Earth','Electric','Greens','Greys','Hot','Jet','Picnic','Portland','Rainbow','RdBu','Reds', 'Thermnal', 'Viridis','YlGnBu','YlOrRd']}
 	this.statusReporting = React.createRef()
 	this.showAll = true // show all autoselect options when field is focused and empty
 	this.units = {

@@ -6,6 +6,8 @@ import helpers from'./helpers'
 class ShipPlots extends React.Component {
 
 	constructor(props) {
+		document.title = 'Argovis - ship-based profile plots'
+
 		super(props);
 
 		helpers.initPlottingPage.bind(this)(['woceline', 'startDate', 'endDate', 'cruise'])
@@ -65,6 +67,57 @@ class ShipPlots extends React.Component {
 
 	generateMetadataURLs(metakeys){
 		return metakeys.map(x => this.apiPrefix + 'cchdo/meta?id=' + x)
+	}
+
+	genTooltip(data){
+		// given <data>, the transposed data record for a profile, reutrn the appropriate tooltip array
+		if(JSON.stringify(data) === '{}'){
+			return []
+		}
+		let tooltips = []
+		for(let i=0; i<data.timestamp.length; i++){
+			let text = ''
+			text += 'Profile ' + data['_id'] + '<br><br>'
+			text += 'Longitude / Latitude: ' + data['longitude'][i] + ' / ' + data['latitude'][i] + '<br>'
+			text += 'Timestamp: ' + new Date(data['timestamp'][i]) + '<br>'
+			text += 'Pressure: ' + data['pressure'][i] + ' dbar<br><br>'
+			let defaultItems = ['longitude', 'latitude', 'timestamp', 'pressure']
+			if(!defaultItems.includes(this.state.xKey)){
+				if(data.hasOwnProperty(this.state.xKey)){
+					text += this.state.xKey + ': ' + data[this.state.xKey][i] + ' ' + this.units[this.state.xKey] + '<br>'
+				}
+				if(data.hasOwnProperty(this.state.xKey + '_woceqc')){
+					text += this.state.xKey +'_woceqc: ' + data[this.state.xKey+'_woceqc'][i] + '<br>'
+				}
+			}
+			if(!defaultItems.includes(this.state.yKey)){
+				if(data.hasOwnProperty(this.state.yKey)){
+					text += this.state.yKey + ': ' + data[this.state.yKey][i] + ' ' + this.units[this.state.yKey] + '<br>'
+				}
+				if(data.hasOwnProperty(this.state.yKey + '_woceqc')){
+					text += this.state.yKey +'_woceqc: ' + data[this.state.yKey+'_woceqc'][i] + '<br>'
+				}
+			}
+			if(!defaultItems.includes(this.state.zKey) && this.state.zKey !== '[2d plot]'){
+				if(data.hasOwnProperty(this.state.zKey)){
+					text += this.state.zKey + ': ' + data[this.state.zKey][i] + ' ' + this.units[this.state.zKey] + '<br>'
+				}
+				if(data.hasOwnProperty(this.state.zKey + '_woceqc')){
+					text += this.state.zKey +'_woceqc: ' + data[this.state.zKey+'_woceqc'][i] + '<br>'
+				}
+			}
+			if(!defaultItems.includes(this.state.cKey)){
+				if(data.hasOwnProperty(this.state.cKey)){
+					text += this.state.cKey + ': ' + data[this.state.cKey][i] + ' ' + this.units[this.state.cKey] + '<br>'
+				}
+				if(data.hasOwnProperty(this.state.cKey + '_woceqc')){
+					text += this.state.cKey +'_woceqc: ' + data[this.state.cKey+'_woceqc'][i]
+				}
+			}
+			tooltips.push(text)
+		}
+
+		return tooltips
 	}
 
 	render(){

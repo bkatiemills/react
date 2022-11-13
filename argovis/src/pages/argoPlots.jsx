@@ -6,6 +6,7 @@ import helpers from'./helpers'
 class ArgoPlots extends React.Component {
 
 	constructor(props) {
+		document.title = 'Argovis - Argo plots'
 		super(props);
 
 		helpers.initPlottingPage.bind(this)(['argoPlatform'])
@@ -83,6 +84,57 @@ class ArgoPlots extends React.Component {
 		return metakeys.map(x => this.apiPrefix + 'argo/meta?id=' + x)
 	}
 
+	genTooltip(data){
+		// given <data>, the transposed data record for a profile, reutrn the appropriate tooltip array
+		if(JSON.stringify(data) === '{}'){
+			return []
+		}
+		let tooltips = []
+		for(let i=0; i<data.timestamp.length; i++){
+			let text = ''
+			text += 'Profile ' + data['_id'] + '<br><br>'
+			text += 'Longitude / Latitude: ' + data['longitude'][i] + ' / ' + data['latitude'][i] + '<br>'
+			text += 'Timestamp: ' + new Date(data['timestamp'][i]) + '<br>'
+			text += 'Pressure: ' + data['pressure'][i] + ' dbar<br><br>'
+			let defaultItems = ['longitude', 'latitude', 'timestamp', 'pressure']
+			if(!defaultItems.includes(this.state.xKey)){
+				if(data.hasOwnProperty(this.state.xKey)){
+					text += this.state.xKey + ': ' + data[this.state.xKey][i] + ' ' + this.units[this.state.xKey] + '<br>'
+				}
+				if(data.hasOwnProperty(this.state.xKey + '_argoqc')){
+					text += this.state.xKey +'_argoqc: ' + data[this.state.xKey+'_argoqc'][i] + '<br>'
+				}
+			}
+			if(!defaultItems.includes(this.state.yKey)){
+				if(data.hasOwnProperty(this.state.yKey)){
+					text += this.state.yKey + ': ' + data[this.state.yKey][i] + ' ' + this.units[this.state.yKey] + '<br>'
+				}
+				if(data.hasOwnProperty(this.state.yKey + '_argoqc')){
+					text += this.state.yKey +'_argoqc: ' + data[this.state.yKey+'_argoqc'][i] + '<br>'
+				}
+			}
+			if(!defaultItems.includes(this.state.zKey) && this.state.zKey !== '[2d plot]'){
+				if(data.hasOwnProperty(this.state.zKey)){
+					text += this.state.zKey + ': ' + data[this.state.zKey][i] + ' ' + this.units[this.state.zKey] + '<br>'
+				}
+				if(data.hasOwnProperty(this.state.zKey + '_argoqc')){
+					text += this.state.zKey +'_argoqc: ' + data[this.state.zKey+'_argoqc'][i] + '<br>'
+				}
+			}
+			if(!defaultItems.includes(this.state.cKey)){
+				if(data.hasOwnProperty(this.state.cKey)){
+					text += this.state.cKey + ': ' + data[this.state.cKey][i] + ' ' + this.units[this.state.cKey] + '<br>'
+				}
+				if(data.hasOwnProperty(this.state.cKey + '_argoqc')){
+					text += this.state.cKey +'_argoqc: ' + data[this.state.cKey+'_argoqc'][i]
+				}
+			}
+			tooltips.push(text)
+		}
+
+		return tooltips
+	}
+
 	render(){
 		helpers.prepPlotlyState.bind(this)(2)
 
@@ -96,6 +148,7 @@ class ArgoPlots extends React.Component {
 						<a className="btn btn-primary" role='button' style={{'marginRight': '1em'}} href={this.csv} download={'argo'+this.state.argoPlatform+'.csv'}>Download Table CSV</a>
 						<a className="btn btn-primary" role='button' style={{'marginRight': '1em'}} href={this.json} download={'argo'+this.state.argoPlatform+'.json'}>Download Complete JSON</a>
 						<a className="btn btn-primary" role='button' style={{'marginRight': '1em'}} href={'https://www.ocean-ops.org/board/wa/Platform?ref='+this.state.argoPlatform} target="_blank" rel="noopener noreferrer">{'Ocean Ops Page for float ID '+this.state.argoPlatform}</a>
+						<a className="btn btn-primary" role='button' style={{'marginRight': '1em'}} href={'https://fleetmonitoring.euro-argo.eu/float/'+this.state.argoPlatform} target="_blank" rel="noopener noreferrer">{'Fleet Monitoring Page for float ID '+this.state.argoPlatform}</a>
 						<table className='table'>
 							<thead style={{'position': 'sticky', 'top': 0, 'backgroundColor': '#FFFFFF'}}>
 							    <tr>

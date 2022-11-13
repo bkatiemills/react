@@ -8,6 +8,7 @@ import helpers from'./helpers'
 class TCExplore extends React.Component {
 
 	constructor(props) {
+		document.title = 'Argovis - Explore tropical cyclones'
 		super(props);
 
 		let q = new URLSearchParams(window.location.search) // parse out query string

@@ -11,22 +11,27 @@ class Grids extends React.Component {
       this.state = {
       	grid: [],
       	points: [],
+      	subpoints: [],
+      	delta: [],
       	polygon: [[-52.382812,53.225768],[-62.050781,48.107431],[-72.773438,43.325178],[-77.695313,37.996163],[-81.5625,32.990236],[-82.089844,27.683528],[-78.925781,22.755921],[-71.547389,23.008026],[-64.160156,22.917923],[-57.673458,28.712256],[-50.449219,34.161818],[-40.078125,44.590467],[-35.683594,51.618017],[-43.066406,54.265224],[-52.382812,53.225768]],
       	min: 0,
       	max: 1,
       	units: '',
       	levelindex: {
       		'temperature_rg': 0,
+      		'temperature_rg_sub': 0,
       		'salinity_rg': 0,
       		'ohc_kg': 0
       	},
       	timestep: {
       		'temperature_rg': "2004-01-15",
+      		'temperature_rg_sub': "2004-01-15",
       		'salinity_rg': "2004-01-15",
       		'ohc_kg': "2005-01-15"
       	},
       	selectedGrid: 'temperature_rg',
-      	refreshData: true
+      	refreshData: true,
+      	apiKey: 'guest'
       }
       this.rawLevels = {
       	'temperature_rg': [2.5,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,182.5,200,220,240,260,280,300,320,340,360,380,400,420,440,462.5,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1412.5,1500,1600,1700,1800,1900,1975],
@@ -46,6 +51,7 @@ class Grids extends React.Component {
       this.fgRef = React.createRef()
       this.gridControls = {
       	'temperature_rg': React.createRef(),
+      	'temperature_rg_sub': React.createRef(), 
       	'salinity_rg': React.createRef(),
       	'ohc_kg': React.createRef()
       }
@@ -61,23 +67,56 @@ class Grids extends React.Component {
       this.componentDidUpdate()
     }
 
+
     componentDidUpdate(prevProps, prevState, snapshot){
     	if(this.state.refreshData){
     		if(this.statusReporting.current){
 					helpers.manageStatus.bind(this)('downloading')
 				}
 	    	//kick off request for new data, redraw the map when complete
-	    	let url = this.apiPrefix + 'grids/' + this.state.selectedGrid+'?data=all&compression=array&startDate='+this.state.timestep[this.state.selectedGrid]+'T00:00:00Z&endDate='+this.state.timestep[this.state.selectedGrid]+'T00:00:01Z&presRange='+(this.rawLevels[this.state.selectedGrid][this.state.levelindex[this.state.selectedGrid]]-0.1)+','+(this.rawLevels[this.state.selectedGrid][this.state.levelindex[this.state.selectedGrid]]+0.1)
+	    	let url    = this.apiPrefix + 'grids/' + this.state.selectedGrid+'?data=all&compression=array&startDate='+this.state.timestep[this.state.selectedGrid]+'T00:00:00Z&endDate='+this.state.timestep[this.state.selectedGrid]+'T00:00:01Z&presRange='+(this.rawLevels[this.state.selectedGrid][this.state.levelindex[this.state.selectedGrid]]-0.1)+','+(this.rawLevels[this.state.selectedGrid][this.state.levelindex[this.state.selectedGrid]]+0.1)
+	    	let suburl = this.apiPrefix + 'grids/' + this.state.selectedGrid+'?data=all&compression=array&startDate='+this.state.timestep[this.state.selectedGrid+'_sub']+'T00:00:00Z&endDate='+this.state.timestep[this.state.selectedGrid+'_sub']+'T00:00:01Z&presRange='+(this.rawLevels[this.state.selectedGrid][this.state.levelindex[this.state.selectedGrid+'_sub']]-0.1)+','+(this.rawLevels[this.state.selectedGrid][this.state.levelindex[this.state.selectedGrid+'_sub']]+0.1)
 	    	if(this.state.polygon.length > 0){
 	    		url += '&polygon='+JSON.stringify(this.state.polygon)
+	    		suburl += '&polygon='+JSON.stringify(this.state.polygon)
 	    	}
-				fetch(url)
-					.then(response => {response.json().then(data => {
-						// eslint-disable-next-line
-						this.state.points = data
+
+				let x = Promise.all([url,suburl].map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+					Promise.all(responses.map(res => res.json())).then(data => {
+						this.state.points = data[0]
+						this.state.subpoints = data[1]
+						// construct grid subtraction delta
+						/// start by turning grids into kv keyed by unique concatenation of lon/lat so we can easily subtract the correct pairs of points
+						let grid1 = {}
+						for(let i=0; i<data[0].length; i++){
+							grid1['' + data[0][i].geolocation.coordinates[0] + data[0][i].geolocation.coordinates[1]] = {
+								geolocation: data[0][i].geolocation,
+								data: data[0][i].data
+							}
+						}
+						let grid2 = {}
+						for(let i=0; i<data[1].length; i++){
+							grid2['' + data[1][i].geolocation.coordinates[0] + data[1][i].geolocation.coordinates[1]] = {
+								geolocation: data[1][i].geolocation,
+								data: data[1][i].data
+							}
+						}
+						/// subrtract grids, produce a list of objects that is 'profile-like' where data are the delta values
+						this.state.delta = []
+						for(let i=0; i<Object.keys(grid1).length; i++){
+							let key = Object.keys(grid1)[i]
+							if(Object.keys(grid2).includes(key)){
+								this.state.delta.push({
+									geolocation: grid1[key].geolocation,
+									data: [[grid1[key].data[0][0] - grid2[key].data[0][0]]]
+								})
+							}
+						}
+						console.log(grid1, grid2)
 						helpers.manageStatus.bind(this)('rendering')
-						this.refreshMap(false)				
-					})})
+						this.refreshMap(false)	
+					})
+				})
 			}
     }
 
@@ -120,9 +159,9 @@ class Grids extends React.Component {
     refreshMap(needNewData){
     	// redraw the map and render the dom
     	if(this.state.points.length > 0){
-				let values = this.state.points.map(x=>x.data[0][0]).filter(x=>x!==null)
+				let values = this.state.delta.map(x=>x.data[0][0]).filter(x=>x!==null)
 				this.setState({...this.state, 
-												grid: this.gridRasterfy(this.state.points, Math.min(...values), Math.max(...values)), 
+												grid: this.gridRasterfy(this.state.delta, Math.min(...values), Math.max(...values)), 
 												min: Math.min(...values), 
 												max: Math.max(...values), 
 												units: this.state.points[0].units[0], 
@@ -139,11 +178,10 @@ class Grids extends React.Component {
 			}
 			else {
 				points = points.map(point => {return(
-					<Rectangle key={point._id+Math.random()} bounds={[[point.geolocation.coordinates[1]-0.5, point.geolocation.coordinates[0]-0.5],[point.geolocation.coordinates[1]+0.5, point.geolocation.coordinates[0]+0.5]]} pathOptions={{ fillOpacity: 0.5, weight: 0, color: this.chooseColor(point.data[0][0], min, max) }}>
+					<Rectangle key={Math.random()} bounds={[[point.geolocation.coordinates[1]-0.5, point.geolocation.coordinates[0]-0.5],[point.geolocation.coordinates[1]+0.5, point.geolocation.coordinates[0]+0.5]]} pathOptions={{ fillOpacity: 0.5, weight: 0, color: this.chooseColor(point.data[0][0], min, max) }}>
       				<Popup>
-				      	ID: {point._id} <br />
 				  			Long / Lat: {point.geolocation.coordinates[0]} / {point.geolocation.coordinates[1]} <br />
-				  			Date: {point.timestamp}
+				  			Value: {point.data[0][0]}
 				  		</Popup>
     			</Rectangle>
 				)})
@@ -206,6 +244,7 @@ class Grids extends React.Component {
     }
 
 	render(){
+		console.log(this.state)
 		return(
 			<div>
 				<div className='row' style={{'width':'100vw'}}>	
@@ -219,25 +258,45 @@ class Grids extends React.Component {
 							  <label className="form-check-label" htmlFor="temperature_rg">
 							    <strong>Roemmich-Gilson temperature total</strong>
 							  </label>
+							  <small className="form-text text-muted"><a target="_blank" rel="noreferrer" href='https://sio-argo.ucsd.edu/RG_Climatology.html'>Original Data</a></small>
 							</div>
 							<div ref={this.gridControls['temperature_rg']}>
 								<div className='row'>
 									<div className='col-1'></div>
 									<div className='col-11'>
-										<small className="form-text text-muted"><a target="_blank" rel="noreferrer" href='https://sio-argo.ucsd.edu/RG_Climatology.html'>Original Data</a></small>
+										<small className="form-text text-muted">Depth Layer [m]</small>
 										<select className="form-select" onChange={(v) => this.changeLevel(v, 'temperature_rg')}>
 											{this.levels.temperature_rg}
 										</select>
-										<small className="form-text text-muted">Depth Layer [m]</small>
 									</div>
 								</div>
 								<div className='row'>
 									<div className='col-1'></div>
 									<div className='col-11'>
+										<small className="form-text text-muted">Month</small>
 										<select className="form-select" onChange={(v) => this.changeDate(v, 'temperature_rg')}>
 											{this.timesteps.temperature_rg}
 										</select>
+									</div>
+								</div>
+							</div>
+							<div ref={this.gridControls['temperature_rg_sub']}>
+								<div className='row'>
+									<div className='col-1'></div>
+									<div className='col-11'>
+										<small className="form-text text-muted">Depth Layer [m]</small>
+										<select className="form-select" onChange={(v) => this.changeLevel(v, 'temperature_rg_sub')}>
+											{this.levels.temperature_rg}
+										</select>
+									</div>
+								</div>
+								<div className='row'>
+									<div className='col-1'></div>
+									<div className='col-11'>
 										<small className="form-text text-muted">Month</small>
+										<select className="form-select" onChange={(v) => this.changeDate(v, 'temperature_rg_sub')}>
+											{this.timesteps.temperature_rg}
+										</select>
 									</div>
 								</div>
 							</div>

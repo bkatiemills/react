@@ -8,6 +8,7 @@ import helpers from'./helpers'
 class ShipsExplore extends React.Component {
 
 	constructor(props) {
+		document.title = 'Argovis - Explore ship-based profiles'
 		super(props);
 
 		let q = new URLSearchParams(window.location.search) // parse out query string

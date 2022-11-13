@@ -32,7 +32,7 @@ class ArgovisNav extends React.Component {
 		return(
 			<nav className="navbar navbar-expand-lg bg-light">
 			  <div className="container-fluid">
-			    <a className="navbar-brand" href="https://github.com/argovis"><img src='./fulllogo.png' style={{'height':'30px'}} className='img-fluid'/></a>
+			    <a className="navbar-brand" href="https://github.com/argovis"><img src={'/fulllogo.png'} style={{'height':'30px'}} className='img-fluid'/></a>
 			    <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
 			      <span className="navbar-toggler-icon"></span>
 			    </button>

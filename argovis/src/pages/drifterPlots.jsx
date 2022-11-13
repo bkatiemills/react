@@ -6,6 +6,7 @@ import helpers from'./helpers'
 class DrifterPlots extends React.Component {
 
 	constructor(props) {
+		document.title = 'Argovis - drifter plots'
 		super(props);
 
 		helpers.initPlottingPage.bind(this)(['wmo', 'platform'])
@@ -39,12 +40,16 @@ class DrifterPlots extends React.Component {
 		} else if(this.state.platform){
 			urls = urls.concat(this.apiPrefix + 'drifters/?compression=array&data=all&platform=' + this.state.platform)
 		}
-
+		console.log(urls)
 		return urls
 	}
 
 	generateMetadataURLs(metakeys){
 		return metakeys.map(x => this.apiPrefix + 'drifters/meta?id=' + x)
+	}
+
+	genTooltip(data){
+		return helpers.genericTooltip.bind(this)(data)
 	}
 
 	render(){

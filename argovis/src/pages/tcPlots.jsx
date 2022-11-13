@@ -6,6 +6,7 @@ import helpers from'./helpers'
 class TCPlots extends React.Component {
 
 	constructor(props) {
+		document.title = 'Argovis - Tropical cyclone plots'
 		super(props);
 
 		helpers.initPlottingPage.bind(this)(['tcMeta'])
@@ -45,6 +46,10 @@ class TCPlots extends React.Component {
 
 	generateMetadataURLs(metakeys){
 		return metakeys.map(x => this.apiPrefix + 'tc/meta?id=' + x)
+	}
+
+	genTooltip(data){
+		return helpers.genericTooltip.bind(this)(data)
 	}
 
 	render(){
