@@ -17,10 +17,16 @@ class Dropdown extends React.Component {
           Explore
         </a>
         <div className={menuClass} aria-labelledby="navbarDropdown">
+  	      <h6 className="dropdown-header">Datasets</h6>
           <a className="dropdown-item" href="/argo">Argo profiles</a>
           <a className="dropdown-item" href="/ships">Ship-based profiles</a>
           <a className="dropdown-item" href="/drifters">Global drifter program</a>
           <a className="dropdown-item" href="/tc">Tropical cyclones</a>
+          <div className="dropdown-divider"></div>
+          <h6 className="dropdown-header">Gridded Products</h6>
+          <a className="dropdown-item" href="/grids?grid=temperature_rg">RG Temperature</a>
+          <a className="dropdown-item" href="/grids?grid=salinity_rg">RG Salinity</a>
+          <a className="dropdown-item" href="/grids?grid=ohc_kg">KG Ocean heat content</a>
         </div>
       </li>
     );

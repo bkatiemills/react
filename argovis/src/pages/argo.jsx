@@ -150,7 +150,6 @@ class ArgoExplore extends React.Component {
 
 		return(
 			<>
-				<title>Explore Argo</title>
 				<div className='row' style={{'width':'100vw'}}>
 					<div className='col-3 overflow-auto'>
 						<fieldset ref={this.formRef}>
