@@ -15,7 +15,7 @@ import ShipPlots from "./pages/shipPlots"
 
 export default function App() {
   useEffect(() => {    
-    // refresh iff query string changed onpopstate, so the back button works in a relatively reasonable manner
+    // refresh iff query string changed onpopstate, so the back button works in a relatively reasonable manner and hash changes dont trigger refresh
     window.onpopstate = function(event){
       if(window.argoPrevious !== window.location.search){
         window.argoPrevious = window.location.search

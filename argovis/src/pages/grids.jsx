@@ -10,19 +10,18 @@ class Grids extends React.Component {
       super(props);
 
       let q = new URLSearchParams(window.location.search) // parse out query string
-
       this.state = {
       	grid: [],
       	points: [],
       	subpoints: [],
-      	delta: [],
-      	polygon: [[-52.382812,53.225768],[-62.050781,48.107431],[-72.773438,43.325178],[-77.695313,37.996163],[-81.5625,32.990236],[-82.089844,27.683528],[-78.925781,22.755921],[-71.547389,23.008026],[-64.160156,22.917923],[-57.673458,28.712256],[-50.449219,34.161818],[-40.078125,44.590467],[-35.683594,51.618017],[-43.066406,54.265224],[-52.382812,53.225768]],
+      	data: [],
+      	polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [[-52.382812,53.225768],[-62.050781,48.107431],[-72.773438,43.325178],[-77.695313,37.996163],[-81.5625,32.990236],[-82.089844,27.683528],[-78.925781,22.755921],[-71.547389,23.008026],[-64.160156,22.917923],[-57.673458,28.712256],[-50.449219,34.161818],[-40.078125,44.590467],[-35.683594,51.618017],[-43.066406,54.265224],[-52.382812,53.225768]],
       	min: 0,
       	max: 1,
       	units: '',
-      	levelindex: 0,
-      	sublevelindex: 0,
-      	timestep: {
+      	levelindex: q.has('levelindex') ? q.get('levelindex') : 0,
+      	sublevelindex: q.has('sublevelindex') ? q.get('sublevelindex') : 0,
+      	timestep: q.has('timestep') ? q.get('timestep') : {
       		'temperature_rg': "2004-01-15",
       		'temperature_rg_sub': "2004-01-15",
       		'salinity_rg': "2004-01-15",
@@ -31,9 +30,10 @@ class Grids extends React.Component {
       	selectedGrid: q.get('grid'),
       	refreshData: true,
       	apiKey: 'guest',
-      	subgrid: true
+      	subgrid: q.has('subgrid') ? q.get('subgrid') : false,
+      	scale: chroma.scale(['#440154', '#482777', '#3f4a8a', '#31678e', '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825'])
       }
-      this.state.subtimestep = this.state.timestep
+      this.state.subtimestep = q.has('subtimestep') ? q.get('subtimestep') : this.state.timestep
       this.rawLevels = {
       	'temperature_rg': [2.5,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,182.5,200,220,240,260,280,300,320,340,360,380,400,420,440,462.5,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1412.5,1500,1600,1700,1800,1900,1975],
       	'salinity_rg': [2.5,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,182.5,200,220,240,260,280,300,320,340,360,380,400,420,440,462.5,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1412.5,1500,1600,1700,1800,1900,1975],
@@ -54,11 +54,11 @@ class Grids extends React.Component {
       	'ohc_kg': 'G'
       }[this.state.selectedGrid]
       this.apiPrefix = 'https://argovis-api.colorado.edu/'
-      this.scale = chroma.scale(['#440154', '#482777', '#3f4a8a', '#31678e', '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825']); //chroma -> colorbrewer -> viridis
+     	this.customQueryParams = ['polygon', 'selectedGrid', 'levelindex', 'sublevelindex', 'timestep', 'subtimestep', 'subgrid']
       
+
       this.componentDidUpdate()
     }
-
 
     componentDidUpdate(prevProps, prevState, snapshot){
     	if(this.state.refreshData){
@@ -73,42 +73,59 @@ class Grids extends React.Component {
 	    		suburl += '&polygon='+JSON.stringify(this.state.polygon)
 	    	}
 
-				let x = Promise.all([url,suburl].map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
-					Promise.all(responses.map(res => res.json())).then(data => {
-						this.state.points = data[0]
-						this.state.subpoints = data[1]
-						// construct grid subtraction delta
-						/// start by turning grids into kv keyed by unique concatenation of lon/lat so we can easily subtract the correct pairs of points
-						let grid1 = {}
-						for(let i=0; i<data[0].length; i++){
-							grid1['' + data[0][i].geolocation.coordinates[0] + data[0][i].geolocation.coordinates[1]] = {
-								geolocation: data[0][i].geolocation,
-								data: data[0][i].data
+	    	if(this.state.subgrid){
+					let x = Promise.all([url,suburl].map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+						Promise.all(responses.map(res => res.json())).then(data => {
+							this.state.points = data[0]
+							this.state.subpoints = data[1]
+							// construct grid subtraction delta
+							/// start by turning grids into kv keyed by unique concatenation of lon/lat so we can easily subtract the correct pairs of points
+							let grid1 = {}
+							for(let i=0; i<data[0].length; i++){
+								grid1['' + data[0][i].geolocation.coordinates[0] + data[0][i].geolocation.coordinates[1]] = {
+									geolocation: data[0][i].geolocation,
+									data: data[0][i].data
+								}
 							}
-						}
-						let grid2 = {}
-						for(let i=0; i<data[1].length; i++){
-							grid2['' + data[1][i].geolocation.coordinates[0] + data[1][i].geolocation.coordinates[1]] = {
-								geolocation: data[1][i].geolocation,
-								data: data[1][i].data
+							let grid2 = {}
+							for(let i=0; i<data[1].length; i++){
+								grid2['' + data[1][i].geolocation.coordinates[0] + data[1][i].geolocation.coordinates[1]] = {
+									geolocation: data[1][i].geolocation,
+									data: data[1][i].data
+								}
 							}
-						}
-						/// subrtract grids, produce a list of objects that is 'profile-like' where data are the delta values
-						this.state.delta = []
-						for(let i=0; i<Object.keys(grid1).length; i++){
-							let key = Object.keys(grid1)[i]
-							if(Object.keys(grid2).includes(key)){
-								this.state.delta.push({
-									geolocation: grid1[key].geolocation,
-									data: [[grid1[key].data[0][0] - grid2[key].data[0][0]]]
-								})
+							/// subrtract grids, produce a list of objects that is 'profile-like' where data are the delta values
+							this.state.data = []
+							for(let i=0; i<Object.keys(grid1).length; i++){
+								let key = Object.keys(grid1)[i]
+								if(Object.keys(grid2).includes(key)){
+									this.state.data.push({
+										geolocation: grid1[key].geolocation,
+										data: [[grid1[key].data[0][0] - grid2[key].data[0][0]]]
+									})
+								}
 							}
-						}
-						console.log(grid1, grid2)
-						helpers.manageStatus.bind(this)('rendering')
-						this.refreshMap(false)	
+							helpers.manageStatus.bind(this)('rendering')
+							let values = this.state.data.map(x=>x.data[0][0]).filter(x=>x!==null)
+							this.setScale(Math.min(...values), Math.max(...values))
+							helpers.setQueryString.bind(this)()
+							this.refreshMap(false, Math.min(...values), Math.max(...values))	
+						})
 					})
-				})
+				} else {
+					let x = Promise.all([url].map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+						Promise.all(responses.map(res => res.json())).then(data => {
+							this.state.points = data[0]
+							this.state.data = data[0]
+							helpers.manageStatus.bind(this)('rendering')
+							let values = this.state.data.map(x=>x.data[0][0]).filter(x=>x!==null)
+							this.setScale(Math.min(...values), Math.max(...values))
+							helpers.setQueryString.bind(this)()
+							this.refreshMap(false, Math.min(...values), Math.max(...values))	
+						}) 
+					})
+				}
+
 			}
     }
 
@@ -140,16 +157,16 @@ class Grids extends React.Component {
     		)})
     }
 
-    refreshMap(needNewData){
+    refreshMap(needNewData, min, max){
     	// redraw the map and render the dom
     	if(this.state.points.length > 0){
-				let values = this.state.delta.map(x=>x.data[0][0]).filter(x=>x!==null)
 				this.setState({...this.state, 
-												grid: this.gridRasterfy(this.state.delta, Math.min(...values), Math.max(...values)), 
-												min: Math.min(...values), 
-												max: Math.max(...values), 
+												grid: this.gridRasterfy(this.state.data, min, max), 
+												min: min, 
+												max: max, 
 												units: this.state.points[0].units[0], 
-												refreshData: needNewData}, () => {
+												refreshData: needNewData
+											}, () => {
 													helpers.manageStatus.bind(this)('ready')
 												})
 	    }
@@ -162,11 +179,15 @@ class Grids extends React.Component {
 			}
 			else {
 				points = points.map(point => {return(
-					<Rectangle key={Math.random()} bounds={[[point.geolocation.coordinates[1]-0.5, point.geolocation.coordinates[0]-0.5],[point.geolocation.coordinates[1]+0.5, point.geolocation.coordinates[0]+0.5]]} pathOptions={{ fillOpacity: 0.5, weight: 0, color: this.chooseColor(point.data[0][0], min, max) }}>
-      				<Popup>
-				  			Long / Lat: {point.geolocation.coordinates[0]} / {point.geolocation.coordinates[1]} <br />
-				  			Value: {point.data[0][0]}
-				  		</Popup>
+					<Rectangle 
+						key={Math.random()} 
+						bounds={[[point.geolocation.coordinates[1]-0.5, point.geolocation.coordinates[0]-0.5],[point.geolocation.coordinates[1]+0.5, point.geolocation.coordinates[0]+0.5]]} 
+						pathOptions={{ 
+							fillOpacity: 0.5, 
+							weight: 0, 
+							color: this.chooseColor(point.data[0][0], min, max) 
+						}}>
+      				{this.genTooltip(point)}
     			</Rectangle>
 				)})
 				return points
@@ -178,7 +199,7 @@ class Grids extends React.Component {
     		return 'black'
     	}
 
-    	return this.scale((val-min)/(max - min)).hex()
+    	return this.state.scale(val).hex()
     }
 
     fetchPolygon(coords){
@@ -217,14 +238,41 @@ class Grids extends React.Component {
     	// given an array <point> corresponding to a single point returned by an API data route with compression=minimal,
     	// return the jsx for an appropriate tooltip for this point.
 
-    	return(
-		    <Popup>
-		      ID: {point[0]} <br />
-		      Long / Lat: {point[1]} / {point[2]} <br />
-		      Date: {point[3]} <br />
-		      Data Sources: {point[4]}
-		    </Popup>
-    	)
+		  if(this.state.subgrid){
+		   	return(<Popup>
+				  			Long / Lat: {point.geolocation.coordinates[0]} / {point.geolocation.coordinates[1]} <br />
+				  			Value: {point.data[0][0]}
+				  	  </Popup>)
+		  } else {
+	    	return(<Popup>
+						      ID: {point._id} <br />
+						      Long / Lat: {point.geolocation.coordinates[0]} / {point.geolocation.coordinates[1]} <br />
+						      Date: {point.timestamp} <br />
+						    </Popup>)
+		  }
+    }
+
+    setScale(min, max){
+
+    	if(this.state.subgrid){
+    		if(min > 0){
+    			this.state.scale = chroma.scale(['#FFFFFF', '#FF0000']).domain([0,max])
+    			this.state.colormin = 0
+    			this.state.colormax = max
+    		} else if(max < 0){
+    			this.state.scale = chroma.scale(['#0000FF', '#FFFFFF']).domain([min,0])
+    			this.state.colormin = min
+    			this.state.colormax = 0
+    		} else {
+    			this.state.scale = chroma.scale(['#0000FF', '#FFFFFF', '#FF0000']).domain([min,0,max])
+    			this.state.colormin = min
+    			this.state.colormax = max
+    		}
+    	} else {
+    		this.state.scale = chroma.scale(['#440154', '#482777', '#3f4a8a', '#31678e', '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825']).domain([min,max])
+    		this.state.colormin = min
+    		this.state.colormax = max
+    	}
     }
 
 	render(){
@@ -242,7 +290,7 @@ class Grids extends React.Component {
 								<div className='row'>
 									<div className='col-12'>
 										<small className="form-text text-muted">Depth Layer [m]</small>
-										<select className="form-select" onChange={(v) => this.changeLevel(v, 'levelindex')}>
+										<select className="form-select" value={this.state.levelindex} onChange={(v) => this.changeLevel(v, 'levelindex')}>
 											{this.levels}
 										</select>
 									</div>
@@ -250,7 +298,7 @@ class Grids extends React.Component {
 								<div className='row'>
 									<div className='col-12'>
 										<small className="form-text text-muted">Month</small>
-										<select className="form-select" onChange={(v) => this.changeDate(v, 'timestep')}>
+										<select className="form-select" value={this.state.timestep} onChange={(v) => this.changeDate(v, 'timestep')}>
 											{this.timesteps}
 										</select>
 									</div>
@@ -266,7 +314,7 @@ class Grids extends React.Component {
 								<div className='row'>
 									<div className='col-12'>
 										<small className="form-text text-muted">Subtraction Depth Layer [m]</small>
-										<select className="form-select" onChange={(v) => this.changeLevel(v, 'sublevelindex')}>
+										<select className="form-select" value={this.state.sublevelindex} onChange={(v) => this.changeLevel(v, 'sublevelindex')}>
 											{this.levels}
 										</select>
 									</div>
@@ -274,7 +322,7 @@ class Grids extends React.Component {
 								<div className='row'>
 									<div className='col-12'>
 										<small className="form-text text-muted">Subtraction Month</small>
-										<select className="form-select" onChange={(v) => this.changeDate(v, 'subtimestep')}>
+										<select className="form-select" value={this.state.subtimestep} onChange={(v) => this.changeDate(v, 'subtimestep')}>
 											{this.timesteps}
 										</select>
 									</div>
@@ -285,17 +333,17 @@ class Grids extends React.Component {
 							<svg style={{'width':'100%', 'marginTop': '1em'}} version="1.1" xmlns="http://www.w3.org/2000/svg">
 							  <defs>
 							    <linearGradient id="grad" x1="0" x2="1" y1="0" y2="0">
-							      <stop offset="0%" stopColor={this.scale(0)} />
-							      <stop offset="10%" stopColor={this.scale(0.1)} />
-							      <stop offset="20%" stopColor={this.scale(0.2)} />
-							      <stop offset="30%" stopColor={this.scale(0.3)} />
-							      <stop offset="40%" stopColor={this.scale(0.4)} />
-							      <stop offset="50%" stopColor={this.scale(0.5)} />
-							      <stop offset="60%" stopColor={this.scale(0.6)} />
-							      <stop offset="70%" stopColor={this.scale(0.7)} />
-							      <stop offset="80%" stopColor={this.scale(0.8)} />
-							      <stop offset="90%" stopColor={this.scale(0.9)} />
-							      <stop offset="100%" stopColor={this.scale(1)} />
+							      <stop offset="0%" stopColor={this.state.scale(this.state.colormin)} />
+							      <stop offset="10%" stopColor={this.state.scale(this.state.colormin + 0.1*(this.state.colormax-this.state.colormin))} />
+							      <stop offset="20%" stopColor={this.state.scale(this.state.colormin + 0.2*(this.state.colormax-this.state.colormin))} />
+							      <stop offset="30%" stopColor={this.state.scale(this.state.colormin + 0.3*(this.state.colormax-this.state.colormin))} />
+							      <stop offset="40%" stopColor={this.state.scale(this.state.colormin + 0.4*(this.state.colormax-this.state.colormin))} />
+							      <stop offset="50%" stopColor={this.state.scale(this.state.colormin + 0.5*(this.state.colormax-this.state.colormin))} />
+							      <stop offset="60%" stopColor={this.state.scale(this.state.colormin + 0.6*(this.state.colormax-this.state.colormin))} />
+							      <stop offset="70%" stopColor={this.state.scale(this.state.colormin + 0.7*(this.state.colormax-this.state.colormin))} />
+							      <stop offset="80%" stopColor={this.state.scale(this.state.colormin + 0.8*(this.state.colormax-this.state.colormin))} />
+							      <stop offset="90%" stopColor={this.state.scale(this.state.colormin + 0.9*(this.state.colormax-this.state.colormin))} />
+							      <stop offset="100%" stopColor={this.state.scale(this.state.colormax)} />
 							    </linearGradient>
 							  </defs>
 
