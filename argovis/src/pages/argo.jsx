@@ -37,7 +37,7 @@ class ArgoExplore extends React.Component {
 			depthRequired: q.has('depthRequired') ? q.get('depthRequired') : 0
 		}
 
-		helpers.mungeTime.bind(this)(q, this.state.maxDayspan+1) // +1 since we include the end date here.
+		helpers.mungeTime.bind(this)(q, this.state.maxDayspan)
 
         // if no query string specified at all or no categories selected turn on all argo categories
         if(!window.location.search || !q.has('argocore') && !q.has('argobgc') && !q.has('argodeep') ){

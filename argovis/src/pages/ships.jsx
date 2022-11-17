@@ -39,7 +39,7 @@ class ShipsExplore extends React.Component {
 			depthRequired: q.has('depthRequired') ? q.get('depthRequired') : 0
 		}
 
-		helpers.mungeTime.bind(this)(q, this.state.maxDayspan+1, '1993-07-31') // +1 since we include the end date here.
+		helpers.mungeTime.bind(this)(q, this.state.maxDayspan, '1993-07-31')
 
         // if no query string specified at all or no categories selected turn on all cchdo categories
         if(!window.location.search || !q.has('woce') && !q.has('goship') && !q.has('other') ){
@@ -134,11 +134,11 @@ class ShipsExplore extends React.Component {
 
     chooseColor(point){
     	if(point[4].includes('cchdo_woce')){
-    		return 'green'
+    		return 'orange'
     	} else if(point[4].includes('cchdo_go-ship')){
-    		return 'blue'
+    		return 'magenta'
     	} else{
-	    	return 'yellow'
+	    	return 'white'
 	    }
     }
 

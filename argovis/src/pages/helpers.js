@@ -198,7 +198,17 @@ helpers.refreshMap = function(){
 	}
 
 	this.setState({refreshData: false}, () => {
-			if(this.state.points.length > 0){
+
+			//state.points might be a flat list or an object; determine if there's any data to plot
+		  let nPoints = 0
+		  if(this.state.points.hasOwnProperty('length')){
+		  	nPoints = this.state.points.length
+		  } else {
+		  	for(let k in this.state.points){
+		  		nPoints += this.state.points[k].length
+		  	}
+		  }
+			if(nPoints > 0){
 				helpers.manageStatus.bind(this)('ready')
 			} else {
 				helpers.manageStatus.bind(this)('error', 'No data found for this search.')
@@ -289,7 +299,6 @@ helpers.setDate = function(date, v, maxdays, noop, noup){
 	// If noup == true, do the state update without refreshing data
 	let start = new Date(this.state.startDate)
 	let end = new Date(this.state.endDate)
-	let delta = end.getTime() - start.getTime()
 	let cutoff = maxdays*24*60*60*1000
 
 	if(isNaN(v)){
@@ -300,17 +309,13 @@ helpers.setDate = function(date, v, maxdays, noop, noup){
 	    	if(!noup){ // no need to drag other date around until we actually update
 		    	if(end.getTime() - start.getTime() > cutoff){
 		    		end = new Date(v + cutoff)
-		    	} else if (start.getTime() > end.getTime()){
-		    		end = new Date(v + delta)
-		    	} 
+		    	}
 		    } 	
 	    } else if(date === 'endDate'){
 	    	end = new Date(v)
 	    	if(!noup){
 		    	if(end.getTime() - start.getTime() > cutoff){
 		    		start = new Date(v - cutoff)
-		    	} else if (start.getTime() > end.getTime()){
-		    		start = new Date(v - delta)
 		    	}
 		    }
 	    }

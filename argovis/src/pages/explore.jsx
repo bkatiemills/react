@@ -42,11 +42,13 @@ class ArgovisExplore extends React.Component {
        	argocore: q.has('argocore') ? q.get('argocore') === 'true' : false,
        	argobgc: q.has('argobgc') ? q.get('argobgc') === 'true' : false,
        	argodeep: q.has('argodeep') ? q.get('argodeep') === 'true' : false,
-       	cchdo: q.has('cchdo') ? q.get('cchdo') === 'true' : false,
+       	woce: q.has('woce') ? q.get('woce') === 'true' : false,
+       	goship: q.has('goship') ? q.get('goship') === 'true' : false,
+       	cchdoother: q.has('cchdoother') ? q.get('cchdoother') === 'true' : false,
        	drifters: q.has('drifters') ? q.get('drifters') === 'true' : false,
        	tc: q.has('tc') ? q.get('tc') === 'true' : false
       }
-      this.customQueryParams = ['startDate', 'endDate', 'polygon', 'argocore', 'argobgc', 'argodeep', 'cchdo', 'drifters', 'tc']
+      this.customQueryParams = ['startDate', 'endDate', 'polygon', 'argocore', 'argobgc', 'argodeep', 'cchdoother', 'woce', 'goship', 'drifters', 'tc']
 
       helpers.mungeTime.bind(this)(q, this.state.maxDayspan+1) // +1 since we include the end date here.
 
@@ -66,6 +68,8 @@ class ArgovisExplore extends React.Component {
       this.statusReporting = React.createRef()
       //this.apiPrefix = 'https://argovis-api.colorado.edu/'
       this.apiPrefix = 'http://3.88.185.52:8080/'
+
+      this.initZoom = !q.has('polygon')
 
 			helpers.setQueryString.bind(this)()
     }
@@ -111,7 +115,7 @@ class ArgovisExplore extends React.Component {
 				if(refresh.length === 0){
 					helpers.manageStatus.bind(this)('ready')
 					//if(this.state.points.length>0){
-						this.refreshMap(false)
+						helpers.refreshMap.bind(this)()
 					//}
 				} else {
 					//promise all across a `fetch` for all new URLs, and update CircleMarkers for all new fetches
@@ -121,9 +125,14 @@ class ArgovisExplore extends React.Component {
 							let newPoints = {}
 
 							for(let i=0; i<data.length; i++){
+								if(data[i].code === 429){
+									console.log(429, urls)
+									helpers.manageStatus.bind(this)('error', 'Too many requests too fast; please wait a minute, and consider using an API key (link below).')
+									return
+								}
 								if(data.length>0 && data[i][0].code !== 404){
 									let points = data[i].map(x => x.concat([datasets[i]])) // so there's something in the source position for everything other than argo
-									points = this.circlefy(points)
+									points = helpers.circlefy.bind(this)(points)
 									if(points){
 										if(newPoints.hasOwnProperty(datasets[i])){
 											newPoints[datasets[i]] = newPoints[datasets[i]].concat(points)
@@ -140,7 +149,7 @@ class ArgovisExplore extends React.Component {
 							this.state.points = {...this.state.points, ...newPoints}
 							helpers.manageStatus.bind(this)('rendering')
 							if(Object.keys(newPoints).length>0){
-								this.refreshMap(false)
+								helpers.refreshMap.bind(this)()
 							}
 						})
 					})
@@ -189,29 +198,12 @@ class ArgovisExplore extends React.Component {
     }
 
     // API URL generation
-    generateTemporoSpatialURL(route){
-    	//returns the api root, compression, time and space filters common to all endpoint queries
-
-    	let url = this.apiPrefix + route + '?compression=minimal'
-
-    	if(this.state.startDate !== ''){
-    		url += '&startDate=' + this.state.startDate + 'T00:00:00Z'
+    generateArgoURLs() {
+    	if(!this.state.argocore && !this.state.argobgc && !this.state.argodeep){
+    		return []
     	}
 
-    	if(this.state.endDate !== ''){
-    		url += '&endDate=' + this.state.endDate + 'T00:00:00Z'
-    	}  
-
-    	if(this.state.polygon.length>0){
-    		url += '&polygon=[' + this.state.polygon.map(x => '['+x[0]+','+x[1]+']').join(',') + ']'
-    	}    
-
-    	return url	
-    }
-
-    generateArgoURLs() {
-
-    	let url = this.generateTemporoSpatialURL('argo')	
+    	let url = helpers.generateTemporoSpatialURL.bind(this)('argo')	
 
     	// decide on source.source
     	let source = []
@@ -242,11 +234,35 @@ class ArgovisExplore extends React.Component {
     }
 
     generateCCHDOURLs() {
-    	if(!this.state.cchdo){
+    	if(!this.state.woce && !this.state.goship && !this.state.cchdoother){
     		return []
     	}
 
-    	let url = this.generateTemporoSpatialURL('cchdo')
+    	let url = helpers.generateTemporoSpatialURL.bind(this)('cchdo')
+
+	    // decide on source.source
+	    let source = []
+	    if(this.state.cchdoother && this.state.woce && this.state.goship){
+	    	source = []
+	    } else if(this.state.cchdoother && this.state.woce && !this.state.goship){
+	    	source = ['~cchdo_woce,~cchdo_go-ship', 'cchdo_woce']
+	    } else if(this.state.cchdoother && !this.state.woce && this.state.goship){
+	    	source = ['~cchdo_woce,~cchdo_go-ship', 'cchdo_go-ship']
+	    } else if(!this.state.cchdoother && this.state.woce && this.state.goship){
+	    	source = ['cchdo_go-ship', 'cchdo_woce']
+	    } else if(this.state.cchdoother && !this.state.woce && !this.state.goship){
+	    	source = ['~cchdo_go-ship,~cchdo_woce']
+	    } else if(!this.state.cchdoother && this.state.woce && !this.state.goship){
+	    	source = ['cchdo_woce']
+	    } else if(!this.state.cchdoother && !this.state.woce && this.state.goship){
+	    	source = ['cchdo_go-ship']
+	    }
+
+	    if(source.length === 0){
+	    	return [url]
+	    } else{
+	    	return source.map(x => url+'&source='+x)
+	    }
 
     	return [url]
     }
@@ -256,7 +272,7 @@ class ArgovisExplore extends React.Component {
     		return []
     	}
 
-    	let url = this.generateTemporoSpatialURL('drifters')
+    	let url = helpers.generateTemporoSpatialURL.bind(this)('drifters')
 
     	return [url]
     }
@@ -266,7 +282,7 @@ class ArgovisExplore extends React.Component {
     		return []
     	}
 
-    	let url = this.generateTemporoSpatialURL('tc')
+    	let url = helpers.generateTemporoSpatialURL.bind(this)('tc')
 
     	return [url]
     }
@@ -286,44 +302,46 @@ class ArgovisExplore extends React.Component {
 
     // leaflet helpers
     chooseColor(datasources){
-    	if(datasources.includes('argo_bgc')){
+
+    	let ds = []
+    	if(datasources[datasources.length-1] == 'argo') {
+    		ds = datasources[4]
+    	} else if(datasources[datasources.length-1] == 'cchdo') {
+    		ds = datasources[4]
+    	} else if(datasources[datasources.length-1] == 'drifters') {
+    		ds = ['drifters']
+    	} else if(datasources[datasources.length-1] == 'tc') {
+    		ds = ['tc']
+    	} 
+
+    	if(ds.includes('argo_bgc')){
     		return 'green'
     	}
-    	else if(datasources.includes('argo_deep')){
+    	else if(ds.includes('argo_deep')){
     		return 'blue'
     	}
-    	else if(datasources.includes('argo_core')){
+    	else if(ds.includes('argo_core')){
 	    	return 'yellow'
 	    }
-	    else if(datasources.includes('drifters')){
+	    else if(ds.includes('drifters')){
 	    	return 'black'
 	    }
-	    else if(datasources.includes('cchdo')){
+	    else if(ds.includes('tc')){
+	    	return 'red'
+	    }
+	    else if(ds.includes('cchdo_woce')){
 	    	return 'orange'
 	    }
-	    else if(datasources.includes('tc')){
-	    	return 'red'
+	    else if(ds.includes('cchdo_go-ship')){
+	    	return 'magenta'
+	    }
+	    else{
+	    	return 'white'
 	    }
     }
 
-    circlefy(points){
-			if(points.hasOwnProperty('code') || points[0].hasOwnProperty('code')){
-				return null
-			}
-			else {
-				points = points.map(point => {return(
-				  <CircleMarker key={point[0]+Math.random()} center={[point[2], point[1]]} radius={1} color={this.chooseColor(point[4])}>
-				    <Popup>
-				      ID: {point[0]} <br />
-				      Long / Lat: {point[1]} / {point[2]} <br />
-				      Date: {point[3]} <br />
-				      Data Sources: {point[4]}
-				    </Popup>
-				  </CircleMarker>
-				)})
-				return points
-			}
-    }
+
+
 
     // misc helpers
     findDataset(url){
@@ -357,10 +375,22 @@ class ArgovisExplore extends React.Component {
 
     	this.minDays = Math.min(...minDays)
     	this.minArea = Math.min(...minArea)
-    	this.maxDays = Math.min(...maxArea)
+    	this.maxArea = Math.min(...maxArea)
+    }
+
+    genTooltip(point){
+    	// given an array <point> corresponding to a single point returned by an API data route with compression=minimal,
+    	// return the jsx for an appropriate tooltip for this point.
+
+    	return(
+		    <Popup>
+		      TBD
+		    </Popup>
+    	)
     }
 
 	render(){
+		console.log(this.state)
 		return(
 			<>
 				<div className='row' style={{'width':'100vw'}}>
@@ -418,24 +448,32 @@ class ArgovisExplore extends React.Component {
 				      		<h6 style={{'color': '#888888'}}>Argo</h6>
 					        <div className="form-check">
 										<input className="form-check-input" checked={this.state.argocore} onChange={(v) => this.toggle(v)} type="checkbox" id='argocore'></input>
-										<label className="form-check-label" htmlFor='Argo Core'>Display Argo Core <span style={{'color':this.chooseColor(['argo_core']), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
+										<label className="form-check-label" htmlFor='Argo Core'>Display Argo Core <span style={{'color':this.chooseColor([,,,,['argo_core'],'argo']), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 						    	<div className="form-check">
 										<input className="form-check-input" checked={this.state.argobgc} onChange={(v) => this.toggle(v)} type="checkbox" id='argobgc'></input>
-										<label className="form-check-label" htmlFor='Argo BGC'>Display Argo BGC <span style={{'color':this.chooseColor(['argo_bgc']), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
+										<label className="form-check-label" htmlFor='Argo BGC'>Display Argo BGC <span style={{'color':this.chooseColor([,,,,['argo_bgc'],'argo']), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 			        		<div className="form-check">
 										<input className="form-check-input" checked={this.state.argodeep} onChange={(v) => this.toggle(v)} type="checkbox" id='argodeep'></input>
-										<label className="form-check-label" htmlFor='Argo Deep'>Display Argo Deep <span style={{'color':this.chooseColor(['argo_deep']), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
+										<label className="form-check-label" htmlFor='Argo Deep'>Display Argo Deep <span style={{'color':this.chooseColor([,,,,['argo_deep'],'argo']), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 								</div>
 
-								<div className='verticalGroup'>
-									<h6 style={{'color': '#888888'}}>Ship-based profiles</h6>
-									<div className="form-check">
-										<input className="form-check-input" checked={this.state.cchdo} onChange={(v) => this.toggle(v)} type="checkbox" id='cchdo'></input>
-										<label className="form-check-label" htmlFor='CCHDO'>Display ship-based profiles <span style={{'color':this.chooseColor(['cchdo']), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
-									</div>						
+				      	<div className='verticalGroup'>
+				      		<h6 style={{'color': '#888888'}}>Ship-based profiles</h6>
+					        <div className="form-check">
+										<input className="form-check-input" checked={this.state.woce} onChange={(v) => this.toggle(v)} type="checkbox" id='woce'></input>
+										<label className="form-check-label" htmlFor='woce'>Display WOCE ships <span style={{'color':this.chooseColor([,,,,['cchdo_woce'],'cchdo']), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
+									</div>
+						    	<div className="form-check">
+										<input className="form-check-input" checked={this.state.goship} onChange={(v) => this.toggle(v)} type="checkbox" id='goship'></input>
+										<label className="form-check-label" htmlFor='goship'>Display GO-SHIP <span style={{'color':this.chooseColor([,,,,['cchdo_go-ship'],'cchdo']), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
+									</div>
+			        		<div className="form-check">
+										<input className="form-check-input" checked={this.state.cchdoother} onChange={(v) => this.toggle(v)} type="checkbox" id='cchdoother'></input>
+										<label className="form-check-label" htmlFor='cchdoother'>Display other ships <span style={{'color':this.chooseColor([,,,,['cchdo_xxx'],'cchdo']), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
+									</div>
 								</div>
 
 								<div className='verticalGroup'>
@@ -459,7 +497,7 @@ class ArgovisExplore extends React.Component {
 
 					{/*leaflet map*/}
 					<div className='col-9'>
-						<MapContainer center={[24.9, -88.9]} zoom={5} scrollWheelZoom={true}>
+						<MapContainer center={[24.9, -88.9]} zoom={this.initZoom? 5 : 2} scrollWheelZoom={true}>
 						  <TileLayer
 						    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 						    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

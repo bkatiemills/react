@@ -33,7 +33,7 @@ class TCExplore extends React.Component {
 			maxDayspan: 30
 		}
 
-		helpers.mungeTime.bind(this)(q, this.state.maxDayspan+1, '2020-08-31') // +1 since we include the end date here.
+		helpers.mungeTime.bind(this)(q, this.state.maxDayspan, '2020-08-31')
 
         // some other useful class variables
         this.fgRef = React.createRef()
