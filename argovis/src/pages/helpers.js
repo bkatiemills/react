@@ -12,8 +12,8 @@ helpers.onPolyCreate = function(payload){
 	helpers.fetchPolygon.bind(this)(payload.layer.getLatLngs()[0])
 }
 
-helpers.onPolyDelete = function(payload){
-	this.setState({polygon: [], maxDayspan: this.defaultDayspan, startDate: this.earlier, endDate: this.today, refreshData: true})
+helpers.onPolyDelete = function(defaultPoly, payload){
+	this.setState({polygon: defaultPoly, maxDayspan: this.defaultDayspan, startDate: this.earlier, endDate: this.today, refreshData: true})
 }
 
 helpers.onPolyEdit = function(payload){
@@ -24,23 +24,32 @@ helpers.fetchPolygon = function(coords){
 	// coords == array of {lng: xx, lat: xx}, such as returned by getLatLngs
 	let vertexes = coords.map(x => [x.lng, x.lat])
 	vertexes.push(vertexes[0])
+
+	let newState = helpers.manageAllowedDates.bind(this)(vertexes)
+	newState.refreshData = true
+
+	this.setState(newState)
+}
+
+helpers.manageAllowedDates = function(vertexes){
+	// given an array [[lon0, lat0], [lon1, lat1], ... , [lon0, lat0]] describing the current polygon
+	// recompute the allowed timespan, and pull up endDate if necessary
+	// return a munged state object reflecting these changes
+
+	let s = {...this.state}
+
 	let maxdays = helpers.calculateDayspan.bind(this)(vertexes)
+
+	s.polygon = vertexes
+	s.maxDayspan = maxdays
 
 	if(maxdays < this.state.maxDayspan){
 		// rethink the end date in case they drew a bigger polygon and the date range needs to be forcibly contracted
 		let timebox = helpers.setDate.bind(this)('startDate', document.getElementById('startDate').valueAsNumber, maxdays, true)
+		s.endDate = timebox[1]
+	}	
 
-		this.setState({
-			polygon: vertexes, 
-			maxDayspan: maxdays,
-			endDate: timebox[1], 
-			refreshData: true})
-	} else {
-		this.setState({
-			polygon: vertexes, 
-			maxDayspan: maxdays,
-			refreshData: true})
-	}
+	return s
 }
 
 helpers.estimateArea = function(vertexes){
@@ -288,18 +297,22 @@ helpers.setDate = function(date, v, maxdays, noop, noup){
 	} else{
 		if(date === 'startDate'){
 	    	start = new Date(v)
-	    	if(end.getTime() - start.getTime() > cutoff){
-	    		end = new Date(v + cutoff)
-	    	} else if (start.getTime() > end.getTime()){
-	    		end = new Date(v + delta)
-	    	}  	
+	    	if(!noup){ // no need to drag other date around until we actually update
+		    	if(end.getTime() - start.getTime() > cutoff){
+		    		end = new Date(v + cutoff)
+		    	} else if (start.getTime() > end.getTime()){
+		    		end = new Date(v + delta)
+		    	} 
+		    } 	
 	    } else if(date === 'endDate'){
 	    	end = new Date(v)
-	    	if(end.getTime() - start.getTime() > cutoff){
-	    		start = new Date(v - cutoff)
-	    	} else if (start.getTime() > end.getTime()){
-	    		start = new Date(v - delta)
-	    	}  	
+	    	if(!noup){
+		    	if(end.getTime() - start.getTime() > cutoff){
+		    		start = new Date(v - cutoff)
+		    	} else if (start.getTime() > end.getTime()){
+		    		start = new Date(v - delta)
+		    	}
+		    }
 	    }
 	    start = start.toISOString().slice(0,10)
 	   	end = end.toISOString().slice(0,10)
@@ -310,7 +323,7 @@ helpers.setDate = function(date, v, maxdays, noop, noup){
     if(!noup){
 		  s.refreshData = true
 		} else {
-			helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
+			helpers.manageStatus.bind(this)('actionRequired', 'Click outside the current input to update the plot.')
 		}
 
     if(noop){
@@ -1220,14 +1233,14 @@ helpers.mungeTime = function(q, nDays, defaultEnd){
 	this.today = this.today.toISOString().slice(0,10);
 	this.state.startDate = this.earlier
 	this.state.endDate = this.today
-    if(q.has('endDate') && q.has('startDate')){
-    	let t0 = new Date(q.get('startDate'))
-    	let t1 = new Date(q.get('endDate'))
-    	if(t1.getTime() - t0.getTime() < (nDays * 24 * 60 * 60 * 1000)){
-    		this.state.startDate = q.get('startDate')
-	    	this.state.endDate = q.get('endDate')
-    	} 
-    }
+  if(q.has('endDate') && q.has('startDate')){
+  	let t0 = new Date(q.get('startDate'))
+  	let t1 = new Date(q.get('endDate'))
+  	if(t1.getTime() - t0.getTime() < (nDays * 24 * 60 * 60 * 1000)){
+  		this.state.startDate = q.get('startDate')
+    	this.state.endDate = q.get('endDate')
+  	} 
+  }
 }
 
 helpers.generateTimetics = function(minMSSE, maxMSSE){

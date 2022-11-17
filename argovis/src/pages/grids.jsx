@@ -9,6 +9,8 @@ class Grids extends React.Component {
     constructor(props) {
       super(props);
 
+      this.defaultPolygon = [[-52.382812,53.225768],[-62.050781,48.107431],[-72.773438,43.325178],[-77.695313,37.996163],[-81.5625,32.990236],[-82.089844,27.683528],[-78.925781,22.755921],[-71.547389,23.008026],[-64.160156,22.917923],[-57.673458,28.712256],[-50.449219,34.161818],[-40.078125,44.590467],[-35.683594,51.618017],[-43.066406,54.265224],[-52.382812,53.225768]]
+
       let q = new URLSearchParams(window.location.search) // parse out query string
       document.title = 'Argovis - Explore ' + q.get('grid') + ' grid'
       this.state = {
@@ -16,7 +18,7 @@ class Grids extends React.Component {
       	points: [],
       	subpoints: [],
       	data: [],
-      	polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [[-52.382812,53.225768],[-62.050781,48.107431],[-72.773438,43.325178],[-77.695313,37.996163],[-81.5625,32.990236],[-82.089844,27.683528],[-78.925781,22.755921],[-71.547389,23.008026],[-64.160156,22.917923],[-57.673458,28.712256],[-50.449219,34.161818],[-40.078125,44.590467],[-35.683594,51.618017],[-43.066406,54.265224],[-52.382812,53.225768]],
+      	polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : this.defaultPolygon,
       	min: 0,
       	max: 1,
       	units: '',
@@ -212,22 +214,6 @@ class Grids extends React.Component {
     	helpers.fetchPolygon.bind(this)(coords)   	
     }
 
-    onPolyCreate(payload){
-    	this.fetchPolygon(payload.layer.getLatLngs()[0])
-    }
-
-    onPolyDelete(payload){
-    	this.setState({polygon: []})
-    }
-
-    onPolyEdit(payload){
-    	payload.layers.eachLayer(layer => this.fetchPolygon(layer.getLatLngs()[0]))
-    }
-
-    onDrawStop(payload){
-    	helpers.onDrawStop.bind(this)(payload)
-    }
-
     unitTransform(unit, scale){
     	if(scale === 'k'){
     		return Math.round(unit)/1000
@@ -371,10 +357,11 @@ class Grids extends React.Component {
 						  <FeatureGroup ref={this.fgRef}>
 						    <EditControl
 						      position='topleft'
-						      onEdited={p => this.onPolyEdit.bind(this,p)()}
-						      onCreated={p => this.onPolyCreate.bind(this,p)()}
-						      onDeleted={p => this.onPolyDelete.bind(this,p)()}
-						      onDrawStop={p => this.onDrawStop.bind(this,p)()}
+						      onEdited={p => helpers.onPolyEdit.bind(this)(p)}
+						      onCreated={p => helpers.onPolyCreate.bind(this)(p)}
+						      onDeleted={p => helpers.onPolyDelete.bind(this)(this.defaultPolygon, p)}
+						      onDrawStop={p => helpers.onDrawStop.bind(this)(p)}
+						      onDrawStart={p => helpers.onDrawStart.bind(this)(p)}
 						      draw={{
                     rectangle: false,
                     circle: false,
@@ -388,7 +375,7 @@ class Grids extends React.Component {
                     }
 						      }}
 						    />
-						    <Polygon positions={this.state.polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
+						    <Polygon key={JSON.stringify(this.state.polygon)} positions={this.state.polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
 						  </FeatureGroup>
               {this.state.grid}
 						</MapContainer>

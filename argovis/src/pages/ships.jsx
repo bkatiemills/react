@@ -325,11 +325,11 @@ class ShipsExplore extends React.Component {
 							<FeatureGroup ref={this.fgRef}>
 								<EditControl
 								position='topleft'
-								onEdited={p => helpers.onPolyEdit.bind(this,p)()}
-								onCreated={p => helpers.onPolyCreate.bind(this,p)()}
-								onDeleted={p => helpers.onPolyDelete.bind(this,p)()}
-								onDrawStop={p => helpers.onDrawStop.bind(this,p)()}
-								onDrawStart={p => helpers.onDrawStart.bind(this,p)()}
+								onEdited={p => helpers.onPolyEdit.bind(this)(p)}
+								onCreated={p => helpers.onPolyCreate.bind(this)(p)}
+								onDeleted={p => helpers.onPolyDelete.bind(this)([],p)}
+								onDrawStop={p => helpers.onDrawStop.bind(this)(p)}
+								onDrawStart={p => helpers.onDrawStart.bind(this)(p)}
 								draw={{
 									rectangle: false,
 									circle: false,
