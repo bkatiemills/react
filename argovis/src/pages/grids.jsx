@@ -222,7 +222,7 @@ class Grids extends React.Component {
     	} else if(scale === 'G'){
     		return Math.round(unit/1000000)/1000
     	} else {
-    		return unit
+    		return Math.round(1000*unit)/1000
     	}
     }
 
