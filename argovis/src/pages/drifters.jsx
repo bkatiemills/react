@@ -24,7 +24,7 @@ class DriftersExplore extends React.Component {
 		// default state, pulling in query string specifications
 		this.state = {
 			observingEntity: false,
-			apiKey: 'guest',
+			apiKey: localStorage.getItem('apiKey') ? localStorage.getItem('apiKey') : 'guest',
 			wmoSuggestions: [],
 			platformSuggestions: [],
 			wmo: q.has('wmo') ? q.get('wmo') : '',
@@ -118,7 +118,7 @@ class DriftersExplore extends React.Component {
 								<h5>Explore Global Drifter Program</h5>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">
-										<input type="password" className="form-control" id="apiKey" placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value)}></input>
+										<input type="password" className="form-control" id="apiKey" placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
 										<label htmlFor="apiKey">API Key</label>
 										<div id="apiKeyHelpBlock" className="form-text">
 						  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>

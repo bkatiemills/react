@@ -23,7 +23,7 @@ class ArgoExplore extends React.Component {
 		// default state, pulling in query string specifications
 		this.state = {
 			observingEntity: false,
-			apiKey: 'guest',
+			apiKey: localStorage.getItem('apiKey') ? localStorage.getItem('apiKey') : 'guest',
 			argocore: q.has('argocore') ? q.get('argocore') === 'true' : false,
 			argobgc: q.has('argobgc') ? q.get('argobgc') === 'true' : false,
 			argodeep: q.has('argodeep') ? q.get('argodeep') === 'true' : false,
@@ -158,7 +158,7 @@ class ArgoExplore extends React.Component {
 								<h5>Explore Argo Profiles</h5>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">
-										<input type="password" className="form-control" id="apiKey" placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value)}></input>
+										<input type="password" className="form-control" id="apiKey" value={this.state.apiKey} placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
 										<label htmlFor="apiKey">API Key</label>
 										<div id="apiKeyHelpBlock" className="form-text">
 						  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>

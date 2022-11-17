@@ -23,7 +23,7 @@ class ArgovisExplore extends React.Component {
 			this.defaultDayspan = helpers.calculateDayspan.bind(this)(this.defaultPolygon)
 
       this.state = {
-      	apiKey: 'guest',					// user's API key, if provided
+      	apiKey: localStorage.getItem('apiKey') ? localStorage.getItem('apiKey') : 'guest',					// user's API key, if provided
        	points: {									// arrays of points to paint for each dataset
        		'argo': [],
        		'cchdo': [],
@@ -296,6 +296,8 @@ class ArgovisExplore extends React.Component {
     	return(
 		    <Popup>
 		      ID: {point[0]} <br />
+		      Long / Lat: {point[1]} / {point[2]} <br />
+		      Date: {point[3]}
 		    </Popup>
     	)
     }
@@ -378,17 +380,6 @@ class ArgovisExplore extends React.Component {
     	this.maxArea = Math.min(...maxArea)
     }
 
-    genTooltip(point){
-    	// given an array <point> corresponding to a single point returned by an API data route with compression=minimal,
-    	// return the jsx for an appropriate tooltip for this point.
-
-    	return(
-		    <Popup>
-		      TBD
-		    </Popup>
-    	)
-    }
-
 	render(){
 		console.log(this.state)
 		return(
@@ -403,7 +394,7 @@ class ArgovisExplore extends React.Component {
 									<h5>Colocate datasets</h5>
 									<div className='verticalGroup'>
 										<div className="form-floating mb-3">
-											<input type="password" className="form-control" id="apiKey" placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value)}></input>
+											<input type="password" className="form-control" id="apiKey" placeholder="" value={this.state.apiKey} onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
 											<label htmlFor="apiKey">API Key</label>
 											<div id="apiKeyHelpBlock" className="form-text">
 							  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>

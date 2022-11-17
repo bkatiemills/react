@@ -23,7 +23,7 @@ class ShipsExplore extends React.Component {
 		// default state, pulling in query string specifications
 		this.state = {
 			observingEntity: false,
-			apiKey: 'guest',
+			apiKey: localStorage.getItem('apiKey') ? localStorage.getItem('apiKey') : 'guest',
 			woce: q.has('woce') ? q.get('woce') === 'true' : false,
 			goship: q.has('goship') ? q.get('goship') === 'true' : false,
 			other: q.has('other') ? q.get('other') === 'true' : false,
@@ -201,7 +201,7 @@ class ShipsExplore extends React.Component {
 								<h5>Explore Ship-Based Profiles</h5>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">
-										<input type="password" className="form-control" id="apiKey" placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value)}></input>
+										<input type="password" className="form-control" id="apiKey" placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
 										<label htmlFor="apiKey">API Key</label>
 										<div id="apiKeyHelpBlock" className="form-text">
 						  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>

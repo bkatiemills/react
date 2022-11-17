@@ -10,6 +10,11 @@ class ArgoPlots extends React.Component {
 		super(props);
 
 		helpers.initPlottingPage.bind(this)(['argoPlatform', 'polygon', 'startDate', 'endDate'])
+		// fudge y to be inverted by default, to go with pressure
+		let q = new URLSearchParams(window.location.search)
+		if(!q.has('reverseY') && !q.has('yKey')){
+			this.state.reverseY = true
+		}
 
 		if(this.state.argoPlatform){
 			this.state.title = 'Argo platform ' + this.state.argoPlatform
@@ -17,7 +22,7 @@ class ArgoPlots extends React.Component {
 			this.state.title = 'Argo regional search, ' + this.state.startDate.slice(0,10) + ' to ' + this.state.endDate.slice(0,10)
 		}
 
-		helpers.downloadData.bind(this)('temperature', 'salinity', '[2D plot]', 'timestamp')
+		helpers.downloadData.bind(this)('temperature', 'pressure', '[2D plot]', 'timestamp')
 	}
 
 	prepCSV(data, meta){

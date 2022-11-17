@@ -147,6 +147,11 @@ helpers.componentDidUpdate = function(){
 					let newPoints = []
 					let timestamps = []
 					for(let i=0; i<data.length; i++){
+						if(data[i].code === 429){
+							console.log(429, urls)
+							helpers.manageStatus.bind(this)('error', 'Too many requests too fast; please wait a minute, and consider using an API key (link below).')
+							return
+						}
 						if(data[i].length>0 && data[i][0].code !== 404){
 							timestamps = timestamps.concat(data[i].map(x => x[3]))
 							newPoints = newPoints.concat(data[i])
@@ -338,9 +343,15 @@ helpers.setDate = function(date, v, maxdays, noop, noup){
 	  }
 }
 
-helpers.setToken = function(key, v, message){
+helpers.setToken = function(key, v, message, persist){
 	// key: state key labeling this input token
 	// v: new value being considered
+	// persist: write this to local storage
+
+	if(persist){
+		localStorage.setItem(key, v);
+	}
+
 	let s = {...this.state}
 	s[key] = v
 	if(v && this.vocab[key] && !this.vocab[key].includes(v)){
@@ -1078,6 +1089,13 @@ helpers.plotHTML = function(){
 										<button type="button" className="btn btn-outline-primary" style={{'marginTop':'0.75em'}} onClick={event => helpers.resetAllAxes.bind(this)(event)} id='allreset'>Reset all axes</button>
 									</div>
 								</div>
+								<div className="form-floating mb-3" style={{'marginTop': '0.5em'}}>
+									<input type="password" className="form-control" id="apiKey" placeholder="" value={this.state.apiKey} onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
+									<label htmlFor="apiKey">API Key</label>
+									<div id="apiKeyHelpBlock" className="form-text">
+					  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -1104,7 +1122,7 @@ helpers.initPlottingPage = function(customParams){
 
 	// default state, pulling in query string specifications
 	this.state = {
-		apiKey: 'guest',
+		apiKey: localStorage.getItem('apiKey') ? localStorage.getItem('apiKey') : 'guest',
 		xKey: q.has('xKey') ? q.get('xKey') : '',
 		yKey: q.has('yKey') ? q.get('yKey') : '',
 		zKey: q.has('zKey') ? q.get('zKey') : '',
@@ -1167,6 +1185,14 @@ helpers.initPlottingPage = function(customParams){
 helpers.downloadData = function(defaultX, defaultY, defaultZ, defaultC, mergePoints){
 	let x = Promise.all(this.generateURLs().map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 		Promise.all(responses.map(res => res.json())).then(data => {
+			for(let i=0; i<data.length; i++){
+				if(data[i].code === 429){
+					console.log(429)
+					helpers.manageStatus.bind(this)('error', 'Too many requests too fast; please wait a minute, and consider using an API key (link below).')
+					return
+				}
+			}
+
 			// keep raw json blob for download
 			this.json = new Blob([JSON.stringify(data)], {type: 'text/json'})
 			this.json = window.URL.createObjectURL(this.json)
@@ -1199,6 +1225,14 @@ helpers.downloadData = function(defaultX, defaultY, defaultZ, defaultC, mergePoi
 
 			let m = Promise.all(this.generateMetadataURLs(metakeys).map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 				Promise.all(responses.map(mres => mres.json())).then(metadata => {
+					for(let i=0; i<metadata.length; i++){
+						if(metadata[i].code === 429){
+							console.log(429)
+							helpers.manageStatus.bind(this)('error', 'Too many requests too fast; please wait a minute, and consider using an API key (link below).')
+							return
+						}
+					}
+
 					metadata = [].concat(...metadata)
 					let meta = {}
 

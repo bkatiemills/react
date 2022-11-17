@@ -32,7 +32,7 @@ class Grids extends React.Component {
       	}[q.get('grid')],
       	selectedGrid: q.get('grid'),
       	refreshData: true,
-      	apiKey: 'guest',
+      	apiKey: localStorage.getItem('apiKey') ? localStorage.getItem('apiKey') : 'guest',
       	subgrid: q.has('subgrid') ? q.get('subgrid') : false,
       	scale: chroma.scale(['#440154', '#482777', '#3f4a8a', '#31678e', '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825'])
       }
@@ -278,6 +278,13 @@ class Grids extends React.Component {
 						<div className='mapSearchInputs'>
 							<h5>{this.state.selectedGrid + ' search control'}</h5>
 							<small><a target="_blank" rel="noreferrer" href={this.reflink}>Original Data Reference</a></small>
+							<div className="form-floating mb-3" style={{'marginTop': '0.5em'}}>
+								<input type="password" className="form-control" id="apiKey" value={this.state.apiKey} placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
+								<label htmlFor="apiKey">API Key</label>
+								<div id="apiKeyHelpBlock" className="form-text">
+				  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
+								</div>
+							</div>
 							<div>
 								<div className='row'>
 									<div className='col-12'>
