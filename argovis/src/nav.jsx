@@ -46,7 +46,7 @@ class ArgovisNav extends React.Component {
 			      <ul className="navbar-nav mr-auto">
 			      	<Dropdown/>
 			        <li className="nav-item">
-			          <a className="nav-link" href="https://argovis-api.colorado.edu/docs/">API</a>
+			          <a className="nav-link" href="http://3.88.185.52:8080/docs/">API</a>
 			        </li>
 			        <li className="nav-item">
 			          <a className="nav-link" href="https://github.com/argovis/demo_notebooks">Jupyter Notebooks</a>
