@@ -161,7 +161,7 @@ class ArgoExplore extends React.Component {
 										<input type="password" className="form-control" id="apiKey" value={this.state.apiKey} placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
 										<label htmlFor="apiKey">API Key</label>
 										<div id="apiKeyHelpBlock" className="form-text">
-						  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
+						  					<a target="_blank" rel="noreferrer" href='http://3.88.185.52:3030/'>Get a free API key</a>
 										</div>
 									</div>
 

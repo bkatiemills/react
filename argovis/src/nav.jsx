@@ -45,6 +45,9 @@ class ArgovisNav extends React.Component {
 			    <div className="collapse navbar-collapse" id="navbarNav">
 			      <ul className="navbar-nav mr-auto">
 			      	<Dropdown/>
+			      	<li className="nav-item">
+			          <a className="nav-link" href="/">Colocation</a>
+			        </li>
 			        <li className="nav-item">
 			          <a className="nav-link" href="http://3.88.185.52:8080/docs/">API</a>
 			        </li>

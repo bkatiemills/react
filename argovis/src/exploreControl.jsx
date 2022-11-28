@@ -120,7 +120,7 @@ class ExploreControl extends React.Component {
 							<input type="password" className="form-control" id="apiKey" placeholder="" onInput={(v) => this.props.statepasser({'apiKey': v.target.value})}></input>
 							<label htmlFor="apiKey">API Key</label>
 							<div id="apiKeyHelpBlock" className="form-text">
-						  		<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
+						  		<a target="_blank" rel="noreferrer" href='http://3.88.185.52:3030/'>Get a free API key</a>
 							</div>
 						</div>
 						<div className="form-floating mb-3">
