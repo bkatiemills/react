@@ -37,10 +37,9 @@ helpers.manageAllowedDates = function(vertexes){
 	// return a munged state object reflecting these changes
 
 	let s = {...this.state}
-
-	let maxdays = helpers.calculateDayspan.bind(this)(vertexes)
-
 	s.polygon = vertexes
+
+	let maxdays = helpers.calculateDayspan.bind(this)(s)
 	s.maxDayspan = maxdays
 
 	if(maxdays < this.state.maxDayspan){
@@ -57,20 +56,20 @@ helpers.estimateArea = function(vertexes){
 	return GeometryUtil.geodesicArea(vertexes.map(x => {return({lng: x[0], lat: x[1]})}))/1000000
 }
 
-helpers.calculateDayspan = function(vertexes){
-	// vertexes == coordinates entry from a geojson polygon
+helpers.calculateDayspan = function(s){
+	// s == state object being mutated
 
-	if(JSON.stringify(vertexes) === '[]'){
+	if(JSON.stringify(s.polygon) === '[]'){
 		return this.minDays
 	}
 
-	let area = helpers.estimateArea(vertexes)
+	let area = helpers.estimateArea(s.polygon)
 	if(area >= this.maxArea){
-		return this.minDays
+		return Math.min(this.minDays*this.dateRangeMultiplyer(s), this.maxDays)
 	} else if (area < this.minArea){
 		return this.maxDays
 	} else {
-		return Math.floor(this.maxDays - (area-this.minArea)/(this.maxArea-this.minArea)*(this.maxDays-this.minDays))
+		return Math.min(Math.floor(this.maxDays - (area-this.minArea)/(this.maxArea-this.minArea)*(this.maxDays-this.minDays))*this.dateRangeMultiplyer(s), this.maxDays)
 	}
 }
 
@@ -270,7 +269,7 @@ helpers.circlefy = function(points){
 	}
 	else {
 		points = points.map(point => {return(
-		  <CircleMarker key={point[0]+Math.random()} center={[point[2], point[1]]} radius={1} color={this.chooseColor(point)}>
+		  <CircleMarker key={point[0]+Math.random()} center={[point[2], point[1]]} radius={2} color={this.chooseColor(point)}>
 		  	{this.genTooltip.bind(this)(point)}
 		  </CircleMarker>
 		)})
@@ -367,6 +366,7 @@ helpers.toggle = function(v){
 	let s = {...this.state}
 	s[v.target.id] = !s[v.target.id]
 	s.refreshData = true
+	s = this.toggleCoupling(s)
 	this.setState(s)
 }
 

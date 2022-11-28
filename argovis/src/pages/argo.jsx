@@ -32,10 +32,10 @@ class ArgoExplore extends React.Component {
 			refreshData: true,
 			points: [],
 			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [],
-			maxDayspan: q.has('polygon') ? helpers.calculateDayspan.bind(this)(JSON.parse(q.get('polygon'))) : this.defaultDayspan,
 			urls: [],
 			depthRequired: q.has('depthRequired') ? q.get('depthRequired') : 0
 		}
+		this.state.maxDayspan = helpers.calculateDayspan.bind(this)(this.state)
 
 		helpers.mungeTime.bind(this)(q, this.state.maxDayspan)
 
@@ -143,6 +143,23 @@ class ArgoExplore extends React.Component {
 		      {regionLink}
 		    </Popup>
     	)
+    }
+
+    dateRangeMultiplyer(s){
+    	// allowed date range will be multiplied by this much, as a function of the mutated state s
+    	let m = 1
+    	if(!s.argocore){
+    		m = 5 // 5x date range when not asking for core.
+    	}
+    	return m
+    }
+
+    toggleCoupling(s){
+    	// if changing a toggle for this page needs to trigger a side effect on state, do so here.
+
+    	s.maxDayspan = helpers.calculateDayspan.bind(this)(s)
+
+    	return s
     }
 
 	render(){

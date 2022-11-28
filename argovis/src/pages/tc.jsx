@@ -30,8 +30,8 @@ class TCExplore extends React.Component {
 			points: [],
 			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [],
 			urls: [],
-			maxDayspan: 30
 		}
+		this.state.maxDayspan = helpers.calculateDayspan.bind(this)(this.state)
 
 		helpers.mungeTime.bind(this)(q, this.state.maxDayspan, '2020-08-31')
 
@@ -99,6 +99,16 @@ class TCExplore extends React.Component {
 		      {regionLink}
 		    </Popup>
     	)
+    }
+
+    dateRangeMultiplyer(s){
+    	// allowed date range will be multiplied by this much, as a function of the mutated state s
+    	return 1
+    }
+
+    toggleCoupling(s){
+    	// if changing a toggle for this page needs to trigger a side effect on state, do so here.
+    	return s
     }
 
 	render(){

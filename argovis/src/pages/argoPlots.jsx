@@ -147,7 +147,7 @@ class ArgoPlots extends React.Component {
 	}
 
 	render(){
-		helpers.prepPlotlyState.bind(this)(2)
+		helpers.prepPlotlyState.bind(this)(6)
 
 		let linkouts = <></>
 		if(this.state.argoPlatform){
