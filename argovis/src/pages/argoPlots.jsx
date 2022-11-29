@@ -22,7 +22,7 @@ class ArgoPlots extends React.Component {
 			this.state.title = 'Argo regional search, ' + this.state.startDate.slice(0,10) + ' to ' + this.state.endDate.slice(0,10)
 		}
 
-		helpers.downloadData.bind(this)('temperature', 'pressure', '[2D plot]', 'timestamp')
+		helpers.downloadData.bind(this)('timestamp', 'pressure', '[2D plot]', 'temperature')
 	}
 
 	prepCSV(data, meta){
@@ -104,13 +104,13 @@ class ArgoPlots extends React.Component {
 		for(let i=0; i<data.timestamp.length; i++){
 			let text = ''
 			text += 'Profile ' + data['_id'] + '<br><br>'
-			text += 'Longitude / Latitude: ' + data['longitude'][i] + ' / ' + data['latitude'][i] + '<br>'
+			text += 'Longitude / Latitude: ' + Number(data['longitude'][i]).toPrecision(7) + ' / ' + Number(data['latitude'][i]).toPrecision(7) + '<br>'
 			text += 'Timestamp: ' + new Date(data['timestamp'][i]) + '<br>'
-			text += 'Pressure: ' + data['pressure'][i] + ' dbar<br><br>'
+			text += 'Pressure: ' + Number(data['pressure'][i]).toPrecision(7) + ' dbar<br><br>'
 			let defaultItems = ['longitude', 'latitude', 'timestamp', 'pressure']
 			if(!defaultItems.includes(this.state.xKey)){
 				if(data.hasOwnProperty(this.state.xKey)){
-					text += this.state.xKey + ': ' + data[this.state.xKey][i] + ' ' + this.units[this.state.xKey] + '<br>'
+					text += this.state.xKey + ': ' + Number(data[this.state.xKey][i]).toPrecision(7) + ' ' + this.units[this.state.xKey] + '<br>'
 				}
 				if(data.hasOwnProperty(this.state.xKey + '_argoqc')){
 					text += this.state.xKey +'_argoqc: ' + data[this.state.xKey+'_argoqc'][i] + '<br>'
@@ -118,7 +118,7 @@ class ArgoPlots extends React.Component {
 			}
 			if(!defaultItems.includes(this.state.yKey)){
 				if(data.hasOwnProperty(this.state.yKey)){
-					text += this.state.yKey + ': ' + data[this.state.yKey][i] + ' ' + this.units[this.state.yKey] + '<br>'
+					text += this.state.yKey + ': ' + Number(data[this.state.yKey][i]).toPrecision(7) + ' ' + this.units[this.state.yKey] + '<br>'
 				}
 				if(data.hasOwnProperty(this.state.yKey + '_argoqc')){
 					text += this.state.yKey +'_argoqc: ' + data[this.state.yKey+'_argoqc'][i] + '<br>'
@@ -126,7 +126,7 @@ class ArgoPlots extends React.Component {
 			}
 			if(!defaultItems.includes(this.state.zKey) && this.state.zKey !== '[2d plot]'){
 				if(data.hasOwnProperty(this.state.zKey)){
-					text += this.state.zKey + ': ' + data[this.state.zKey][i] + ' ' + this.units[this.state.zKey] + '<br>'
+					text += this.state.zKey + ': ' + Number(data[this.state.zKey][i]).toPrecision(7) + ' ' + this.units[this.state.zKey] + '<br>'
 				}
 				if(data.hasOwnProperty(this.state.zKey + '_argoqc')){
 					text += this.state.zKey +'_argoqc: ' + data[this.state.zKey+'_argoqc'][i] + '<br>'
@@ -134,7 +134,7 @@ class ArgoPlots extends React.Component {
 			}
 			if(!defaultItems.includes(this.state.cKey)){
 				if(data.hasOwnProperty(this.state.cKey)){
-					text += this.state.cKey + ': ' + data[this.state.cKey][i] + ' ' + this.units[this.state.cKey] + '<br>'
+					text += this.state.cKey + ': ' + Number(data[this.state.cKey][i]).toPrecision(7) + ' ' + this.units[this.state.cKey] + '<br>'
 				}
 				if(data.hasOwnProperty(this.state.cKey + '_argoqc')){
 					text += this.state.cKey +'_argoqc: ' + data[this.state.cKey+'_argoqc'][i]

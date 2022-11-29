@@ -212,7 +212,7 @@ class ShipsExplore extends React.Component {
 								<h5>Explore Ship-Based Profiles</h5>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">
-										<input type="password" className="form-control" id="apiKey" placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
+										<input type="password" className="form-control" id="apiKey" value={this.state.apiKey} placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
 										<label htmlFor="apiKey">API Key</label>
 										<div id="apiKeyHelpBlock" className="form-text">
 						  					<a target="_blank" rel="noreferrer" href='http://3.88.185.52:3030/'>Get a free API key</a>
@@ -344,9 +344,7 @@ class ShipsExplore extends React.Component {
 			      						/>
 									</div>
 
-									<div id="coloHelpBlock" className="form-text">
-					  					<a target="_blank" rel="noreferrer" href='https://github.com/argovis/demo_notebooks/blob/main/CCHDO_Intro.ipynb'>Colocate ship profiles with other products</a>
-									</div>
+									<a class="btn btn-primary" href="/ships" role="button">Reset Map</a>
 								</div>
 							</div>
 						</fieldset>

@@ -645,27 +645,27 @@ helpers.genericTooltip = function(data){
 	for(let i=0; i<data.timestamp.length; i++){
 		let text = ''
 		text += 'Record ID ' + data['_id'][i] + '<br><br>'
-		text += 'Longitude / Latitude: ' + data['longitude'][i] + ' / ' + data['latitude'][i] + '<br>'
+		text += 'Longitude / Latitude: ' + Number(data['longitude'][i]).toPrecision(7) + ' / ' + Number(data['latitude'][i]).toPrecision(7) + '<br>'
 		text += 'Timestamp: ' + new Date(data['timestamp'][i]) + '<br><br>'
 		let defaultItems = ['longitude', 'latitude', 'timestamp', 'pressure']
 		if(!defaultItems.includes(this.state.xKey)){
 			if(data.hasOwnProperty(this.state.xKey)){
-				text += this.state.xKey + ': ' + data[this.state.xKey][i] + ' ' + this.units[this.state.xKey] + '<br>'
+				text += this.state.xKey + ': ' + Number(data[this.state.xKey][i]).toPrecision(7) + ' ' + this.units[this.state.xKey] + '<br>'
 			}
 		}
 		if(!defaultItems.includes(this.state.yKey)){
 			if(data.hasOwnProperty(this.state.yKey)){
-				text += this.state.yKey + ': ' + data[this.state.yKey][i] + ' ' + this.units[this.state.yKey] + '<br>'
+				text += this.state.yKey + ': ' + Number(data[this.state.yKey][i]).toPrecision(7) + ' ' + this.units[this.state.yKey] + '<br>'
 			}
 		}
 		if(!defaultItems.includes(this.state.zKey) && this.state.zKey !== '[2d plot]'){
 			if(data.hasOwnProperty(this.state.zKey)){
-				text += this.state.zKey + ': ' + data[this.state.zKey][i] + ' ' + this.units[this.state.zKey] + '<br>'
+				text += this.state.zKey + ': ' + Number(data[this.state.zKey][i]).toPrecision(7) + ' ' + this.units[this.state.zKey] + '<br>'
 			}
 		}
 		if(!defaultItems.includes(this.state.cKey)){
 			if(data.hasOwnProperty(this.state.cKey)){
-				text += this.state.cKey + ': ' + data[this.state.cKey][i] + ' ' + this.units[this.state.cKey] + '<br>'
+				text += this.state.cKey + ': ' + Number(data[this.state.cKey][i]).toPrecision(7) + ' ' + this.units[this.state.cKey] + '<br>'
 			}
 		}
 		tooltips.push(text)
