@@ -244,19 +244,28 @@ helpers.generateTemporoSpatialURL = function(route){
 	}  
 
 	if(this.state.polygon.length>0){
-		let tidypoly = [] // make sure longitudes are on [-180,180]
-		for(let i=0; i<this.state.polygon.length; i++){
-			let point = [this.state.polygon[i][0], this.state.polygon[i][1]]
-			if(point[0] < -180){
-				point[0] += 360
-			} else if(point[0] > 180){
-				point[0] -= 360
-			}
-			tidypoly.push(point)
-		}
+		let tidypoly = helpers.tidypoly(this.state.polygon)
 		url += '&polygon=[' + tidypoly.map(x => '['+x[0]+','+x[1]+']').join(',') + ']'
 	}    
 	return url	
+}
+
+helpers.tidypoly = function(polygon){
+	// given geojson polygon vertexes [[lon0,lat0],[lon1,lat1],...,[lon0,lat0]],
+	// return the same polygon on [-180,180]
+
+	let tidypoly = [] // make sure longitudes are on [-180,180]
+	for(let i=0; i<polygon.length; i++){
+		let point = [polygon[i][0], polygon[i][1]]
+		if(point[0] < -180){
+			point[0] += 360
+		} else if(point[0] > 180){
+			point[0] -= 360
+		}
+		tidypoly.push(point)
+	}
+
+	return tidypoly
 }
 
 helpers.circlefy = function(points){
@@ -269,7 +278,7 @@ helpers.circlefy = function(points){
 	}
 	else {
 		points = points.map(point => {return(
-		  <CircleMarker key={point[0]+Math.random()} center={[point[2], point[1]]} radius={2} color={this.chooseColor(point)}>
+		  <CircleMarker key={point[0]+Math.random()} center={[point[2], helpers.mutateLongitude(point[1], parseFloat(this.state.centerlon)) ]} radius={2} color={this.chooseColor(point)}>
 		  	{this.genTooltip.bind(this)(point)}
 		  </CircleMarker>
 		)})
@@ -778,7 +787,7 @@ helpers.plotHTML = function(){
 			<div className='col-3'>
 				<fieldset ref={this.formRef}>
 					<span id='statusBanner' ref={this.statusReporting} className={'statusBanner busy'}>Downloading...</span>
-					<MapContainer style={{'height': '30vh'}} center={[0,0]} zoom={0} scrollWheelZoom={true}>
+					<MapContainer style={{'height': '30vh'}} center={[25,parseFloat(this.state.centerlon)]} zoom={0} scrollWheelZoom={true}>
 						<TileLayer
 						attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 						url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -1152,7 +1161,8 @@ helpers.initPlottingPage = function(customParams){
 		counterTraces: q.has('counterTraces') ? q.get('counterTraces') : [], // trace IDs with a show status opposite to showAll
 		points: [],
 		connectingLines: q.has('connectingLines') ? q.get('connectingLines') === 'true' : false,
-		refreshData: true
+		refreshData: true,
+		centerlon: q.has('centerlon') ? q.get('centerlon') : 0,
 	}
 
 	this.apiPrefix = 'http://3.88.185.52:8080/'
@@ -1210,7 +1220,7 @@ helpers.downloadData = function(defaultX, defaultY, defaultZ, defaultC, mergePoi
 
 			let mappoints = p.map(point => {
 				return(
-					<CircleMarker key={point._id+Math.random()} center={[point.latitude[0], point.longitude[0]]} radius={1} color={'red'}/>
+					<CircleMarker key={point._id+Math.random()} center={[point.latitude[0], helpers.mutateLongitude(point.longitude[0], parseFloat(this.state.centerlon)) ]} radius={1} color={'red'}/>
 					)
 			})
 
@@ -1303,6 +1313,29 @@ helpers.generateTimetics = function(minMSSE, maxMSSE){
 
   return [ticktext, tickvals]
 
+}
+
+helpers.manageCenterlon = function(centerlon){
+	centerlon = parseFloat(centerlon)
+	if(centerlon < -180){
+		centerlon = -180
+	} else if (centerlon > 180){
+		centerlon = 180
+	}
+	return centerlon
+}
+
+helpers.mutateLongitude = function(longitude, centerlon){
+	// given a longitude on [-180,180],
+	// transform it to plot on a map centered on [centerlon - 180, centerlon + 180]
+
+	if(longitude > centerlon + 180){
+		return longitude - 360
+	} else if(longitude < centerlon-180){
+		return longitude + 360
+	} else {
+		return longitude
+	}
 }
 
 export default helpers

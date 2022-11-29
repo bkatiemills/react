@@ -33,7 +33,9 @@ class ArgoExplore extends React.Component {
 			points: [],
 			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [],
 			urls: [],
-			depthRequired: q.has('depthRequired') ? q.get('depthRequired') : 0
+			depthRequired: q.has('depthRequired') ? q.get('depthRequired') : 0,
+			centerlon: q.has('centerlon') ? q.get('centerlon') : 0,
+			mapkey: Math.random()
 		}
 		this.state.maxDayspan = helpers.calculateDayspan.bind(this)(this.state)
 
@@ -55,7 +57,7 @@ class ArgoExplore extends React.Component {
         this.apiPrefix = 'http://3.88.185.52:8080/'
         this.vocab = {}
         this.dataset = 'argo'
-        this.customQueryParams = ['startDate', 'endDate', 'polygon', 'argocore', 'argobgc', 'argodeep', 'argoPlatform', 'depthRequired']
+        this.customQueryParams = ['startDate', 'endDate', 'polygon', 'argocore', 'argobgc', 'argodeep', 'argoPlatform', 'depthRequired', 'centerlon']
 
         // populate vocabularies, and trigger first render
         fetch(this.apiPrefix + 'argo/vocabulary?parameter=platform', {headers:{'x-argokey': this.state.apiKey}})
@@ -130,7 +132,7 @@ class ArgoExplore extends React.Component {
       	if(JSON.stringify(this.state.polygon) !== '[]'){
       		let endDate = new Date(this.state.endDate)
       		endDate.setDate(endDate.getDate() + 1)
-      		regionLink = <><br /><a target="_blank" rel="noreferrer" href={'/plots/argo?showAll=true&startDate=' + this.state.startDate + 'T00:00:00Z&endDate='+ endDate.toISOString().replace('.000Z', 'Z') +'&polygon='+JSON.stringify(this.state.polygon)}>Regional Selection Page</a></>		
+      		regionLink = <><br /><a target="_blank" rel="noreferrer" href={'/plots/argo?showAll=true&startDate=' + this.state.startDate + 'T00:00:00Z&endDate='+ endDate.toISOString().replace('.000Z', 'Z') +'&polygon='+JSON.stringify(helpers.tidypoly(this.state.polygon))+'&centerlon='+this.state.centerlon}>Regional Selection Page</a></>		
       	}
 
     	return(
@@ -139,7 +141,7 @@ class ArgoExplore extends React.Component {
 		      Long / Lat: {point[1]} / {point[2]} <br />
 		      Date: {point[3]} <br />
 		      Data Sources: {point[4].join(', ')} <br />
-		      <a target="_blank" rel="noreferrer" href={'/plots/argo?showAll=true&argoPlatform='+point[0].split('_')[0]}>Platform Page</a>
+		      <a target="_blank" rel="noreferrer" href={'/plots/argo?showAll=true&argoPlatform='+point[0].split('_')[0]+'&centerlon='+this.state.centerlon}>Platform Page</a>
 		      {regionLink}
 		    </Popup>
     	)
@@ -234,6 +236,32 @@ class ArgoExplore extends React.Component {
 											aria-describedby="basic-addon1"/>
 										<label htmlFor="depth">Require levels deeper than [m]:</label>
 									</div>
+
+									<h6>Map Center Longitude</h6>
+									<div className="form-floating mb-3">
+										<input 
+											id="centerlon"
+											type="text"
+											disabled={this.state.observingEntity} 
+											className="form-control" 
+											placeholder="0" 
+											value={this.state.centerlon} 
+											onChange={e => {
+												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
+												this.setState({centerlon:e.target.value})}
+											} 
+											onBlur={e => {
+												this.setState({centerlon: helpers.manageCenterlon(e.target.defaultValue), mapkey: Math.random(), refreshData: true})
+											}}
+											onKeyPress={e => {
+												if(e.key==='Enter'){
+													this.setState({centerlon: helpers.manageCenterlon(e.target.defaultValue), mapkey: Math.random(), refreshData: true})
+												}
+											}}
+											aria-label="centerlon" 
+											aria-describedby="basic-addon1"/>
+										<label htmlFor="depth">Center longitude on [-180,180]</label>
+									</div>
 								</div>
 
 								<div className='verticalGroup'>
@@ -276,7 +304,7 @@ class ArgoExplore extends React.Component {
 
 					{/*leaflet map*/}
 					<div className='col-9'>
-						<MapContainer center={[25, 0]} zoom={2} scrollWheelZoom={true}>
+						<MapContainer key={this.state.mapkey} center={[25, parseFloat(this.state.centerlon)]} zoom={2} scrollWheelZoom={true}>
 							<TileLayer
 							attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 							url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
