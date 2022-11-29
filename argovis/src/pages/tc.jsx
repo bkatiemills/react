@@ -30,6 +30,8 @@ class TCExplore extends React.Component {
 			points: [],
 			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [],
 			urls: [],
+			centerlon: q.has('centerlon') ? q.get('centerlon') : 0,
+			mapkey: Math.random()
 		}
 		this.state.maxDayspan = helpers.calculateDayspan.bind(this)(this.state)
 
@@ -43,7 +45,7 @@ class TCExplore extends React.Component {
         this.vocab = {}
         this.lookupLabel = {}
         this.dataset = 'tc'
-        this.customQueryParams =  ['startDate', 'endDate', 'polygon', 'tcName']
+        this.customQueryParams =  ['startDate', 'endDate', 'polygon', 'tcName', 'centerlon']
 
         // populate vocabularies, and trigger first render
         fetch(this.apiPrefix + 'summary?id=tc_labels', {headers:{'x-argokey': this.state.apiKey}})
@@ -87,7 +89,7 @@ class TCExplore extends React.Component {
       	if(JSON.stringify(this.state.polygon) !== '[]'){
       		let endDate = new Date(this.state.endDate)
       		endDate.setDate(endDate.getDate() + 1)
-      		regionLink = <><br /><a target="_blank" rel="noreferrer" href={'/plots/tc?showAll=true&startDate=' + this.state.startDate + 'T00:00:00Z&endDate='+ endDate.toISOString().replace('.000Z', 'Z') +'&polygon='+JSON.stringify(this.state.polygon)}>Regional Selection Page</a></>		
+      		regionLink = <><br /><a target="_blank" rel="noreferrer" href={'/plots/tc?showAll=true&startDate=' + this.state.startDate + 'T00:00:00Z&endDate='+ endDate.toISOString().replace('.000Z', 'Z') +'&polygon='+JSON.stringify(this.state.polygon)+'&centerlon='+this.state.centerlon}>Regional Selection Page</a></>		
       	}
 
     	return(
@@ -95,7 +97,7 @@ class TCExplore extends React.Component {
 		      ID: {point[0]} <br />
 		      Long / Lat: {point[1]} / {point[2]} <br />
 		      Date: {point[3]} <br />
-		      <a target="_blank" rel="noreferrer" href={'/plots/tc?showAll=true&tcMeta='+point[0].split('_')[0]}>Cyclone Page</a>
+		      <a target="_blank" rel="noreferrer" href={'/plots/tc?showAll=true&tcMeta='+point[0].split('_')[0]+'&centerlon='+this.state.centerlon}>Cyclone Page</a>
 		      {regionLink}
 		    </Popup>
     	)
@@ -163,6 +165,32 @@ class TCExplore extends React.Component {
 									</div>
 								</div>
 
+								<h6>Map Center Longitude</h6>
+									<div className="form-floating mb-3">
+										<input 
+											id="centerlon"
+											type="text"
+											disabled={this.state.observingEntity} 
+											className="form-control" 
+											placeholder="0" 
+											value={this.state.centerlon} 
+											onChange={e => {
+												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
+												this.setState({centerlon:e.target.value})}
+											} 
+											onBlur={e => {
+												this.setState({centerlon: helpers.manageCenterlon(e.target.defaultValue), mapkey: Math.random(), refreshData: true})
+											}}
+											onKeyPress={e => {
+												if(e.key==='Enter'){
+													this.setState({centerlon: helpers.manageCenterlon(e.target.defaultValue), mapkey: Math.random(), refreshData: true})
+												}
+											}}
+											aria-label="centerlon" 
+											aria-describedby="basic-addon1"/>
+										<label htmlFor="depth">Center longitude on [-180,180]</label>
+									</div>
+
 								<div className='verticalGroup'>
 									<h6>Object Filters</h6>
 									<div className="form-floating mb-3">
@@ -187,7 +215,7 @@ class TCExplore extends React.Component {
 
 					{/*leaflet map*/}
 					<div className='col-9'>
-						<MapContainer center={[25, 0]} zoom={2} scrollWheelZoom={true}>
+						<MapContainer key={this.state.mapkey} center={[25, parseFloat(this.state.centerlon)]} zoom={2} scrollWheelZoom={true}>
 							<TileLayer
 							attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 							url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

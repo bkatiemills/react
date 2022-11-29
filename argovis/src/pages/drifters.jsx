@@ -32,7 +32,9 @@ class DriftersExplore extends React.Component {
 			refreshData: false,
 			points: [],
 			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : this.defaultPolygon,
-			urls: []
+			urls: [],
+			centerlon: q.has('centerlon') ? q.get('centerlon') : 0,
+			mapkey: Math.random()
 		}
 		this.state.maxDayspan = helpers.calculateDayspan.bind(this)(this.state)
 
@@ -46,7 +48,7 @@ class DriftersExplore extends React.Component {
         this.vocab = {}
         this.lookupLabel = {}
         this.dataset = 'drifter'
-        this.customQueryParams =  ['startDate', 'endDate', 'polygon', 'wmo', 'platform']
+        this.customQueryParams =  ['startDate', 'endDate', 'polygon', 'wmo', 'platform', 'centerlon']
 
         // populate vocabularies, and trigger first render
         let vocabURLs = [this.apiPrefix + 'drifters/vocabulary?parameter=wmo', this.apiPrefix + 'drifters/vocabulary?parameter=platform']
@@ -90,7 +92,7 @@ class DriftersExplore extends React.Component {
       	if(JSON.stringify(this.state.polygon) !== '[]'){
       		let endDate = new Date(this.state.endDate)
       		endDate.setDate(endDate.getDate() + 1)
-      		regionLink = <><a target="_blank" rel="noreferrer" href={'/plots/drifters?showAll=true&startDate=' + this.state.startDate + 'T00:00:00Z&endDate='+ endDate.toISOString().replace('.000Z', 'Z') +'&polygon='+JSON.stringify(this.state.polygon)}>Regional Selection Page</a></>		
+      		regionLink = <><a target="_blank" rel="noreferrer" href={'/plots/drifters?showAll=true&startDate=' + this.state.startDate + 'T00:00:00Z&endDate='+ endDate.toISOString().replace('.000Z', 'Z') +'&polygon='+JSON.stringify(this.state.polygon)+'&centerlon='+this.state.centerlon}>Regional Selection Page</a></>		
       	}
 
     	return(
@@ -98,8 +100,8 @@ class DriftersExplore extends React.Component {
 		      ID: {point[0]} <br />
 		      Long / Lat: {point[1]} / {point[2]} <br />
 		      Date: {point[3]} <br />
-		      <a target="_blank" rel="noreferrer" href={'/plots/drifters?showAll=true&wmo='+point[4]}>{'WMO ' + point[4] + ' page'}</a><br />
-		      <a target="_blank" rel="noreferrer" href={'/plots/drifters?showAll=true&platform='+point[0].split('_')[0]}>{'Drifter platform ' + point[0].split('_')[0] + ' Page'}</a><br/>
+		      <a target="_blank" rel="noreferrer" href={'/plots/drifters?showAll=true&wmo='+point[4]+'&centerlon='+this.state.centerlon}>{'WMO ' + point[4] + ' page'}</a><br />
+		      <a target="_blank" rel="noreferrer" href={'/plots/drifters?showAll=true&platform='+point[0].split('_')[0]+'&centerlon='+this.state.centerlon}>{'Drifter platform ' + point[0].split('_')[0] + ' Page'}</a><br/>
 		      {regionLink}
 		    </Popup>
     	)
@@ -167,6 +169,32 @@ class DriftersExplore extends React.Component {
 									</div>
 								</div>
 
+								<h6>Map Center Longitude</h6>
+									<div className="form-floating mb-3">
+										<input 
+											id="centerlon"
+											type="text"
+											disabled={this.state.observingEntity} 
+											className="form-control" 
+											placeholder="0" 
+											value={this.state.centerlon} 
+											onChange={e => {
+												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
+												this.setState({centerlon:e.target.value})}
+											} 
+											onBlur={e => {
+												this.setState({centerlon: helpers.manageCenterlon(e.target.defaultValue), mapkey: Math.random(), refreshData: true})
+											}}
+											onKeyPress={e => {
+												if(e.key==='Enter'){
+													this.setState({centerlon: helpers.manageCenterlon(e.target.defaultValue), mapkey: Math.random(), refreshData: true})
+												}
+											}}
+											aria-label="centerlon" 
+											aria-describedby="basic-addon1"/>
+										<label htmlFor="depth">Center longitude on [-180,180]</label>
+									</div>
+
 								<div className='verticalGroup'>
 									<h6>Object Filters</h6>
 									<div className="form-floating mb-3">
@@ -206,7 +234,7 @@ class DriftersExplore extends React.Component {
 
 					{/*leaflet map*/}
 					<div className='col-9'>
-						<MapContainer center={[25, 0]} zoom={2} scrollWheelZoom={true}>
+						<MapContainer key={this.state.mapkey} center={[25, parseFloat(this.state.centerlon)]} zoom={2} scrollWheelZoom={true}>
 							<TileLayer
 							attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 							url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -216,7 +244,7 @@ class DriftersExplore extends React.Component {
 								position='topleft'
 								onEdited={p => helpers.onPolyEdit.bind(this)(p)}
 								onCreated={p => helpers.onPolyCreate.bind(this)(p)}
-								onDeleted={p => helpers.onPolyDelete.bind(this)([],p)}
+								onDeleted={p => helpers.onPolyDelete.bind(this)(this.defaultPolygon,p)}
 								onDrawStop={p => helpers.onDrawStop.bind(this)(p)}
 								onDrawStart={p => helpers.onDrawStart.bind(this)(p)}
 								draw={{
@@ -232,7 +260,7 @@ class DriftersExplore extends React.Component {
 									}
 								}}
 								/>
-								<Polygon key={JSON.stringify(this.state.polygon)} positions={this.state.polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
+								<Polygon key={JSON.stringify(this.state.polygon)} positions={this.state.polygon.map(x => [x[1],helpers.mutateLongitude(x[0], this.state.centerlon)])} fillOpacity={0}></Polygon>
 							</FeatureGroup>
 							{this.state.points}
 						</MapContainer>
