@@ -35,7 +35,10 @@ class ArgoExplore extends React.Component {
 			urls: [],
 			depthRequired: q.has('depthRequired') ? q.get('depthRequired') : 0,
 			centerlon: q.has('centerlon') ? q.get('centerlon') : 0,
-			mapkey: Math.random()
+			mapkey: Math.random(),
+			nCore: 0,
+			nBGC: 0,
+			nDeep: 0
 		}
 		this.state.maxDayspan = helpers.calculateDayspan.bind(this)(this.state)
 
@@ -60,12 +63,20 @@ class ArgoExplore extends React.Component {
         this.customQueryParams = ['startDate', 'endDate', 'polygon', 'argocore', 'argobgc', 'argodeep', 'argoPlatform', 'depthRequired', 'centerlon']
 
         // populate vocabularies, and trigger first render
-        fetch(this.apiPrefix + 'argo/vocabulary?parameter=platform', {headers:{'x-argokey': this.state.apiKey}})
-        .then(response => response.json())
-        .then(data => {
-        	this.vocab['argoPlatform'] = data
-        	this.setState({refreshData:true})
-        })
+        let vocabURLs = [this.apiPrefix + 'argo/vocabulary?parameter=platform', this.apiPrefix + 'argo/overview']
+		Promise.all(vocabURLs.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+			Promise.all(responses.map(res => res.json())).then(data => {
+				console.log(data)
+				this.vocab['argoPlatform'] = data[0]
+				this.setState({
+					refreshData:true,
+					nCore: data[1][0].summary.nCore,
+					nBGC: data[1][0].summary.nBGC,
+					nDeep: data[1][0].summary.nDeep
+				})
+			})
+		})
+
 	}
 
     componentDidUpdate(prevProps, prevState, snapshot){
@@ -173,7 +184,7 @@ class ArgoExplore extends React.Component {
 					<div className='col-3 overflow-auto'>
 						<fieldset ref={this.formRef}>
 							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
-							<div className='mapSearchInputs'>
+							<div className='mapSearchInputs overflow-scroll' style={{'height':'90vh'}}> 
 								<h5>Explore Argo Profiles</h5>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">
@@ -297,6 +308,14 @@ class ArgoExplore extends React.Component {
 									<div id="coloHelpBlock" className="form-text">
 					  					<a target="_blank" rel="noreferrer" href='https://github.com/earthcube2022/ec22_mills_etal/blob/rc/WM_01_intro_to_argovis_api.ipynb'>Colocate Argo with other products</a>
 									</div>
+								</div>
+
+								<div className='verticalGroup'>
+									<h6>Database stats</h6>
+									<span>Number of core profiles: {this.state.nCore}</span><br/>
+									<span>Number of BGC profiles: {this.state.nBGC}</span><br/>
+									<span>Number of deep profiles: {this.state.nDeep}</span><br/>
+									<span><i>Argo data is synced nightly from IFREMER</i></span>
 								</div>
 							</div>
 						</fieldset>
