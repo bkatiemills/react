@@ -61,11 +61,11 @@ class ShipPlots extends React.Component {
 		if(this.state.woceline){
 			urls = urls.concat(this.apiPrefix + 'cchdo?compression=array&data=all&woceline=' + this.state.woceline + '&startDate=' + this.state.startDate + '&endDate=' + this.state.endDate)
 		} else if(this.state.cruise){
-			urls = urls.concat(this.apiPrefix + 'cchdo?compression=array&data=all&cruise=' + this.state.cruise)
+			urls = urls.concat(this.apiPrefix + 'cchdo?compression=array&data=all&cchdo_cruise=' + this.state.cruise)
 		} else if(this.state.polygon && this.state.startDate && this.state.endDate){
 			urls = urls.concat(this.apiPrefix + 'cchdo?compression=array&data=all&startDate=' + this.state.startDate + '&endDate=' + this.state.endDate + '&polygon=' + this.state.polygon)
 		} 
-
+		console.log(urls)
 		return urls
 	}
 
