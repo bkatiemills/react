@@ -232,7 +232,7 @@ class TCExplore extends React.Component {
 									polyline: false,
 									circlemarker: false,
 									marker: false,
-									polygon: {
+									polygon: this.state.observingEntity ? false: {
 										shapeOptions: {
 											fillOpacity: 0
 										}

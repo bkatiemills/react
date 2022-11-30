@@ -156,7 +156,6 @@ helpers.componentDidUpdate = function(){
 							newPoints = newPoints.concat(data[i])
 						}
 					}
-					newPoints = helpers.circlefy.bind(this)(newPoints)
 					if(this.lookingForEntity()){
 						timestamps = timestamps.map(x => { let d = new Date(x); return d.getTime()})
 						let start = new Date(Math.min(...timestamps))
@@ -165,6 +164,7 @@ helpers.componentDidUpdate = function(){
 	   					// eslint-disable-next-line
 	   					this.state.startDate = start.toISOString().slice(0,10) ; this.state.endDate = end.toISOString().slice(0,10) ; this.state.polygon = [] ; this.state.observingEntity = true
 					}
+					newPoints = helpers.circlefy.bind(this)(newPoints)
 					// eslint-disable-next-line
 					this.state.points = newPoints
 					helpers.manageStatus.bind(this)('rendering')
