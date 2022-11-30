@@ -224,7 +224,7 @@ class DriftersExplore extends React.Component {
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 									</div>
-									<a class="btn btn-primary" href="/drifters" role="button">Reset Map</a>
+									<a className="btn btn-primary" href="/drifters" role="button">Reset Map</a>
 								</div>
 							</div>
 						</fieldset>

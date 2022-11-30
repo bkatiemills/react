@@ -305,9 +305,7 @@ class ArgoExplore extends React.Component {
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 									</div>
-									<div id="coloHelpBlock" className="form-text">
-					  					<a target="_blank" rel="noreferrer" href='https://github.com/earthcube2022/ec22_mills_etal/blob/rc/WM_01_intro_to_argovis_api.ipynb'>Colocate Argo with other products</a>
-									</div>
+									<a className="btn btn-primary" href="/argo" role="button">Reset Map</a>
 								</div>
 
 								<div className='verticalGroup'>

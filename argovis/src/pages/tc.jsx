@@ -205,7 +205,7 @@ class TCExplore extends React.Component {
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item autocomplete-item'}}
 			      						/>
 									</div>
-									<a class="btn btn-primary" href="/tc" role="button">Reset Map</a>
+									<a className="btn btn-primary" href="/tc" role="button">Reset Map</a>
 								</div>
 							</div>
 						</fieldset>

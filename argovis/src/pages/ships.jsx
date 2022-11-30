@@ -344,7 +344,7 @@ class ShipsExplore extends React.Component {
 			      						/>
 									</div>
 
-									<a class="btn btn-primary" href="/ships" role="button">Reset Map</a>
+									<a className="btn btn-primary" href="/ships" role="button">Reset Map</a>
 								</div>
 							</div>
 						</fieldset>
