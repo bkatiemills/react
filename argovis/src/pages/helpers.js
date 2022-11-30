@@ -501,8 +501,9 @@ helpers.generateRange = function(min, max, dataKey, reverse){
 
 	let range = []
 	let data = this.state.data.map(x=>x[dataKey])
-	let dataMin = Math.min(...([].concat(...data)).filter(x=>typeof x === 'number') )
-	let dataMax = Math.max(...([].concat(...data)).filter(x=>typeof x === 'number') )
+	let datalist = ([].concat(...data)).filter(x=>typeof x === 'number')
+	let dataMin = datalist.reduce((a, b) => Math.min(a, b), Infinity); 
+	let dataMax = datalist.reduce((a, b) => Math.max(a, b), -Infinity);
 	let buffer = (dataMax - dataMin)*0.05
 	range[0] = min === '' ? dataMin - buffer : Number(min)
 	range[1] = max === '' ? dataMax + buffer : Number(max)
