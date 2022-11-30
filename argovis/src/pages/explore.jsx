@@ -20,7 +20,7 @@ class ArgovisExplore extends React.Component {
 			this.maxArea = 10000000
 			this.defaultDayspan = 10
 			this.defaultPolygon = [[-100.37109375,24.49248193841918],[-97.55859375000001,32.662809707774706],[-88.06640625000001,34.130298918618614],[-81.38671875000001,34.130298918618614],[-76.46484375000001,27.80539400261969],[-76.11328125000001,22.396132592320402],[-85.42968750000001,14.397794716268102],[-95.27343750000001,17.607725265457233],[-100.37109375,24.49248193841918]]
-			this.defaultDayspan = helpers.calculateDayspan.bind(this)(this.defaultPolygon)
+			this.defaultDayspan = helpers.calculateDayspan.bind(this)({'polygon':this.defaultPolygon})
 
       this.state = {
       	apiKey: localStorage.getItem('apiKey') ? localStorage.getItem('apiKey') : 'guest',					// user's API key, if provided
@@ -342,9 +342,6 @@ class ArgovisExplore extends React.Component {
 	    }
     }
 
-
-
-
     // misc helpers
     findDataset(url){
     	return url.slice(url.search('(?<='+this.apiPrefix+')'), url.search('(?=comp)')-1 )
@@ -378,6 +375,16 @@ class ArgovisExplore extends React.Component {
     	this.minDays = Math.min(...minDays)
     	this.minArea = Math.min(...minArea)
     	this.maxArea = Math.min(...maxArea)
+    }
+
+    dateRangeMultiplyer(s){
+    	// allowed date range will be multiplied by this much, as a function of the mutated state s
+    	return 1
+    }
+
+    toggleCoupling(s){
+    	// if changing a toggle for this page needs to trigger a side effect on state, do so here.
+    	return s
     }
 
 	render(){
