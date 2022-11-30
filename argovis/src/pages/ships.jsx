@@ -14,11 +14,11 @@ class ShipsExplore extends React.Component {
 		let q = new URLSearchParams(window.location.search) // parse out query string
 
 		// limits for polygon / time coupling
-		this.minDays = 30
+		this.minDays = 31
 		this.maxDays = 365
 		this.minArea = 1000000
 		this.maxArea = 10000000
-		this.defaultDayspan = 30
+		this.defaultDayspan = 31
 
 		// default state, pulling in query string specifications
 		this.state = {
@@ -109,7 +109,9 @@ class ShipsExplore extends React.Component {
 
 	    	// decide on source.source
 	    	let source = []
-	    	if(this.state.other && this.state.woce && this.state.goship){
+	    	if(!this.state.other && !this.state.woce && !this.state.goship){
+	    		return []
+	    	}else if(this.state.other && this.state.woce && this.state.goship){
 	    		source = []
 	    	} else if(this.state.other && this.state.woce && !this.state.goship){
 	    		source = ['~cchdo_woce,~cchdo_go-ship', 'cchdo_woce']
