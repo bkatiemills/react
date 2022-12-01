@@ -40,7 +40,9 @@ class TCExplore extends React.Component {
         // some other useful class variables
         this.fgRef = React.createRef()
         this.formRef = React.createRef()
+        this.nameRef = React.createRef()
 		this.statusReporting = React.createRef()
+		this.reautofocus = null
         this.apiPrefix = 'http://3.88.185.52:8080/'
         this.vocab = {}
         this.lookupLabel = {}
@@ -196,12 +198,13 @@ class TCExplore extends React.Component {
 									<div className="form-floating mb-3">
 			      						<Autosuggest
 									      	id='tcNameAS'
+									      	ref={this.nameRef}
 									        suggestions={this.state.tcNameSuggestions}
 									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'tcNameSuggestions')}
 									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'tcNameSuggestions')}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'tcName')}
-									        inputProps={{placeholder: 'TC Name', value: this.state.tcName, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of TC Name', 'tcName'), id: 'tcName'}}
+									        inputProps={{placeholder: 'TC Name', value: this.state.tcName, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of TC Name', 'tcName', this.nameRef), id: 'tcName'}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item autocomplete-item'}}
 			      						/>
 									</div>

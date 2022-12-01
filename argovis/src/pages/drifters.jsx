@@ -43,7 +43,10 @@ class DriftersExplore extends React.Component {
         // some other useful class variables
         this.fgRef = React.createRef()
         this.formRef = React.createRef()
+        this.wmoRef = React.createRef()
+        this.platformRef = React.createRef()
 		this.statusReporting = React.createRef()
+		this.reautofocus = null
         this.apiPrefix = 'http://3.88.185.52:8080/'
         this.vocab = {}
         this.lookupLabel = {}
@@ -201,12 +204,13 @@ class DriftersExplore extends React.Component {
 			      						<Autosuggest
 									      	id='wmoAS'
 									      	key='wmo'
+									      	ref={this.wmoRef}
 									        suggestions={this.state.wmoSuggestions}
 									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'wmoSuggestions')}
 									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'wmoSuggestions')}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'wmo')}
-									        inputProps={{placeholder: 'WMO ID', value: this.state.wmo, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of WMO ID', 'wmo'), id: 'wmo', disabled: Boolean(this.state.platform)}}
+									        inputProps={{placeholder: 'WMO ID', value: this.state.wmo, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of WMO ID', 'wmo', this.wmoRef), id: 'wmo', disabled: Boolean(this.state.platform)}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 									</div>
@@ -215,12 +219,13 @@ class DriftersExplore extends React.Component {
 			      						<Autosuggest
 									      	id='platformAS'
 									      	key='platform'
+									      	ref={this.platformRef}
 									        suggestions={this.state.platformSuggestions}
 									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'platformSuggestions')}
 									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'platformSuggestions')}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'platform')}
-									        inputProps={{placeholder: 'Platform ID', value: this.state.platform, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of Platform ID', 'platform'), id: 'platform',  disabled: Boolean(this.state.wmo)}}
+									        inputProps={{placeholder: 'Platform ID', value: this.state.platform, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of Platform ID', 'platform', this.platformRef), id: 'platform',  disabled: Boolean(this.state.wmo)}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 									</div>

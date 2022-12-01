@@ -55,7 +55,9 @@ class ArgoExplore extends React.Component {
         // some other useful class variables
         this.fgRef = React.createRef()
         this.formRef = React.createRef()
+        this.platformRef = React.createRef()
 		this.statusReporting = React.createRef()
+		this.reautofocus = null
         //this.apiPrefix = 'https://argovis-api.colorado.edu/'
         this.apiPrefix = 'http://3.88.185.52:8080/'
         this.vocab = {}
@@ -296,12 +298,13 @@ class ArgoExplore extends React.Component {
 									<div className="form-floating mb-3">
 			      						<Autosuggest
 									      	id='argoPlatformAS'
+									      	ref={this.platformRef}
 									        suggestions={this.state.argoPlatformSuggestions}
 									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'argoPlatformSuggestions')}
 									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'argoPlatformSuggestions')}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'argoPlatform')}
-									        inputProps={{placeholder: 'Argo platform ID', value: this.state.argoPlatform, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of Argo platform ID', 'argoPlatform'), id: 'argoPlatform'}}
+									        inputProps={{placeholder: 'Argo platform ID', value: this.state.argoPlatform, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of Argo platform ID', 'argoPlatform', this.platformRef), id: 'argoPlatform'}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 									</div>

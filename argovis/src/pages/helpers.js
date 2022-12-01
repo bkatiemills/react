@@ -101,6 +101,11 @@ helpers.clearLeafletDraw = function(){
 helpers.componentDidUpdate = function(){
 	// generic logic to bind into each explore page's componentDidUpdate
 
+	if(this.reautofocus){
+		// keep focus on autofocus where appropriate
+		this.reautofocus.current.input.focus()
+	}
+
 	if(this.state.refreshData){
 		this.formRef.current.setAttribute('disabled', 'true')
 		if(this.statusReporting.current){
@@ -381,7 +386,12 @@ helpers.toggle = function(v){
 
 // autosuggest callbacks
 
-helpers.onAutosuggestChange = function(message, fieldID, event, change){
+helpers.onAutosuggestChange = function(message, fieldID, ref, event, change){
+	if(change.newValue !== ''){
+		this.reautofocus = ref
+	} else {
+		this.reautofocus = null
+	}
 	helpers.setToken.bind(this)(fieldID, change.newValue, message)
 }
 

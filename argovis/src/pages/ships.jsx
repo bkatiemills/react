@@ -54,13 +54,17 @@ class ShipsExplore extends React.Component {
         // some other useful class variables
         this.fgRef = React.createRef()
         this.formRef = React.createRef()
+        this.woceRef = React.createRef()
+        this.cruiseRef = React.createRef()
 		this.statusReporting = React.createRef()
+		this.reautofocus = null
         this.apiPrefix = 'http://3.88.185.52:8080/'
         this.vocab = {}
         this.wocelineLookup = {}
         this.wocegroupLookup = {}
         this.dataset = 'cchdo'
         this.customQueryParams = ['startDate', 'endDate', 'polygon', 'depthRequired', 'woce', 'goship', 'other', 'woceline', 'cruise', 'centerlon']
+
 
         // populate vocabularies, and trigger first render
         let vocabURLs = [this.apiPrefix + 'summary?id=cchdo_occupancies', this.apiPrefix + 'cchdo/vocabulary?parameter=cchdo_cruise']
@@ -75,7 +79,6 @@ class ShipsExplore extends React.Component {
 						return label
 					}) 
 				})
-				console.log(this.wocegroupLookup)
 				this.vocab['woceline'] = [].concat(...this.vocab['woceline'])
 				this.vocab['cruise'] = data[1].map(x=>String(x))
 				this.setState({refreshData:true})
@@ -184,7 +187,7 @@ class ShipsExplore extends React.Component {
 		      Date: {point[3]} <br />
 		      Data Sources: {point[4]} <br />
 		      {woceoccupy.map(x => {
-		      	return(<><a key={Math.random()} target="_blank" rel="noreferrer" href={'/plots/ships?showAll=true&woceline='+x[0]+'&startDate=' + x[1].toISOString().replace('.000Z', 'Z') + '&endDate=' + x[2].toISOString().replace('.000Z', 'Z')+'&centerlon='+this.state.centerlon}>{'Plots for ' + x[3]}</a><br /></>)
+		      	return(<span key={Math.random()}><a target="_blank" rel="noreferrer" href={'/plots/ships?showAll=true&woceline='+x[0]+'&startDate=' + x[1].toISOString().replace('.000Z', 'Z') + '&endDate=' + x[2].toISOString().replace('.000Z', 'Z')+'&centerlon='+this.state.centerlon}>{'Plots for ' + x[3]}</a><br /></span>)
 		      })}
 		      <a target="_blank" rel="noreferrer" href={'/plots/ships?showAll=true&cruise='+point[6]+'&centerlon='+this.state.centerlon}>{'Plots for cruise ' + point[6]}</a><br />
 		      {regionLink}
@@ -322,12 +325,13 @@ class ShipsExplore extends React.Component {
 			      						<Autosuggest
 									      	id='woceAS'
 									      	key='woce'
+									      	ref={this.woceRef}
 									        suggestions={this.state.wocelineSuggestions}
 									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'wocelineSuggestions')}
 									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'wocelineSuggestions')}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'woceline')}
-									        inputProps={{placeholder: 'WOCE Line', value: this.state.woceline, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of WOCE line', 'woceline'), id: 'woceline', disabled: Boolean(this.state.cruise)}}
+									        inputProps={{placeholder: 'WOCE Line', value: this.state.woceline, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of WOCE line', 'woceline', this.woceRef), id: 'woceline', disabled: Boolean(this.state.cruise)}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 									</div>
@@ -336,12 +340,13 @@ class ShipsExplore extends React.Component {
 			      						<Autosuggest
 									      	id='cruiseAS'
 									      	key='cruise'
+									      	ref={this.cruiseRef}
 									        suggestions={this.state.cruiseSuggestions}
 									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'cruiseSuggestions')}
 									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'cruiseSuggestions')}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'cruise')}
-									        inputProps={{placeholder: 'Cruise ID', value: this.state.cruise, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of Cruise ID', 'cruise'), id: 'cruise', disabled: Boolean(this.state.woceline)}}
+									        inputProps={{placeholder: 'Cruise ID', value: this.state.cruise, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of Cruise ID', 'cruise', this.cruiseRef), id: 'cruise', disabled: Boolean(this.state.woceline)}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 									</div>
