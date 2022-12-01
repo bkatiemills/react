@@ -58,6 +58,11 @@ class TCPlots extends React.Component {
 		return helpers.genericTooltip.bind(this)(data)
 	}
 
+	toggleCoupling(s){
+    	// if changing a toggle for this page needs to trigger a side effect on state, do so here.
+    	return s
+    }
+
 	render(){
 		helpers.prepPlotlyState.bind(this)(6)
 

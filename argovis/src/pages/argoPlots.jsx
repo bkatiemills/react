@@ -146,6 +146,11 @@ class ArgoPlots extends React.Component {
 		return tooltips
 	}
 
+	toggleCoupling(s){
+    	// if changing a toggle for this page needs to trigger a side effect on state, do so here.
+    	return s
+    }
+
 	render(){
 		helpers.prepPlotlyState.bind(this)(6)
 

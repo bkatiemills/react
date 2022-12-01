@@ -36,7 +36,7 @@ class ArgovisExplore extends React.Component {
        		'drifters': [],
        		'tc': []
        	},
-       	maxDayspan: q.has('polygon') ? helpers.calculateDayspan.bind(this)(JSON.parse(q.get('polygon'))) : this.defaultDayspan,
+       	maxDayspan: q.has('polygon') ? helpers.calculateDayspan.bind(this)( {'polygon':JSON.parse(q.get('polygon'))} ) : this.defaultDayspan,
        	polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : this.defaultPolygon, // [[lon0, lat0], [lon1, lat1], ..., [lonn,latn], [lon0,lat0]]
        	refreshData: true,
        	argocore: q.has('argocore') ? q.get('argocore') === 'true' : false,
@@ -338,7 +338,7 @@ class ArgovisExplore extends React.Component {
 	    	return 'magenta'
 	    }
 	    else{
-	    	return 'white'
+	    	return '#999999'
 	    }
     }
 

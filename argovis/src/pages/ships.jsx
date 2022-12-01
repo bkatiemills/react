@@ -141,7 +141,7 @@ class ShipsExplore extends React.Component {
     	} else if(point[4].includes('cchdo_go-ship')){
     		return 'magenta'
     	} else{
-	    	return 'white'
+	    	return '#999999'
 	    }
     }
 
@@ -210,7 +210,7 @@ class ShipsExplore extends React.Component {
 					<div className='col-3 overflow-auto'>
 						<fieldset ref={this.formRef}>
 							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
-							<div className='mapSearchInputs'>
+							<div className='mapSearchInputs overflow-scroll' style={{'height':'90vh'}}>
 								<h5>Explore Ship-Based Profiles</h5>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">
@@ -341,7 +341,7 @@ class ShipsExplore extends React.Component {
 									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'cruiseSuggestions')}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'cruise')}
-									        inputProps={{placeholder: 'Cruise ID', value: this.state.cruise, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of Cruise ID', 'cruise'), id: 'cruise',  disabled: Boolean(this.state.woceline)}}
+									        inputProps={{placeholder: 'Cruise ID', value: this.state.cruise, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of Cruise ID', 'cruise'), id: 'cruise', disabled: Boolean(this.state.woceline)}}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 									</div>
