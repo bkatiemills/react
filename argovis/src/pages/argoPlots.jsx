@@ -9,7 +9,7 @@ class ArgoPlots extends React.Component {
 		document.title = 'Argovis - Argo plots'
 		super(props);
 
-		helpers.initPlottingPage.bind(this)(['argoPlatform', 'polygon', 'startDate', 'endDate'])
+		helpers.initPlottingPage.bind(this)(['argoPlatform', 'polygon', 'startDate', 'endDate', 'id'])
 		// fudge y to be inverted by default, to go with pressure
 		let q = new URLSearchParams(window.location.search)
 		if(!q.has('reverseY') && !q.has('yKey')){
@@ -20,6 +20,8 @@ class ArgoPlots extends React.Component {
 			this.state.title = 'Argo platform ' + this.state.argoPlatform
 		} else if (this.state.polygon && this.state.startDate && this.state.endDate){
 			this.state.title = 'Argo regional search, ' + this.state.startDate.slice(0,10) + ' to ' + this.state.endDate.slice(0,10)
+		} else if (this.state.id){
+			this.state.title = 'Argo profile ' + this.state.id
 		}
 
 		helpers.downloadData.bind(this)('timestamp', 'pressure', '[2D plot]', 'temperature')
@@ -86,7 +88,9 @@ class ArgoPlots extends React.Component {
 			urls = urls.concat(this.apiPrefix + 'argo/?compression=array&data=all&platform=' + this.state.argoPlatform)
 		} else if(this.state.polygon && this.state.startDate && this.state.endDate){
 			urls = urls.concat(this.apiPrefix + 'argo/?compression=array&data=all&startDate=' + this.state.startDate + '&endDate=' + this.state.endDate + '&polygon=' + this.state.polygon)
-		} 
+		} else if(this.state.id){
+			urls = urls.concat(this.apiPrefix + 'argo/?compression=array&data=all&id='+this.state.id)
+		}
 
 		return urls
 	}

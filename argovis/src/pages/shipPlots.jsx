@@ -10,14 +10,16 @@ class ShipPlots extends React.Component {
 
 		super(props);
 
-		helpers.initPlottingPage.bind(this)(['woceline', 'startDate', 'endDate', 'cruise', 'polygon'])
+		helpers.initPlottingPage.bind(this)(['woceline', 'startDate', 'endDate', 'cruise', 'polygon', 'id'])
 
 		if(this.state.woceline){
 			this.state.title = 'WOCE line ' + this.state.woceline + ', ' + this.state.startDate.slice(0,10) + ' to ' + this.state.endDate.slice(0,10)
 		} else if(this.state.cruise){
 			this.state.title = 'Cruise ' + this.state.cruise
-		} else if (this.state.polygon){
+		} else if(this.state.polygon){
 			this.state.title = 'Ship profile regional search, ' + this.state.startDate.slice(0,10) + ' to ' + this.state.endDate.slice(0,10)
+		} else if(this.state.id){
+			this.state.title = 'Profile ID ' + this.state.id
 		}
 
 		helpers.downloadData.bind(this)('latitude', 'longitude', '[2D plot]', 'timestamp', false)
@@ -64,8 +66,10 @@ class ShipPlots extends React.Component {
 			urls = urls.concat(this.apiPrefix + 'cchdo?compression=array&data=all&cchdo_cruise=' + this.state.cruise)
 		} else if(this.state.polygon && this.state.startDate && this.state.endDate){
 			urls = urls.concat(this.apiPrefix + 'cchdo?compression=array&data=all&startDate=' + this.state.startDate + '&endDate=' + this.state.endDate + '&polygon=' + this.state.polygon)
+		} else if(this.state.id){
+			urls = urls.concat(this.apiPrefix + 'cchdo?compression=array&data=all&id=' + this.state.id)
 		} 
-		console.log(urls)
+		
 		return urls
 	}
 
