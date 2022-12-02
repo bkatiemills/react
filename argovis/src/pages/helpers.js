@@ -531,34 +531,54 @@ helpers.zoomSync = function(event){
 
 	let s = {...this.state}
 
-	if(event.hasOwnProperty("xaxis.range[0]")){
+	if(event.hasOwnProperty("xaxis.range[0]") && event.hasOwnProperty("xaxis.range[1]")){
 		s.xmin = event["xaxis.range[0]"]
-		if(s.xKey === 'timestamp'){
-			s.xmin = s.xmin.slice(0,10)
-		}
-	}
-
-	if(event.hasOwnProperty("xaxis.range[1]")){
 		s.xmax = event["xaxis.range[1]"]
 		if(s.xKey === 'timestamp'){
+			s.xmin = s.xmin.slice(0,10)
 			s.xmax = s.xmax.slice(0,10)
+			let a = new Date(s.xmin)
+			let b = new Date(s.xmax)
+			if(b<a){
+				let c = s.xmin
+				s.xmin = s.xmax
+				s.xmax = c
+			}
+		} else {
+			let a = Number(s.xmin)
+			let b = Number(s.xmax)
+			if(b<a){
+				let c = s.xmin
+				s.xmin = s.xmax
+				s.xmax = c
+			}
 		}
 	}
 
-	if(event.hasOwnProperty("yaxis.range[0]")){
+	if(event.hasOwnProperty("yaxis.range[0]") && event.hasOwnProperty("yaxis.range[1]")){
 		s.ymin = event["yaxis.range[0]"]
-		if(s.yKey === 'timestamp'){
-			s.ymin = s.ymin.slice(0,10)
-		}
-	}
-
-	if(event.hasOwnProperty("yaxis.range[1]")){
 		s.ymax = event["yaxis.range[1]"]
 		if(s.yKey === 'timestamp'){
+			s.ymin = s.ymin.slice(0,10)
 			s.ymax = s.ymax.slice(0,10)
+			let a = new Date(s.ymin)
+			let b = new Date(s.ymax)
+			if(b<a){
+				let c = s.ymin
+				s.ymin = s.ymax
+				s.ymax = c
+			}
+		} else {
+			let a = Number(s.ymin)
+			let b = Number(s.ymax)
+			if(b<a){
+				let c = s.ymin
+				s.ymin = s.ymax
+				s.ymax = c
+			}
 		}
 	}
-
+	
 	this.setState(s)
 }
 
