@@ -265,7 +265,12 @@ class Grids extends React.Component {
     		this.state.colormin = min
     		this.state.colormax = max
     	}
-    }
+   }
+
+	toggleCoupling(s){
+    	// if changing a toggle for this page needs to trigger a side effect on state, do so here.
+    	return s
+  }
 
 	render(){
 		console.log(this.state)
