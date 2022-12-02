@@ -24,7 +24,7 @@ class ArgoPlots extends React.Component {
 			this.state.title = 'Argo profile ' + this.state.counterTraces.slice(1,-1)
 		}
 
-		helpers.downloadData.bind(this)('timestamp', 'pressure', '[2D plot]', 'temperature')
+		helpers.downloadData.bind(this)('temperature', 'pressure', '[2D plot]', 'timestamp')
 	}
 
 	prepCSV(data, meta){
@@ -106,13 +106,13 @@ class ArgoPlots extends React.Component {
 		for(let i=0; i<data.timestamp.length; i++){
 			let text = ''
 			text += 'Profile ' + data['_id'] + '<br><br>'
-			text += 'Longitude / Latitude: ' + Number(data['longitude'][i]).toPrecision(7) + ' / ' + Number(data['latitude'][i]).toPrecision(7) + '<br>'
+			text += 'Longitude / Latitude: ' + helpers.mungePrecision(data['longitude'][i]) + ' / ' + helpers.mungePrecision(data['latitude'][i]) + '<br>'
 			text += 'Timestamp: ' + new Date(data['timestamp'][i]) + '<br>'
-			text += 'Pressure: ' + Number(data['pressure'][i]).toPrecision(7) + ' dbar<br><br>'
+			text += 'Pressure: ' + helpers.mungePrecision(data['pressure'][i]) + ' dbar<br><br>'
 			let defaultItems = ['longitude', 'latitude', 'timestamp', 'pressure']
 			if(!defaultItems.includes(this.state.xKey)){
 				if(data.hasOwnProperty(this.state.xKey)){
-					text += this.state.xKey + ': ' + Number(data[this.state.xKey][i]).toPrecision(7) + ' ' + this.units[this.state.xKey] + '<br>'
+					text += this.state.xKey + ': ' + helpers.mungePrecision(data[this.state.xKey][i]) + ' ' + this.units[this.state.xKey] + '<br>'
 				}
 				if(data.hasOwnProperty(this.state.xKey + '_argoqc')){
 					text += this.state.xKey +'_argoqc: ' + data[this.state.xKey+'_argoqc'][i] + '<br>'
@@ -120,15 +120,15 @@ class ArgoPlots extends React.Component {
 			}
 			if(!defaultItems.includes(this.state.yKey)){
 				if(data.hasOwnProperty(this.state.yKey)){
-					text += this.state.yKey + ': ' + Number(data[this.state.yKey][i]).toPrecision(7) + ' ' + this.units[this.state.yKey] + '<br>'
+					text += this.state.yKey + ': ' + helpers.mungePrecision(data[this.state.yKey][i]) + ' ' + this.units[this.state.yKey] + '<br>'
 				}
 				if(data.hasOwnProperty(this.state.yKey + '_argoqc')){
 					text += this.state.yKey +'_argoqc: ' + data[this.state.yKey+'_argoqc'][i] + '<br>'
 				}
 			}
-			if(!defaultItems.includes(this.state.zKey) && this.state.zKey !== '[2d plot]'){
+			if(!defaultItems.includes(this.state.zKey) && this.state.zKey !== '[2D plot]'){
 				if(data.hasOwnProperty(this.state.zKey)){
-					text += this.state.zKey + ': ' + Number(data[this.state.zKey][i]).toPrecision(7) + ' ' + this.units[this.state.zKey] + '<br>'
+					text += this.state.zKey + ': ' + helpers.mungePrecision(data[this.state.zKey][i]) + ' ' + this.units[this.state.zKey] + '<br>'
 				}
 				if(data.hasOwnProperty(this.state.zKey + '_argoqc')){
 					text += this.state.zKey +'_argoqc: ' + data[this.state.zKey+'_argoqc'][i] + '<br>'
@@ -136,7 +136,7 @@ class ArgoPlots extends React.Component {
 			}
 			if(!defaultItems.includes(this.state.cKey)){
 				if(data.hasOwnProperty(this.state.cKey)){
-					text += this.state.cKey + ': ' + Number(data[this.state.cKey][i]).toPrecision(7) + ' ' + this.units[this.state.cKey] + '<br>'
+					text += this.state.cKey + ': ' + helpers.mungePrecision(data[this.state.cKey][i]) + ' ' + this.units[this.state.cKey] + '<br>'
 				}
 				if(data.hasOwnProperty(this.state.cKey + '_argoqc')){
 					text += this.state.cKey +'_argoqc: ' + data[this.state.cKey+'_argoqc'][i]

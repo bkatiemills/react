@@ -656,27 +656,27 @@ helpers.genericTooltip = function(data){
 	for(let i=0; i<data.timestamp.length; i++){
 		let text = ''
 		text += 'Record ID ' + data['_id'][i] + '<br><br>'
-		text += 'Longitude / Latitude: ' + Number(data['longitude'][i]).toPrecision(7) + ' / ' + Number(data['latitude'][i]).toPrecision(7) + '<br>'
+		text += 'Longitude / Latitude: ' + helpers.mungePrecision(data['longitude'][i]) + ' / ' + helpers.mungePrecision(data['latitude'][i]) + '<br>'
 		text += 'Timestamp: ' + new Date(data['timestamp'][i]) + '<br><br>'
 		let defaultItems = ['longitude', 'latitude', 'timestamp', 'pressure']
 		if(!defaultItems.includes(this.state.xKey)){
 			if(data.hasOwnProperty(this.state.xKey)){
-				text += this.state.xKey + ': ' + Number(data[this.state.xKey][i]).toPrecision(7) + ' ' + this.units[this.state.xKey] + '<br>'
+				text += this.state.xKey + ': ' + helpers.mungePrecision(data[this.state.xKey][i]) + ' ' + this.units[this.state.xKey] + '<br>'
 			}
 		}
 		if(!defaultItems.includes(this.state.yKey)){
 			if(data.hasOwnProperty(this.state.yKey)){
-				text += this.state.yKey + ': ' + Number(data[this.state.yKey][i]).toPrecision(7) + ' ' + this.units[this.state.yKey] + '<br>'
+				text += this.state.yKey + ': ' + helpers.mungePrecision(data[this.state.yKey][i]) + ' ' + this.units[this.state.yKey] + '<br>'
 			}
 		}
-		if(!defaultItems.includes(this.state.zKey) && this.state.zKey !== '[2d plot]'){
+		if(!defaultItems.includes(this.state.zKey) && this.state.zKey !== '[2D plot]'){
 			if(data.hasOwnProperty(this.state.zKey)){
-				text += this.state.zKey + ': ' + Number(data[this.state.zKey][i]).toPrecision(7) + ' ' + this.units[this.state.zKey] + '<br>'
+				text += this.state.zKey + ': ' + helpers.mungePrecision(data[this.state.zKey][i]) + ' ' + this.units[this.state.zKey] + '<br>'
 			}
 		}
 		if(!defaultItems.includes(this.state.cKey)){
 			if(data.hasOwnProperty(this.state.cKey)){
-				text += this.state.cKey + ': ' + Number(data[this.state.cKey][i]).toPrecision(7) + ' ' + this.units[this.state.cKey] + '<br>'
+				text += this.state.cKey + ': ' + helpers.mungePrecision(data[this.state.cKey][i]) + ' ' + this.units[this.state.cKey] + '<br>'
 			}
 		}
 		tooltips.push(text)
@@ -719,37 +719,55 @@ helpers.prepPlotlyState = function(markerSize){
 
 			// generate data and layout
 			this.data = this.state.data.map((d,i) => {
+				if(d.hasOwnProperty(this.state.xKey) && d.hasOwnProperty(this.state.yKey) && (d.hasOwnProperty(this.state.zKey) || this.state.zKey === '[2D plot]') && d.hasOwnProperty(this.state.cKey)){
+					
+					// filter off any points that have null for color value, don't plot these.
+					let x = d[this.state.xKey].filter((e,j) => {return d[this.state.cKey][j] !== null})
+					let y = d[this.state.yKey].filter((e,j) => {return d[this.state.cKey][j] !== null})
+					let z = []
+					if(this.state.zKey !== '[2D plot]'){
+						let z = d[this.state.zKey].filter((e,j) => {return d[this.state.cKey][j] !== null})
+					}
+					let c = d[this.state.cKey].filter(x => x!==null)
+					let filteredData = {...d}
+					filteredData[this.state.xKey] = x
+					filteredData[this.state.yKey] = y
+					filteredData[this.state.zKey] = z
+					filteredData[this.state.cKey] = c
 
-				return {
-					x: d[this.state.xKey],
-					y: d[this.state.yKey],
-					z: this.state.zKey === '[2D plot]' ? [] : d[this.state.zKey],
-					text: this.genTooltip.bind(this)(d),
-					hoverinfo: 'text',
-					type: this.state.zKey === '[2D plot]' ? 'scattergl' : 'scatter3d',
-					connectgaps: true,
-					mode: this.state.connectingLines ? 'markers+lines' : 'markers',
-					line: {
-						color: 'grey'
-					},
-					marker: {
-						size: markerSize,
-						color: d[this.state.cKey],
-						colorscale: this.state.cscale === 'Thermal' ? [[0,'rgb(3, 35, 51)'], [0.09,'rgb(13, 48, 100)'], [0.18,'rgb(53, 50, 155)'], [0.27,'rgb(93, 62, 153)'], [0.36,'rgb(126, 77, 143)'], [0.45,'rgb(158, 89, 135)'], [0.54,'rgb(193, 100, 121)'], [0.63,'rgb(225, 113, 97)'], [0.72,'rgb(246, 139, 69)'], [0.81,'rgb(251, 173, 60)'], [0.90,'rgb(246, 211, 70)'], [1,'rgb(231, 250, 90)']] : this.state.cscale,
-						cmin: Math.min(crange[0], crange[1]),
-						cmax: Math.max(crange[0], crange[1]),
-						showscale: needsScale(helpers.showTrace.bind(this)(d._id)),
-						reversescale: this.state.reverseC,
-						colorbar: {
-							title: helpers.generateAxisTitle.bind(this)(this.state.cKey),
-							titleside: 'left',
-							tickmode: this.state.cKey === 'timestamp' ? 'array' : 'auto',
-							ticktext: colortics[0],
-							tickvals: colortics[1]
-						}
-					},
-					name: d._id,
-					visible: this.state.counterTraces.includes(d._id) ? !this.state.showAll : this.state.showAll
+					return {
+						x: filteredData[this.state.xKey],
+						y: filteredData[this.state.yKey],
+						z: filteredData[this.state.zKey],
+						text: this.genTooltip.bind(this)(filteredData),
+						hoverinfo: 'text',
+						type: this.state.zKey === '[2D plot]' ? 'scattergl' : 'scatter3d',
+						connectgaps: true,
+						mode: this.state.connectingLines ? 'markers+lines' : 'markers',
+						line: {
+							color: 'grey'
+						},
+						marker: {
+							size: markerSize,
+							color: filteredData[this.state.cKey],
+							colorscale: this.state.cscale === 'Thermal' ? [[0,'rgb(3, 35, 51)'], [0.09,'rgb(13, 48, 100)'], [0.18,'rgb(53, 50, 155)'], [0.27,'rgb(93, 62, 153)'], [0.36,'rgb(126, 77, 143)'], [0.45,'rgb(158, 89, 135)'], [0.54,'rgb(193, 100, 121)'], [0.63,'rgb(225, 113, 97)'], [0.72,'rgb(246, 139, 69)'], [0.81,'rgb(251, 173, 60)'], [0.90,'rgb(246, 211, 70)'], [1,'rgb(231, 250, 90)']] : this.state.cscale,
+							cmin: Math.min(crange[0], crange[1]),
+							cmax: Math.max(crange[0], crange[1]),
+							showscale: needsScale(helpers.showTrace.bind(this)(d._id)),
+							reversescale: this.state.reverseC,
+							colorbar: {
+								title: helpers.generateAxisTitle.bind(this)(this.state.cKey),
+								titleside: 'left',
+								tickmode: this.state.cKey === 'timestamp' ? 'array' : 'auto',
+								ticktext: colortics[0],
+								tickvals: colortics[1]
+							}
+						},
+						name: d._id,
+						visible: this.state.counterTraces.includes(d._id) ? !this.state.showAll : this.state.showAll
+					}
+				} else {
+					return {}
 				}
 			})
 
@@ -1348,6 +1366,14 @@ helpers.mutateLongitude = function(longitude, centerlon){
 		return longitude + 360
 	} else {
 		return longitude
+	}
+}
+
+helpers.mungePrecision = function(num){
+	if(num === null){
+		return null
+	} else{
+		return Number(num).toPrecision(7)
 	}
 }
 

@@ -10,17 +10,18 @@ class ShipPlots extends React.Component {
 
 		super(props);
 
-		helpers.initPlottingPage.bind(this)(['woceline', 'startDate', 'endDate', 'cruise', 'polygon', 'id'])
+		helpers.initPlottingPage.bind(this)(['woceline', 'startDate', 'endDate', 'cruise', 'polygon', 'counterTraces'])
 
 		if(this.state.woceline){
 			this.state.title = 'WOCE line ' + this.state.woceline + ', ' + this.state.startDate.slice(0,10) + ' to ' + this.state.endDate.slice(0,10)
-		} else if(this.state.cruise){
+		} else if(this.state.cruise && !this.state.counterTraces){
 			this.state.title = 'Cruise ' + this.state.cruise
 		} else if(this.state.polygon){
 			this.state.title = 'Ship profile regional search, ' + this.state.startDate.slice(0,10) + ' to ' + this.state.endDate.slice(0,10)
-		} else if(this.state.id){
-			this.state.title = 'Profile ID ' + this.state.id
+		} else if (this.state.counterTraces){
+			this.state.title = 'Profile ID ' + this.state.counterTraces.slice(1,-1)
 		}
+
 
 		helpers.downloadData.bind(this)('latitude', 'longitude', '[2D plot]', 'timestamp', false)
 	}
@@ -66,9 +67,7 @@ class ShipPlots extends React.Component {
 			urls = urls.concat(this.apiPrefix + 'cchdo?compression=array&data=all&cchdo_cruise=' + this.state.cruise)
 		} else if(this.state.polygon && this.state.startDate && this.state.endDate){
 			urls = urls.concat(this.apiPrefix + 'cchdo?compression=array&data=all&startDate=' + this.state.startDate + '&endDate=' + this.state.endDate + '&polygon=' + this.state.polygon)
-		} else if(this.state.id){
-			urls = urls.concat(this.apiPrefix + 'cchdo?compression=array&data=all&id=' + this.state.id)
-		} 
+		}
 		
 		return urls
 	}
@@ -86,13 +85,13 @@ class ShipPlots extends React.Component {
 		for(let i=0; i<data.timestamp.length; i++){
 			let text = ''
 			text += 'Profile ' + data['_id'] + '<br><br>'
-			text += 'Longitude / Latitude: ' + Number(data['longitude'][i]).toPrecision(7) + ' / ' + Number(data['latitude'][i]).toPrecision(7) + '<br>'
+			text += 'Longitude / Latitude: ' + helpers.mungePrecision(data['longitude'][i]) + ' / ' + helpers.mungePrecision(data['latitude'][i]) + '<br>'
 			text += 'Timestamp: ' + new Date(data['timestamp'][i]) + '<br>'
-			text += 'Pressure: ' + Number(data['pressure'][i]).toPrecision(7) + ' dbar<br><br>'
+			text += 'Pressure: ' + helpers.mungePrecision(data['pressure'][i]) + ' dbar<br><br>'
 			let defaultItems = ['longitude', 'latitude', 'timestamp', 'pressure']
 			if(!defaultItems.includes(this.state.xKey)){
 				if(data.hasOwnProperty(this.state.xKey)){
-					text += this.state.xKey + ': ' + Number(data[this.state.xKey][i]).toPrecision(7) + ' ' + this.units[this.state.xKey] + '<br>'
+					text += this.state.xKey + ': ' + helpers.mungePrecision(data[this.state.xKey][i]) + ' ' + this.units[this.state.xKey] + '<br>'
 				}
 				if(data.hasOwnProperty(this.state.xKey + '_woceqc')){
 					text += this.state.xKey +'_woceqc: ' + data[this.state.xKey+'_woceqc'][i] + '<br>'
@@ -100,15 +99,15 @@ class ShipPlots extends React.Component {
 			}
 			if(!defaultItems.includes(this.state.yKey)){
 				if(data.hasOwnProperty(this.state.yKey)){
-					text += this.state.yKey + ': ' + Number(data[this.state.yKey][i]).toPrecision(7) + ' ' + this.units[this.state.yKey] + '<br>'
+					text += this.state.yKey + ': ' + helpers.mungePrecision(data[this.state.yKey][i]) + ' ' + this.units[this.state.yKey] + '<br>'
 				}
 				if(data.hasOwnProperty(this.state.yKey + '_woceqc')){
 					text += this.state.yKey +'_woceqc: ' + data[this.state.yKey+'_woceqc'][i] + '<br>'
 				}
 			}
-			if(!defaultItems.includes(this.state.zKey) && this.state.zKey !== '[2d plot]'){
+			if(!defaultItems.includes(this.state.zKey) && this.state.zKey !== '[2D plot]'){
 				if(data.hasOwnProperty(this.state.zKey)){
-					text += this.state.zKey + ': ' + Number(data[this.state.zKey][i]).toPrecision(7) + ' ' + this.units[this.state.zKey] + '<br>'
+					text += this.state.zKey + ': ' + helpers.mungePrecision(data[this.state.zKey][i]) + ' ' + this.units[this.state.zKey] + '<br>'
 				}
 				if(data.hasOwnProperty(this.state.zKey + '_woceqc')){
 					text += this.state.zKey +'_woceqc: ' + data[this.state.zKey+'_woceqc'][i] + '<br>'
@@ -116,7 +115,7 @@ class ShipPlots extends React.Component {
 			}
 			if(!defaultItems.includes(this.state.cKey)){
 				if(data.hasOwnProperty(this.state.cKey)){
-					text += this.state.cKey + ': ' + Number(data[this.state.cKey][i]).toPrecision(7) + ' ' + this.units[this.state.cKey] + '<br>'
+					text += this.state.cKey + ': ' + helpers.mungePrecision(data[this.state.cKey][i]) + ' ' + this.units[this.state.cKey] + '<br>'
 				}
 				if(data.hasOwnProperty(this.state.cKey + '_woceqc')){
 					text += this.state.cKey +'_woceqc: ' + data[this.state.cKey+'_woceqc'][i]
