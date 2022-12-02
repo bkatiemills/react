@@ -10,7 +10,7 @@ class ShipPlots extends React.Component {
 
 		super(props);
 
-		helpers.initPlottingPage.bind(this)(['woceline', 'startDate', 'endDate', 'cruise', 'polygon', 'counterTraces'])
+		helpers.initPlottingPage.bind(this)(['woceline', 'startDate', 'endDate', 'cruise', 'polygon'])
 
 		if(this.state.woceline){
 			this.state.title = 'WOCE line ' + this.state.woceline + ', ' + this.state.startDate.slice(0,10) + ' to ' + this.state.endDate.slice(0,10)

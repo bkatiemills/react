@@ -9,7 +9,7 @@ class ArgoPlots extends React.Component {
 		document.title = 'Argovis - Argo plots'
 		super(props);
 
-		helpers.initPlottingPage.bind(this)(['argoPlatform', 'polygon', 'startDate', 'endDate', 'counterTraces'])
+		helpers.initPlottingPage.bind(this)(['argoPlatform', 'polygon', 'startDate', 'endDate'])
 		// fudge y to be inverted by default, to go with pressure
 		let q = new URLSearchParams(window.location.search)
 		if(!q.has('reverseY') && !q.has('yKey')){

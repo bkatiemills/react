@@ -564,10 +564,11 @@ helpers.zoomSync = function(event){
 
 helpers.toggleTrace = function(id){
 	let s = {...this.state}
+
 	if(s.counterTraces.includes(id)){
 		s.counterTraces.splice(s.counterTraces.indexOf(id), 1)
 	} else {
-		s.counterTraces = s.counterTraces.concat(id)
+		s.counterTraces.push(id)
 	}
 
 	s.refreshData = true
@@ -1187,7 +1188,7 @@ helpers.initPlottingPage = function(customParams){
 		data: [{}],
 		metadata: {},
 		showAll:  q.has('showAll') ? q.get('showAll') === 'true' : false,
-		counterTraces: q.has('counterTraces') ? q.get('counterTraces') : [], // trace IDs with a show status opposite to showAll
+		counterTraces: q.has('counterTraces') ? JSON.parse(q.get('counterTraces')) : [], // trace IDs with a show status opposite to showAll
 		points: [],
 		connectingLines: q.has('connectingLines') ? q.get('connectingLines') === 'true' : false,
 		refreshData: true,

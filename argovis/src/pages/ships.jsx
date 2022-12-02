@@ -190,7 +190,7 @@ class ShipsExplore extends React.Component {
 		      	return(<span key={Math.random()}><a target="_blank" rel="noreferrer" href={'/plots/ships?showAll=true&woceline='+x[0]+'&startDate=' + x[1].toISOString().replace('.000Z', 'Z') + '&endDate=' + x[2].toISOString().replace('.000Z', 'Z')+'&centerlon='+this.state.centerlon}>{'Plots for ' + x[3]}</a><br /></span>)
 		      })}
 		      <a target="_blank" rel="noreferrer" href={'/plots/ships?showAll=true&cruise='+point[6]+'&centerlon='+this.state.centerlon}>{'Plots for cruise ' + point[6]}</a><br />
-		      <a target="_blank" rel="noreferrer" href={'/plots/ships?cruise='+point[6]+'&centerlon='+this.state.centerlon+'&counterTraces=['+point[0]+']'}>Profile Page</a>
+		      <a target="_blank" rel="noreferrer" href={'/plots/ships?cruise='+point[6]+'&centerlon='+this.state.centerlon+'&counterTraces=["'+point[0]+'"]'}>Profile Page</a>
 		      {regionLink}
 		    </Popup>
     	)
