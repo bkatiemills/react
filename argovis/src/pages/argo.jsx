@@ -155,7 +155,7 @@ class ArgoExplore extends React.Component {
 		      Date: {point[3]} <br />
 		      Data Sources: {point[4].join(', ')} <br />
 		      <a target="_blank" rel="noreferrer" href={'/plots/argo?showAll=true&argoPlatform='+point[0].split('_')[0]+'&centerlon='+this.state.centerlon}>Platform Page</a><br />
-		      <a target="_blank" rel="noreferrer" href={'/plots/argo?showAll=true&id='+point[0]+'&centerlon='+this.state.centerlon}>Profile Page</a>
+		      <a target="_blank" rel="noreferrer" href={'/plots/argo?argoPlatform='+point[0].split('_')[0]+'&counterTraces=['+point[0]+']&centerlon='+this.state.centerlon}>Profile Page</a>
 		      {regionLink}
 		    </Popup>
     	)
