@@ -46,9 +46,10 @@ class ArgovisExplore extends React.Component {
        	goship: q.has('goship') ? q.get('goship') === 'true' : false,
        	cchdoother: q.has('cchdoother') ? q.get('cchdoother') === 'true' : false,
        	drifters: q.has('drifters') ? q.get('drifters') === 'true' : false,
-       	tc: q.has('tc') ? q.get('tc') === 'true' : false
+       	tc: q.has('tc') ? q.get('tc') === 'true' : false,
+       	centerlon: q.has('centerlon') ? q.get('centerlon') : 0
       }
-      this.customQueryParams = ['startDate', 'endDate', 'polygon', 'argocore', 'argobgc', 'argodeep', 'cchdoother', 'woce', 'goship', 'drifters', 'tc']
+      this.customQueryParams = ['startDate', 'endDate', 'polygon', 'argocore', 'argobgc', 'argodeep', 'cchdoother', 'woce', 'goship', 'drifters', 'tc', 'centerlon']
 
       helpers.mungeTime.bind(this)(q, this.state.maxDayspan+1) // +1 since we include the end date here.
 
@@ -68,8 +69,6 @@ class ArgovisExplore extends React.Component {
       this.statusReporting = React.createRef()
       //this.apiPrefix = 'https://argovis-api.colorado.edu/'
       this.apiPrefix = 'http://3.88.185.52:8080/'
-
-      this.initZoom = !q.has('polygon')
 
 			helpers.setQueryString.bind(this)()
     }
@@ -114,15 +113,20 @@ class ArgovisExplore extends React.Component {
 
 				if(refresh.length === 0){
 					helpers.manageStatus.bind(this)('ready')
-					//if(this.state.points.length>0){
-						helpers.refreshMap.bind(this)()
-					//}
+
+					for(let i=0; i<Object.keys(this.state.rawPoints).length; i++){
+						let dataset = Object.keys(this.state.rawPoints)[i]
+						this.state.points[dataset] = helpers.circlefy.bind(this)(this.state.rawPoints[dataset])
+					}
+
+					helpers.refreshMap.bind(this)()
 				} else {
 					//promise all across a `fetch` for all new URLs, and update CircleMarkers for all new fetches
 					Promise.all(refresh.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 						let datasets = responses.map(x => this.findDataset(x.url))
 						Promise.all(responses.map(res => res.json())).then(data => {
 							let newPoints = {}
+							let newRawPoints = {}
 
 							for(let i=0; i<data.length; i++){
 								if(data[i].code === 429){
@@ -132,6 +136,7 @@ class ArgovisExplore extends React.Component {
 								}
 								if(data.length>0 && data[i][0].code !== 404){
 									let points = data[i].map(x => x.concat([datasets[i]])) // so there's something in the source position for everything other than argo
+									let rawPoints = JSON.parse(JSON.stringify(points))
 									points = helpers.circlefy.bind(this)(points)
 									if(points){
 										if(newPoints.hasOwnProperty(datasets[i])){
@@ -139,14 +144,23 @@ class ArgovisExplore extends React.Component {
 										} else {
 											newPoints[datasets[i]] = points
 										}
+
+										// preserve these for reprocessing in case center longitude moves
+										if(newRawPoints.hasOwnProperty(datasets[i])){
+											newRawPoints[datasets[i]] = newRawPoints[datasets[i]].concat(rawPoints)
+										} else {
+											newRawPoints[datasets[i]] = rawPoints
+										}
 									}
 								} else {
 									newPoints[datasets[i]] = []
+									newRawPoints[datasets[i]] = []
 								}
 							}
 
 							// eslint-disable-next-line
 							this.state.points = {...this.state.points, ...newPoints}
+							this.state.rawPoints = {...this.state.rawPoints, ...newRawPoints}
 							helpers.manageStatus.bind(this)('rendering')
 							if(Object.keys(newPoints).length>0){
 								helpers.refreshMap.bind(this)()
@@ -440,6 +454,31 @@ class ArgovisExplore extends React.Component {
 										</div>
 									</div>
 
+									<h6>Map Center Longitude</h6>
+									<div className="form-floating mb-3">
+										<input 
+											id="centerlon"
+											type="text"
+											className="form-control" 
+											placeholder="0" 
+											value={this.state.centerlon} 
+											onChange={e => {
+												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
+												this.setState({centerlon:e.target.value})}
+											} 
+											onBlur={e => {
+												this.setState({centerlon: helpers.manageCenterlon(e.target.defaultValue), mapkey: Math.random(), refreshData: true})
+											}}
+											onKeyPress={e => {
+												if(e.key==='Enter'){
+													this.setState({centerlon: helpers.manageCenterlon(e.target.defaultValue), mapkey: Math.random(), refreshData: true})
+												}
+											}}
+											aria-label="centerlon" 
+											aria-describedby="basic-addon1"/>
+										<label htmlFor="depth">Center longitude on [-180,180]</label>
+									</div>
+
 								<h6>Dataset Filters</h6>
 
 				      	<div className='verticalGroup'>
@@ -495,7 +534,7 @@ class ArgovisExplore extends React.Component {
 
 					{/*leaflet map*/}
 					<div className='col-9'>
-						<MapContainer center={[24.9, -88.9]} zoom={this.initZoom? 5 : 2} scrollWheelZoom={true}>
+						<MapContainer key={this.state.mapkey} center={[25, parseFloat(this.state.centerlon)]} zoom={2} scrollWheelZoom={true}>
 						  <TileLayer
 						    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 						    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -521,7 +560,7 @@ class ArgovisExplore extends React.Component {
                     						}
 						      }}
 						    />
-						    <Polygon key={JSON.stringify(this.state.polygon)} positions={this.state.polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
+						    <Polygon key={JSON.stringify(this.state.polygon)} positions={this.state.polygon.map(x => [x[1],helpers.mutateLongitude(x[0], this.state.centerlon)])} fillOpacity={0}></Polygon>
 						  </FeatureGroup>
 						  {this.state.points.argo}
 						  {this.state.points.cchdo}

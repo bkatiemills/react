@@ -1332,6 +1332,8 @@ helpers.manageCenterlon = function(centerlon){
 		centerlon = -180
 	} else if (centerlon > 180){
 		centerlon = 180
+	} else if (isNaN(centerlon)){
+		centerlon = 0
 	}
 	return centerlon
 }
