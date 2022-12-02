@@ -1224,7 +1224,7 @@ helpers.downloadData = function(defaultX, defaultY, defaultZ, defaultC, mergePoi
 			let metakeys = Array.from(new Set(p.map(x=>x['metadata'])))
 
 			// set up vocab lists
-			let vars = ['month', 'year'].concat(helpers.getDataKeys.bind(this)(p))
+			let vars = ['month', 'year'].concat(helpers.getDataKeys.bind(this)(p)).sort()
 
 			// transpose data for traces
 			p = p.map(d => helpers.transpose.bind(this)(d))
