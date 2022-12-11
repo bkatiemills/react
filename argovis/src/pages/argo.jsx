@@ -58,8 +58,7 @@ class ArgoExplore extends React.Component {
         this.platformRef = React.createRef()
 		this.statusReporting = React.createRef()
 		this.reautofocus = null
-        //this.apiPrefix = 'https://argovis-api.colorado.edu/'
-        this.apiPrefix = 'http://3.88.185.52:8080/'
+        this.apiPrefix = 'https://argovisbeta01.colorado.edu/api/'
         this.vocab = {}
         this.dataset = 'argo'
         this.customQueryParams = ['startDate', 'endDate', 'polygon', 'argocore', 'argobgc', 'argodeep', 'argoPlatform', 'depthRequired', 'centerlon']
@@ -194,7 +193,7 @@ class ArgoExplore extends React.Component {
 										<input type="password" className="form-control" id="apiKey" value={this.state.apiKey} placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
 										<label htmlFor="apiKey">API Key</label>
 										<div id="apiKeyHelpBlock" className="form-text">
-						  					<a target="_blank" rel="noreferrer" href='http://3.88.185.52:3030/'>Get a free API key</a>
+						  					<a target="_blank" rel="noreferrer" href='https://argovisbeta02.colorado.edu/'>Get a free API key</a>
 										</div>
 									</div>
 

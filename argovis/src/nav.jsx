@@ -49,7 +49,7 @@ class ArgovisNav extends React.Component {
 			          <a className="nav-link" href="/">Colocation</a>
 			        </li>
 			        <li className="nav-item">
-			          <a className="nav-link" href="http://3.88.185.52:8080/docs/">API</a>
+			          <a className="nav-link" href="https://argovisbeta01.colorado.edu/api/docs/">API</a>
 			        </li>
 			        <li className="nav-item">
 			          <a className="nav-link" href="https://github.com/argovis/demo_notebooks">Jupyter Notebooks</a>
