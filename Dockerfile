@@ -1,4 +1,4 @@
-FROM node:18.9
+FROM node:18.9 as base
 
 RUN apt-get update -y; apt-get install -y nano
 
@@ -17,4 +17,11 @@ RUN npm install --force react-leaflet \
 						leaflet-geometryutil
 COPY argovis/src src
 COPY argovis/public public
-CMD npm start
+
+FROM base as prod
+RUN npm run build
+RUN npm install -g serve
+CMD serve -s build
+
+FROM base as dev
+#CMD npm start
