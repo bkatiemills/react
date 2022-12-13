@@ -747,7 +747,7 @@ helpers.prepPlotlyState = function(markerSize){
 					let y = d[this.state.yKey].filter((e,j) => {return d[this.state.cKey][j] !== null})
 					let z = []
 					if(this.state.zKey !== '[2D plot]'){
-						let z = d[this.state.zKey].filter((e,j) => {return d[this.state.cKey][j] !== null})
+						z = d[this.state.zKey].filter((e,j) => {return d[this.state.cKey][j] !== null})
 					}
 					let c = d[this.state.cKey].filter(x => x!==null)
 					let filteredData = {...d}
