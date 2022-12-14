@@ -101,6 +101,8 @@ helpers.clearLeafletDraw = function(){
 helpers.componentDidUpdate = function(){
 	// generic logic to bind into each explore page's componentDidUpdate
 
+	let s = {...this.state}  // transform a copy of state until we're happy with it, and write it back
+
 	if(this.reautofocus){
 		// keep focus on autofocus where appropriate
 		this.reautofocus.current.input.focus()
@@ -113,36 +115,33 @@ helpers.componentDidUpdate = function(){
 		}
 
 		// handle backing out of an object selection
-		if(!this.lookingForEntity() && this.state.observingEntity){
-			this.state.observingEntity = false
-			// eslint-disable-next-line
-			this.state.startDate = this.earlier ; this.state.endDate = this.today
+		if(!this.lookingForEntity(s) && this.state.observingEntity){
+			s.observingEntity = false
+			s.startDate = this.earlier
+			s.endDate = this.today
 			if(this.defaultPolygon){
-				// eslint-disable-next-line
-				this.state.polygon = this.defaultPolygon
+				s.polygon = this.defaultPolygon
 			}
 		}
 
 		// reformualte all URLs
-		let urls = this.generateURLs().sort()
-
+		let urls = this.generateURLs(s).sort()
 		//compare new URLs to old URLs; if any have changed, flag data for refetching.
 		let refetch = false
 		for(let i=0; i<urls.length; i++){
-			if(JSON.stringify(urls[i])!==JSON.stringify(this.state.urls[i])){
+			if(JSON.stringify(urls[i])!==JSON.stringify(s.urls[i])){
 				refetch = true
 			}
 		}
 		if(urls.length === 0){
-			// eslint-disable-next-line
-			this.state.points = []
+			s.points = []
 			refetch = true			
 		}
 
 		if(!refetch){
 			helpers.manageStatus.bind(this)('ready')
-			if(this.state.points.length>0){
-				helpers.refreshMap.bind(this)()
+			if(s.points.length>0){
+				helpers.refreshMap.bind(this)(s)
 			}
 		} else {
 			//promise all across a `fetch` for all new URLs, and update CircleMarkers for all new fetches
@@ -161,19 +160,18 @@ helpers.componentDidUpdate = function(){
 							newPoints = newPoints.concat(data[i])
 						}
 					}
-					if(this.lookingForEntity()){
+					if(this.lookingForEntity(s)){
 						timestamps = timestamps.map(x => { let d = new Date(x); return d.getTime()})
 						let start = new Date(Math.min(...timestamps))
 						let end = new Date(Math.max(...timestamps))
-						
-	   					// eslint-disable-next-line
-	   					this.state.startDate = start.toISOString().slice(0,10) ; this.state.endDate = end.toISOString().slice(0,10) ; this.state.polygon = [] ; this.state.observingEntity = true
+	   				s.startDate = start.toISOString().slice(0,10)
+	   				s.endDate = end.toISOString().slice(0,10)
+	   				s.polygon = []
+	   				s.observingEntity = true
 					}
-					newPoints = helpers.circlefy.bind(this)(newPoints)
-					// eslint-disable-next-line
-					this.state.points = newPoints
+					s.points = helpers.circlefy.bind(this)(newPoints, s)
 					helpers.manageStatus.bind(this)('rendering')
-					helpers.refreshMap.bind(this)()
+					helpers.refreshMap.bind(this)(s)
 				})
 			})
 		}
@@ -199,14 +197,14 @@ helpers.manageStatus = function(newStatus, messageArg){
 	this.statusReporting.current.textContent = statuses[newStatus][0]
 }
 
-helpers.refreshMap = function(){
+helpers.refreshMap = function(state){
 	helpers.manageStatus.bind(this)('rendering')
 
-	if(JSON.stringify(this.state.polygon) === '[]'){
+	if(JSON.stringify(state.polygon) === '[]'){
 		helpers.clearLeafletDraw.bind(this)()
 	}
 
-	this.setState({refreshData: false}, () => {
+	this.setState({...state, refreshData: false}, () => {
 
 			//state.points might be a flat list or an object; determine if there's any data to plot
 		  let nPoints = 0
@@ -227,29 +225,29 @@ helpers.refreshMap = function(){
 		})
 }
 
-helpers.generateTemporoSpatialURL = function(route){
+helpers.generateTemporoSpatialURL = function(route, state){
 	//returns the api root, compression, time and space filters common to all endpoint queries
 
 	let url = this.apiPrefix + route + '?compression=minimal'
 
-	if(this.state.depthRequired){
-		url += '&presRange=' + this.state.depthRequired + ',20000'
+	if(state.depthRequired){
+		url += '&presRange=' + state.depthRequired + ',20000'
 	}
 
-	if(this.state.startDate !== ''){
-		url += '&startDate=' + this.state.startDate + 'T00:00:00Z'
+	if(state.startDate !== ''){
+		url += '&startDate=' + state.startDate + 'T00:00:00Z'
 	}
 
-	if(this.state.endDate !== ''){
+	if(state.endDate !== ''){
 		// set to one day later to include the end date
-		let d = new Date(this.state.endDate)
+		let d = new Date(state.endDate)
 		d = d.getTime() + 24*60*60*1000
 		d = new Date(d)
 		url += '&endDate=' + d.toISOString().replace('.000Z', 'Z')
 	}  
 
-	if(this.state.polygon.length>0){
-		let tidypoly = helpers.tidypoly(this.state.polygon)
+	if(state.polygon.length>0){
+		let tidypoly = helpers.tidypoly(state.polygon)
 		url += '&polygon=[' + tidypoly.map(x => '['+x[0]+','+x[1]+']').join(',') + ']'
 	}    
 	return url	
@@ -273,7 +271,7 @@ helpers.tidypoly = function(polygon){
 	return tidypoly
 }
 
-helpers.circlefy = function(points){
+helpers.circlefy = function(points, state){
 	if(JSON.stringify(points) === '[]'){
 		return []
 	}
@@ -283,8 +281,8 @@ helpers.circlefy = function(points){
 	}
 	else {
 		points = points.map(point => {return(
-		  <CircleMarker key={point[0]+Math.random()} center={[point[2], helpers.mutateLongitude(point[1], parseFloat(this.state.centerlon)) ]} radius={2} color={this.chooseColor(point)}>
-		  	{this.genTooltip.bind(this)(point)}
+		  <CircleMarker key={point[0]+Math.random()} center={[point[2], helpers.mutateLongitude(point[1], parseFloat(state.centerlon)) ]} radius={2} color={this.chooseColor(point)}>
+		  	{this.genTooltip.bind(this)(point, state)}
 		  </CircleMarker>
 		)})
 		return points

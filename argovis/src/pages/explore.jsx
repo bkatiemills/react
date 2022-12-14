@@ -116,10 +116,10 @@ class ArgovisExplore extends React.Component {
 
 					for(let i=0; i<Object.keys(this.state.rawPoints).length; i++){
 						let dataset = Object.keys(this.state.rawPoints)[i]
-						this.state.points[dataset] = helpers.circlefy.bind(this)(this.state.rawPoints[dataset])
+						this.state.points[dataset] = helpers.circlefy.bind(this)(this.state.rawPoints[dataset], this.state)
 					}
 
-					helpers.refreshMap.bind(this)()
+					helpers.refreshMap.bind(this)(this.state)
 				} else {
 					//promise all across a `fetch` for all new URLs, and update CircleMarkers for all new fetches
 					Promise.all(refresh.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
@@ -137,7 +137,7 @@ class ArgovisExplore extends React.Component {
 								if(data.length>0 && data[i][0].code !== 404){
 									let points = data[i].map(x => x.concat([datasets[i]])) // so there's something in the source position for everything other than argo
 									let rawPoints = JSON.parse(JSON.stringify(points))
-									points = helpers.circlefy.bind(this)(points)
+									points = helpers.circlefy.bind(this)(points, this.state)
 									if(points){
 										if(newPoints.hasOwnProperty(datasets[i])){
 											newPoints[datasets[i]] = newPoints[datasets[i]].concat(points)
@@ -163,7 +163,7 @@ class ArgovisExplore extends React.Component {
 							this.state.rawPoints = {...this.state.rawPoints, ...newRawPoints}
 							helpers.manageStatus.bind(this)('rendering')
 							if(Object.keys(newPoints).length>0){
-								helpers.refreshMap.bind(this)()
+								helpers.refreshMap.bind(this)(this.state)
 							}
 						})
 					})

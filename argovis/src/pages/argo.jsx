@@ -67,7 +67,6 @@ class ArgoExplore extends React.Component {
         let vocabURLs = [this.apiPrefix + 'argo/vocabulary?parameter=platform', this.apiPrefix + 'argo/overview']
 		Promise.all(vocabURLs.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 			Promise.all(responses.map(res => res.json())).then(data => {
-				console.log(data)
 				this.vocab['argoPlatform'] = data[0]
 				this.setState({
 					refreshData:true,
@@ -84,35 +83,35 @@ class ArgoExplore extends React.Component {
     	helpers.componentDidUpdate.bind(this)()
     }
 
-    lookingForEntity(){
+    lookingForEntity(state){
     	// return true if any token, valid or not, is specified for any entity query string parameter
-    	return Boolean(this.state.argoPlatform)
+    	return Boolean(state.argoPlatform)
     }
 
-    generateURLs() {
-    	if(this.state.argoPlatform !== ''){
-    		return [this.apiPrefix +'argo?compression=minimal&platform=' + this.state.argoPlatform]
+    generateURLs(state) {
+    	if(state.argoPlatform !== ''){
+    		return [this.apiPrefix +'argo?compression=minimal&platform=' + state.argoPlatform]
     	} else {
 
-	    	let url = helpers.generateTemporoSpatialURL.bind(this)('argo')	
+	    	let url = helpers.generateTemporoSpatialURL.bind(this)('argo', state)	
 
 	    	// decide on source.source
 	    	let source = []
-	    	if(!this.state.argocore && !this.state.argobgc && !this.state.argodeep){
+	    	if(!state.argocore && !state.argobgc && !state.argodeep){
 	    		return []
-	    	} else if(this.state.argocore && this.state.argobgc && this.state.argodeep){
+	    	} else if(state.argocore && state.argobgc && state.argodeep){
 	    		source = ['argo_core']
-	    	} else if(this.state.argocore && this.state.argobgc && !this.state.argodeep){
+	    	} else if(state.argocore && state.argobgc && !state.argodeep){
 	    		source = ['argo_core,~argo_deep', 'argo_bgc']
-	    	} else if(this.state.argocore && !this.state.argobgc && this.state.argodeep){
+	    	} else if(state.argocore && !state.argobgc && state.argodeep){
 	    		source = ['argo_core,~argo_bgc', 'argo_deep']
-	    	} else if(!this.state.argocore && this.state.argobgc && this.state.argodeep){
+	    	} else if(!state.argocore && state.argobgc && state.argodeep){
 	    		source = ['argo_bgc', 'argo_deep']
-	    	} else if(this.state.argocore && !this.state.argobgc && !this.state.argodeep){
+	    	} else if(state.argocore && !state.argobgc && !state.argodeep){
 	    		source = ['argo_core,~argo_bgc,~argo_deep']
-	    	} else if(!this.state.argocore && this.state.argobgc && !this.state.argodeep){
+	    	} else if(!state.argocore && state.argobgc && !state.argodeep){
 	    		source = ['argo_bgc']
-	    	} else if(!this.state.argocore && !this.state.argobgc && this.state.argodeep){
+	    	} else if(!state.argocore && !state.argobgc && state.argodeep){
 	    		source = ['argo_deep']
 	    	}
 
@@ -136,15 +135,15 @@ class ArgoExplore extends React.Component {
 	    }
     }
 
-    genTooltip(point){
+    genTooltip(point, state){
     	// given an array <point> corresponding to a single point returned by an API data route with compression=minimal,
     	// return the jsx for an appropriate tooltip for this point.
 
     	let regionLink = ''
-      	if(JSON.stringify(this.state.polygon) !== '[]'){
-      		let endDate = new Date(this.state.endDate)
+      	if(JSON.stringify(state.polygon) !== '[]'){
+      		let endDate = new Date(state.endDate)
       		endDate.setDate(endDate.getDate() + 1)
-      		regionLink = <><br /><a target="_blank" rel="noreferrer" href={'/plots/argo?showAll=true&startDate=' + this.state.startDate + 'T00:00:00Z&endDate='+ endDate.toISOString().replace('.000Z', 'Z') +'&polygon='+JSON.stringify(helpers.tidypoly(this.state.polygon))+'&centerlon='+this.state.centerlon}>Regional Selection Page</a></>		
+      		regionLink = <><br /><a target="_blank" rel="noreferrer" href={'/plots/argo?showAll=true&startDate=' + state.startDate + 'T00:00:00Z&endDate='+ endDate.toISOString().replace('.000Z', 'Z') +'&polygon='+JSON.stringify(helpers.tidypoly(state.polygon))+'&centerlon='+state.centerlon}>Regional Selection Page</a></>		
       	}
 
     	return(
@@ -153,8 +152,8 @@ class ArgoExplore extends React.Component {
 		      Long / Lat: {point[1]} / {point[2]} <br />
 		      Date: {point[3]} <br />
 		      Data Sources: {point[4].join(', ')} <br />
-		      <a target="_blank" rel="noreferrer" href={'/plots/argo?showAll=true&argoPlatform='+point[0].split('_')[0]+'&centerlon='+this.state.centerlon}>Platform Page</a><br />
-		      <a target="_blank" rel="noreferrer" href={'/plots/argo?argoPlatform='+point[0].split('_')[0]+'&counterTraces=["'+point[0]+'"]&centerlon='+this.state.centerlon}>Profile Page</a>
+		      <a target="_blank" rel="noreferrer" href={'/plots/argo?showAll=true&argoPlatform='+point[0].split('_')[0]+'&centerlon='+state.centerlon}>Platform Page</a><br />
+		      <a target="_blank" rel="noreferrer" href={'/plots/argo?argoPlatform='+point[0].split('_')[0]+'&counterTraces=["'+point[0]+'"]&centerlon='+state.centerlon}>Profile Page</a>
 		      {regionLink}
 		    </Popup>
     	)

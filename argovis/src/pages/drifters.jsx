@@ -68,18 +68,18 @@ class DriftersExplore extends React.Component {
     	helpers.componentDidUpdate.bind(this)()
     }
 
-    lookingForEntity(){
+    lookingForEntity(state){
     	// return true if any token, valid or not, is specified for any entity query string parameter
-    	return Boolean(this.state.wmo || this.state.platform)
+    	return Boolean(state.wmo || state.platform)
     }
 
-    generateURLs(){
-    	if(this.state.wmo !== ''){
-    		return [this.apiPrefix +'drifters?compression=minimal&wmo=' + this.state.wmo]
-    	} else if (this.state.platform !== ''){
-    		return [this.apiPrefix +'drifters?compression=minimal&platform=' + this.state.platform]
+    generateURLs(state){
+    	if(state.wmo !== ''){
+    		return [this.apiPrefix +'drifters?compression=minimal&wmo=' + state.wmo]
+    	} else if (state.platform !== ''){
+    		return [this.apiPrefix +'drifters?compression=minimal&platform=' + state.platform]
     	} else {
-    		return [helpers.generateTemporoSpatialURL.bind(this)('drifters')]
+    		return [helpers.generateTemporoSpatialURL.bind(this)('drifters', state)]
     	}
     }	
 

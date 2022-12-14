@@ -90,43 +90,43 @@ class ShipsExplore extends React.Component {
     	helpers.componentDidUpdate.bind(this)()
     }
 
-    lookingForEntity(){
+    lookingForEntity(state){
     	// return true if any token, valid or not, is specified for any entity query string parameter
-    	return Boolean(this.state.woceline || this.state.cruise)
+    	return Boolean(state.woceline || state.cruise)
     }
 
-    generateURLs() {
-    	if(this.state.woceline !== ''){
+    generateURLs(state) {
+    	if(state.woceline !== ''){
     		// parse out what WOCE line and date range is meant by the autocomplete, and give an extra hour on either end
-    		let woceline = this.state.woceline.split(' ')[0]
-    		let startDate = new Date(this.wocelineLookup[this.state.woceline].startDate)
-    		let endDate = new Date(this.wocelineLookup[this.state.woceline].endDate)
+    		let woceline = state.woceline.split(' ')[0]
+    		let startDate = new Date(this.wocelineLookup[state.woceline].startDate)
+    		let endDate = new Date(this.wocelineLookup[state.woceline].endDate)
     		startDate.setHours(startDate.getHours() - 1)
     		endDate.setHours(endDate.getHours() + 1)
     		return [this.apiPrefix +'cchdo?compression=minimal&woceline=' + woceline + '&startDate=' + startDate.toISOString().replace('.000Z', 'Z') + '&endDate=' + endDate.toISOString().replace('.000Z', 'Z')]
-    	} else if(this.state.cruise !== '') {
-    		return [this.apiPrefix +'cchdo?compression=minimal&cchdo_cruise=' + this.state.cruise]
+    	} else if(state.cruise !== '') {
+    		return [this.apiPrefix +'cchdo?compression=minimal&cchdo_cruise=' + state.cruise]
     	} else {
 
-	    	let url = helpers.generateTemporoSpatialURL.bind(this)('cchdo')	
+	    	let url = helpers.generateTemporoSpatialURL.bind(this)('cchdo', state)	
 
 	    	// decide on source.source
 	    	let source = []
-	    	if(!this.state.other && !this.state.woce && !this.state.goship){
+	    	if(!state.other && !state.woce && !state.goship){
 	    		return []
-	    	}else if(this.state.other && this.state.woce && this.state.goship){
+	    	}else if(state.other && state.woce && state.goship){
 	    		source = []
-	    	} else if(this.state.other && this.state.woce && !this.state.goship){
+	    	} else if(state.other && state.woce && !state.goship){
 	    		source = ['~cchdo_woce,~cchdo_go-ship', 'cchdo_woce']
-	    	} else if(this.state.other && !this.state.woce && this.state.goship){
+	    	} else if(state.other && !state.woce && state.goship){
 	    		source = ['~cchdo_woce,~cchdo_go-ship', 'cchdo_go-ship']
-	    	} else if(!this.state.other && this.state.woce && this.state.goship){
+	    	} else if(!state.other && state.woce && state.goship){
 	    		source = ['cchdo_go-ship', 'cchdo_woce']
-	    	} else if(this.state.other && !this.state.woce && !this.state.goship){
+	    	} else if(state.other && !state.woce && !state.goship){
 	    		source = ['~cchdo_go-ship,~cchdo_woce']
-	    	} else if(!this.state.other && this.state.woce && !this.state.goship){
+	    	} else if(!state.other && state.woce && !state.goship){
 	    		source = ['cchdo_woce']
-	    	} else if(!this.state.other && !this.state.woce && this.state.goship){
+	    	} else if(!state.other && !state.woce && state.goship){
 	    		source = ['cchdo_go-ship']
 	    	}
 

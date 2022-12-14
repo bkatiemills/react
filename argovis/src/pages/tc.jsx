@@ -66,16 +66,16 @@ class TCExplore extends React.Component {
     	helpers.componentDidUpdate.bind(this)()
     }
 
-    lookingForEntity(){
+    lookingForEntity(state){
     	// return true if any token, valid or not, is specified for any entity query string parameter
-    	return Boolean(this.state.tcName)
+    	return Boolean(state.tcName)
     }
 
-    generateURLs(){
-    	if(this.state.tcName !== ''){
-    		return [this.apiPrefix +'tc?compression=minimal&metadata=' + this.lookupLabel[this.state.tcName]]
+    generateURLs(state){
+    	if(state.tcName !== ''){
+    		return [this.apiPrefix +'tc?compression=minimal&metadata=' + this.lookupLabel[state.tcName]]
     	} else {
-    		return [helpers.generateTemporoSpatialURL.bind(this)('tc')]
+    		return [helpers.generateTemporoSpatialURL.bind(this)('tc', state)]
     	}
     }	
 
