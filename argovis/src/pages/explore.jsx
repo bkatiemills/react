@@ -358,7 +358,9 @@ class ArgovisExplore extends React.Component {
 
     // misc helpers
     findDataset(url){
-    	return url.slice(url.search('(?<='+this.apiPrefix+')'), url.search('(?=comp)')-1 )
+    	let u = url.slice(this.apiPrefix.length)
+    	u = u.slice(0,u.search('[\?].'))
+    	return u
     }
 
     recalculateTemporospatialLimits(s){
