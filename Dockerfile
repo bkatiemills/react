@@ -24,4 +24,4 @@ RUN npm install -g serve
 CMD serve -s build
 
 FROM base as dev
-#CMD npm start
+CMD npm start

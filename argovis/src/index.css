@@ -71,3 +71,31 @@ div.autocomplete-item{
 hr {
   border-top: 2px solid rgba(0, 0, 0, 1);
 }
+
+.hero-wrap{
+  position: relative;
+}
+
+.hero-wrap::before{
+  content: ' ';
+  display: block;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.4;
+  background-image: url('../public/hero.png');
+  background-repeat: no-repeat;
+  background-position: 50% 0;
+  background-size: cover;
+}
+
+.hero {
+  position: relative; 
+  padding: 3em;
+}
+
+.aboutBlock{
+  padding: 3em 12em 3em 12em;
+}
