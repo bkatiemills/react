@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapContainer, TileLayer, Popup, CircleMarker} from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker} from 'react-leaflet'
 import GeometryUtil from "leaflet-geometryutil";
 import Autosuggest from 'react-autosuggest';
 import Plot from 'react-plotly.js';
@@ -87,7 +87,6 @@ helpers.onDrawStop = function(payload){
 helpers.clearLeafletDraw = function(){
 	if(Object.keys(this.fgRef.current._layers).length > 0){
 		if(this.defaultPolygon){
-			// eslint-disable-next-line
 			this.state.polygon = this.defaultPolygon
 		}
 		let layerID = Object.keys(this.fgRef.current._layers)[0]
@@ -729,13 +728,6 @@ helpers.prepPlotlyState = function(markerSize){
 				}
 			}
 
-			let sum = 0
-			this.state.data.map(d => {
-				if(d[this.state.xKey]){
-					sum += d[this.state.xKey].length
-				}
-			})
-
 			// generate data and layout
 			this.data = this.state.data.map((d,i) => {
 				if(d.hasOwnProperty(this.state.xKey) && d.hasOwnProperty(this.state.yKey) && (d.hasOwnProperty(this.state.zKey) || this.state.zKey === '[2D plot]') && d.hasOwnProperty(this.state.cKey)){
@@ -1241,7 +1233,7 @@ helpers.initPlottingPage = function(customParams){
 }
 
 helpers.downloadData = function(defaultX, defaultY, defaultZ, defaultC, mergePoints){
-	let x = Promise.all(this.generateURLs().map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+	Promise.all(this.generateURLs().map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 		Promise.all(responses.map(res => res.json())).then(data => {
 			for(let i=0; i<data.length; i++){
 				if(data[i].code === 429){
@@ -1281,7 +1273,7 @@ helpers.downloadData = function(defaultX, defaultY, defaultZ, defaultC, mergePoi
 			this.vocab['zKey'] = ['[2D plot]'].concat(vars)
 			this.vocab['cKey'] = vars
 
-			let m = Promise.all(this.generateMetadataURLs(metakeys).map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+			Promise.all(this.generateMetadataURLs(metakeys).map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 				Promise.all(responses.map(mres => mres.json())).then(metadata => {
 					for(let i=0; i<metadata.length; i++){
 						if(metadata[i].code === 429){
