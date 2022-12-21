@@ -2,7 +2,13 @@ import React from 'react';
 
 class ArgoAbout extends React.Component {
 
-	//constructor(props) {}
+	constructor(props) {
+		document.title = 'Argovis - About'
+		super(props);
+
+		let queryManagement = new URL(window.location)
+		window.argoPrevious = queryManagement.search
+	}
 
 	render(){
 		return(
@@ -49,7 +55,7 @@ class ArgoAbout extends React.Component {
 								started their career by developing novel reconstruction algorithms in high energy particle 
 								physics for the ATLAS experiment at the LHC, and developed web apps for the nuclear
 								structure community for years before heading to the private sector to teach organizations
-								how to design and operate softwar eat scale using Docker and Kubernetes. They are currently
+								how to design and operate software at scale using Docker and Kubernetes. They are currently
 								working in Prof. Giglio's group at University of Colorado Boulder as the lead engineer
 								on Argovis.</p>
 							</div>
@@ -82,9 +88,9 @@ class ArgoAbout extends React.Component {
 									<li><b>NSF project award #2026954</b> to include GO-SHIP data in Argovis: Dr. Sarah Purkey, Steve
 									Diggs, Lynne Merchant, Andrew Barna.</li>
 									<li><b>NOAA project award #NA21OAR4310261</b> to produce a new Argo gridded product with
-									uncertainties and include it in Argovis: Dr. Mikarl Kuusela.</li>
+									uncertainties and include it in Argovis: Dr. Mikael Kuusela.</li>
 									<li><b>Others, current and past</b>: Sam Shen, Gui Castelao, Matt Mazloff, Aneesh Subramanian, 
-									Lynne Talley, Julien Pierret.</li>
+									Lynne Talley, Julien Pierret, Shane Elipot, Philippe Miron.</li>
 								</ul>
 							</div>
 						</div>
@@ -92,8 +98,7 @@ class ArgoAbout extends React.Component {
 						<h3>Identification of data sources</h3>
 						<p><b>Citation for the Argovis web application and the Argovis database:</b> Tucker, T., D. Giglio, 
 						M. Scanderbeg, and S.S.P. Shen: Argovis: A Web Application for Fast Delivery, Visualization, and 
-						Analysis of Argo Data. J. Atmos. Oceanic Technol., 37, 401–416, 
-						<a href="https://doi.org/10.1175/JTECH-D-19-0041.1" target="_blank">https://doi.org/10.1175/JTECH-D-19-0041.1</a></p>
+						Analysis of Argo Data. J. Atmos. Oceanic Technol., 37, 401–416, <a href="https://doi.org/10.1175/JTECH-D-19-0041.1" target="_blank">https://doi.org/10.1175/JTECH-D-19-0041.1</a></p>
 						<p><b>In addition to citing Argovis, please cite the reference for the dataset you are using, enumrated below:</b></p>
 						<ul>
 							<li><b>Argo data</b>: see <a href='https://argo.ucsd.edu/data/acknowledging-argo/#:~:text=To%20acknowledge%20Argo%2C%20please%20use,ocean%2Dops.org).'> guidance from the Argo collaboration</a></li>
@@ -111,8 +116,8 @@ class ArgoAbout extends React.Component {
 
 						<h3>Acknowledgements</h3>
 						<p>Argovis is hosted on a server of the Department of Atmospheric and Oceanic Sciences (ATOC) at the 
-						University of Colorado Boulder. Currently, Argovis is funded by the NSF Earthcube program (Award #1928305) 
-						and (Award #2026954).</p>
+						University of Colorado Boulder. <b>Currently, Argovis is funded by the NSF Earthcube program (Award #1928305) 
+						and (Award #2026954).</b></p>
 						<p>In the past, Argovis has been funded by (starting with the most recent):</p>
 						<ul>
 							<li>Giglio's research funds provided by University of Colorado Boulder</li>
