@@ -34,8 +34,8 @@ class ArgoAbout extends React.Component {
 
 						<h3>News & events</h3>
 						<ul>
-							<li><b>14-16 June 2022:</b> Argovis featured at the <a href='https://www.conftool.org/earthcube2022/sessions.php'>2022 EarthCube Annual Meeting</a></li>
-							<li><b>2-4 May 2022:</b> <a href='https://argovis.colorado.edu/docs/Argovis_Events.html'>Argovis Hackathon (supported by EarthCube TAC)</a></li>
+							<li><b>14-16 June 2022:</b> Argovis featured at the <a href='https://www.conftool.org/earthcube2022/sessions.php' target="_blank" rel="noreferrer">2022 EarthCube Annual Meeting</a></li>
+							<li><b>2-4 May 2022:</b> <a href='https://argovis.colorado.edu/docs/Argovis_Events.html' target="_blank" rel="noreferrer">Argovis Hackathon (supported by EarthCube TAC)</a></li>
 						</ul>
 
 						<h3>The Argovis team</h3>
@@ -101,12 +101,12 @@ class ArgoAbout extends React.Component {
 						Analysis of Argo Data. J. Atmos. Oceanic Technol., 37, 401–416, <a href="https://doi.org/10.1175/JTECH-D-19-0041.1" target="_blank" rel="noreferrer">https://doi.org/10.1175/JTECH-D-19-0041.1</a></p>
 						<p><b>In addition to citing Argovis, please cite the reference for the dataset you are using, enumerated below:</b></p>
 						<ul>
-							<li><b>Argo data</b>: see <a href='https://argo.ucsd.edu/data/acknowledging-argo/#:~:text=To%20acknowledge%20Argo%2C%20please%20use,ocean%2Dops.org).'> guidance from the Argo collaboration</a></li>
+							<li><b>Argo data</b>: see <a href='https://argo.ucsd.edu/data/acknowledging-argo/#:~:text=To%20acknowledge%20Argo%2C%20please%20use,ocean%2Dops.org).' target="_blank" rel="noreferrer"> guidance from the Argo collaboration</a></li>
 							<li><b>Ship-based profiles</b>: TBD</li>
-							<li><b>Global Drifter Program</b>: Cite as: Elipot, Shane; Sykulski, Adam; Lumpkin, Rick; Centurioni, Luca; Pazos, Mayra (2022). Hourly location, current velocity, and temperature collected from Global Drifter Program drifters world-wide. [indicate subset used]. NOAA National Centers for Environmental Information. Dataset. <a href='https://doi.org/10.25921/x46c-3620'>https://doi.org/10.25921/x46c-3620</a>. Accessed [date].</li>
+							<li><b>Global Drifter Program</b>: Cite as: Elipot, Shane; Sykulski, Adam; Lumpkin, Rick; Centurioni, Luca; Pazos, Mayra (2022). Hourly location, current velocity, and temperature collected from Global Drifter Program drifters world-wide. [indicate subset used]. NOAA National Centers for Environmental Information. Dataset. <a href='https://doi.org/10.25921/x46c-3620' target="_blank" rel="noreferrer">https://doi.org/10.25921/x46c-3620</a>. Accessed [date].</li>
 							<li><b>Tropical cyclone data</b>: TBD</li>
-							<li><b><a href='https://sio-argo.ucsd.edu/RG_Climatology.html'>Roemmich-Gilson Argo gridded climatology</a></b>: Roemmich, D. and J. Gilson, 2009: The 2004-2008 mean and annual cycle of temperature, salinity, and steric height in the global ocean from the Argo Program. Progress in Oceanography, 82, 81-100. </li>
-							<li><b>Kuusela-Giglio ocean heat content grid</b>: Mikael Kuusela, & Donata Giglio. (2022). Global Ocean Heat Content Anomalies based on Argo data (1.0.0) [Data set]. Zenodo. <a href='https://doi.org/10.5281/zenodo.6131625'>https://doi.org/10.5281/zenodo.6131625</a></li>
+							<li><b><a href='https://sio-argo.ucsd.edu/RG_Climatology.html' target="_blank" rel="noreferrer">Roemmich-Gilson Argo gridded climatology</a></b>: Roemmich, D. and J. Gilson, 2009: The 2004-2008 mean and annual cycle of temperature, salinity, and steric height in the global ocean from the Argo Program. Progress in Oceanography, 82, 81-100. </li>
+							<li><b>Kuusela-Giglio ocean heat content grid</b>: Mikael Kuusela, & Donata Giglio. (2022). Global Ocean Heat Content Anomalies based on Argo data (1.0.0) [Data set]. Zenodo. <a href='https://doi.org/10.5281/zenodo.6131625' target="_blank" rel="noreferrer">https://doi.org/10.5281/zenodo.6131625</a></li>
 						</ul>
 
 						<h3>Data producer responsibility</h3>
@@ -129,15 +129,15 @@ class ArgoAbout extends React.Component {
 						</ul>
 						<p>The initial development of Argovis referenced the codes and ideas of the 4-Dimensional Visual Delivery 
 						(4DVD) technology developed at the Climate Informatics Lab, San Diego State University. The computer code 
-						for 4DVD is at <a href='https://github.com/dafrenchyman/4dvd'>https://github.com/dafrenchyman/4dvd</a>, and is available for download under the GNU General 
+						for 4DVD is at <a href='https://github.com/dafrenchyman/4dvd' target="_blank" rel="noreferrer">https://github.com/dafrenchyman/4dvd</a>, and is available for download under the GNU General 
 						Public License open source license. All applicable restrictions, disclaimers of warranties, and limitations 
 						of liability in the GNU General Public License also applies to uses of 4DVD on this website.</p>
 
 						<h3>User guide</h3>
-						<p>More educational resources for using Argovis are planned for the near future. For now, see our <a href='https://github.com/argovis/demo_notebooks'>collection of Jupyter notebooks</a> for 
-							examples on how to consume our API, and try exploring our <a href='/'>web app</a> in Firefox or any
+						<p>More educational resources for using Argovis are planned for the near future. For now, see our <a href='https://github.com/argovis/demo_notebooks' target="_blank" rel="noreferrer">collection of Jupyter notebooks</a> for 
+							examples on how to consume our API, and try exploring our <a href='/' target="_blank" rel="noreferrer">web app</a> in Firefox or any
 							webkit browser (Chrome, Safari, Brave) on your laptop / desktop, or in Chrome or Safari on your mobile 
-							device. Complete API docs are always up to date via <a href='/api/docs/'>Swagger</a>.
+							device. Complete API docs are always up to date via <a href='/api/docs/' target="_blank" rel="noreferrer">Swagger</a>.
 						</p>
 
 						<h3>Contact us</h3>
