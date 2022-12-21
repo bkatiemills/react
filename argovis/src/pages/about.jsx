@@ -134,10 +134,12 @@ class ArgoAbout extends React.Component {
 						of liability in the GNU General Public License also applies to uses of 4DVD on this website.</p>
 
 						<h3>User guide</h3>
-						<p>More educational resources for using Argovis are planned for the near future. For now, see our <a href='https://github.com/argovis/demo_notebooks' target="_blank" rel="noreferrer">collection of Jupyter notebooks</a> for 
-							examples on how to consume our API, and try exploring our <a href='/' target="_blank" rel="noreferrer">web app</a> in Firefox or any
+						<p>More educational resources for using Argovis are planned for the near future. For now, Python users can see our <a href='https://github.com/argovis/demo_notebooks' target="_blank" rel="noreferrer">collection of Jupyter notebooks</a> for 
+							examples on how to consume our API; for a language agnostic introduction, see <a href='/apiintro' target="_blank" rel="noreferrer">this document</a>.
+							Complete API docs are always up to date via <a href='/api/docs/' target="_blank" rel="noreferrer">Swagger</a>.
+							Try exploring our <a href='/' target="_blank" rel="noreferrer">web app</a> in Firefox or any
 							webkit browser (Chrome, Safari, Brave) on your laptop / desktop, or in Chrome or Safari on your mobile 
-							device. Complete API docs are always up to date via <a href='/api/docs/' target="_blank" rel="noreferrer">Swagger</a>.
+							device.
 						</p>
 
 						<h3>Contact us</h3>
