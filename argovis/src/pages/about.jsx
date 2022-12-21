@@ -38,6 +38,15 @@ class ArgoAbout extends React.Component {
 							<li><b>2-4 May 2022:</b> <a href='https://argovis.colorado.edu/docs/Argovis_Events.html' target="_blank" rel="noreferrer">Argovis Hackathon (supported by EarthCube TAC)</a></li>
 						</ul>
 
+						<h3>User guide</h3>
+						<p>More educational resources for using Argovis are planned for the near future. For now, Python users can see our <a href='https://github.com/argovis/demo_notebooks' target="_blank" rel="noreferrer">collection of Jupyter notebooks</a> for 
+							examples on how to consume our API; for a language agnostic introduction, see <a href='/apiintro' target="_blank" rel="noreferrer">this document</a>.
+							Complete API docs are always up to date via <a href='/api/docs/' target="_blank" rel="noreferrer">Swagger</a>.
+							Try exploring our <a href='/' target="_blank" rel="noreferrer">web app</a> in Firefox or any
+							webkit browser (Chrome, Safari, Brave) on your laptop / desktop, or in Chrome or Safari on your mobile 
+							device.
+						</p>
+
 						<h3>The Argovis team</h3>
 						<div className='row'>
 							<div className='col-2'><img alt='' src='donata_giglio2_crop.jpg' style={{'width':'100%'}}></img></div>
@@ -132,15 +141,6 @@ class ArgoAbout extends React.Component {
 						for 4DVD is at <a href='https://github.com/dafrenchyman/4dvd' target="_blank" rel="noreferrer">https://github.com/dafrenchyman/4dvd</a>, and is available for download under the GNU General 
 						Public License open source license. All applicable restrictions, disclaimers of warranties, and limitations 
 						of liability in the GNU General Public License also applies to uses of 4DVD on this website.</p>
-
-						<h3>User guide</h3>
-						<p>More educational resources for using Argovis are planned for the near future. For now, Python users can see our <a href='https://github.com/argovis/demo_notebooks' target="_blank" rel="noreferrer">collection of Jupyter notebooks</a> for 
-							examples on how to consume our API; for a language agnostic introduction, see <a href='/apiintro' target="_blank" rel="noreferrer">this document</a>.
-							Complete API docs are always up to date via <a href='/api/docs/' target="_blank" rel="noreferrer">Swagger</a>.
-							Try exploring our <a href='/' target="_blank" rel="noreferrer">web app</a> in Firefox or any
-							webkit browser (Chrome, Safari, Brave) on your laptop / desktop, or in Chrome or Safari on your mobile 
-							device.
-						</p>
 
 						<h3>Contact us</h3>
 						<p>Please contact us with any questions or issues with Argovis.</p>
