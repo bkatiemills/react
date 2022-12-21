@@ -40,7 +40,7 @@ class ArgoAbout extends React.Component {
 
 						<h3>The Argovis team</h3>
 						<div className='row'>
-							<div className='col-2'><img src='donata_giglio2_crop.jpg' style={{'width':'100%'}}></img></div>
+							<div className='col-2'><img alt='' src='donata_giglio2_crop.jpg' style={{'width':'100%'}}></img></div>
 							<div className='col-10'>
 								<p><b>Donata Giglio</b> is an Assistant Professor in the Department of Atmospheric and Ocean
 								Science at University of Colorado Boulder and is the PI of the Argovis project. Her research 
@@ -49,7 +49,7 @@ class ArgoAbout extends React.Component {
 							</div>
 						</div>
 						<div className='row' style={{'paddingTop': '1em'}}>
-							<div className='col-2'><img src='bill-selfie.png' style={{'width':'100%'}}></img></div>
+							<div className='col-2'><img alt='' src='bill-selfie.png' style={{'width':'100%'}}></img></div>
 							<div className='col-10'>
 								<p><b>Bill Mills</b> is a scientific software developer based in Brooklyn, NY. They
 								started their career by developing novel reconstruction algorithms in high energy particle 
@@ -61,7 +61,7 @@ class ArgoAbout extends React.Component {
 							</div>
 						</div>
 						<div className='row' style={{'paddingTop': '1em'}}>
-							<div className='col-2'><img src='scanderbeg_head_shot_sm.jpg' style={{'width':'100%'}}></img></div>
+							<div className='col-2'><img alt='' src='scanderbeg_head_shot_sm.jpg' style={{'width':'100%'}}></img></div>
 							<div className='col-10'>
 								<p><b>Megan Scanderbeg</b> is the Argo Program Science Coordinator and the Argo Data Management Team 
 								Co-chair. She works at Scripps Institution of Oceanography and is interested in making 
@@ -69,7 +69,7 @@ class ArgoAbout extends React.Component {
 							</div>
 						</div>
 						<div className='row' style={{'paddingTop': '1em'}}>
-							<div className='col-2'><img src='ttucker_crop.jpg' style={{'width':'100%'}}></img></div>
+							<div className='col-2'><img alt='' src='ttucker_crop.jpg' style={{'width':'100%'}}></img></div>
 							<div className='col-10'>
 								<p><b>Tyler Tucker</b> lives and works (and plays) on the Big Island of Hawaii. He is currently
 								a scientific software engineer at the W. M. Keck Observatory on the Big Island. In 2019-2020, he
@@ -98,15 +98,15 @@ class ArgoAbout extends React.Component {
 						<h3>Identification of data sources</h3>
 						<p><b>Citation for the Argovis web application and the Argovis database:</b> Tucker, T., D. Giglio, 
 						M. Scanderbeg, and S.S.P. Shen: Argovis: A Web Application for Fast Delivery, Visualization, and 
-						Analysis of Argo Data. J. Atmos. Oceanic Technol., 37, 401–416, <a href="https://doi.org/10.1175/JTECH-D-19-0041.1" target="_blank">https://doi.org/10.1175/JTECH-D-19-0041.1</a></p>
-						<p><b>In addition to citing Argovis, please cite the reference for the dataset you are using, enumrated below:</b></p>
+						Analysis of Argo Data. J. Atmos. Oceanic Technol., 37, 401–416, <a href="https://doi.org/10.1175/JTECH-D-19-0041.1" target="_blank" rel="noreferrer">https://doi.org/10.1175/JTECH-D-19-0041.1</a></p>
+						<p><b>In addition to citing Argovis, please cite the reference for the dataset you are using, enumerated below:</b></p>
 						<ul>
 							<li><b>Argo data</b>: see <a href='https://argo.ucsd.edu/data/acknowledging-argo/#:~:text=To%20acknowledge%20Argo%2C%20please%20use,ocean%2Dops.org).'> guidance from the Argo collaboration</a></li>
 							<li><b>Ship-based profiles</b>: TBD</li>
-							<li><b>Global Drifter Program</b>: Cite as: Elipot, Shane; Sykulski, Adam; Lumpkin, Rick; Centurioni, Luca; Pazos, Mayra (2022). Hourly location, current velocity, and temperature collected from Global Drifter Program drifters world-wide. [indicate subset used]. NOAA National Centers for Environmental Information. Dataset. https://doi.org/10.25921/x46c-3620. Accessed [date].</li>
+							<li><b>Global Drifter Program</b>: Cite as: Elipot, Shane; Sykulski, Adam; Lumpkin, Rick; Centurioni, Luca; Pazos, Mayra (2022). Hourly location, current velocity, and temperature collected from Global Drifter Program drifters world-wide. [indicate subset used]. NOAA National Centers for Environmental Information. Dataset. <a href='https://doi.org/10.25921/x46c-3620'>https://doi.org/10.25921/x46c-3620</a>. Accessed [date].</li>
 							<li><b>Tropical cyclone data</b>: TBD</li>
-							<li><b>Roemmich-Gilson Argo gridded climatology</b>: Roemmich, D. and J. Gilson, 2009: The 2004-2008 mean and annual cycle of temperature, salinity, and steric height in the global ocean from the Argo Program. Progress in Oceanography, 82, 81-100. </li>
-							<li><b>Kuusela-Giglio ocean heat content grid</b>: Mikael Kuusela, & Donata Giglio. (2022). Global Ocean Heat Content Anomalies based on Argo data (1.0.0) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.6131625</li>
+							<li><b><a href='https://sio-argo.ucsd.edu/RG_Climatology.html'>Roemmich-Gilson Argo gridded climatology</a></b>: Roemmich, D. and J. Gilson, 2009: The 2004-2008 mean and annual cycle of temperature, salinity, and steric height in the global ocean from the Argo Program. Progress in Oceanography, 82, 81-100. </li>
+							<li><b>Kuusela-Giglio ocean heat content grid</b>: Mikael Kuusela, & Donata Giglio. (2022). Global Ocean Heat Content Anomalies based on Argo data (1.0.0) [Data set]. Zenodo. <a href='https://doi.org/10.5281/zenodo.6131625'>https://doi.org/10.5281/zenodo.6131625</a></li>
 						</ul>
 
 						<h3>Data producer responsibility</h3>
@@ -116,8 +116,8 @@ class ArgoAbout extends React.Component {
 
 						<h3>Acknowledgements</h3>
 						<p>Argovis is hosted on a server of the Department of Atmospheric and Oceanic Sciences (ATOC) at the 
-						University of Colorado Boulder. <b>Currently, Argovis is funded by the NSF Earthcube program (Award #1928305) 
-						and (Award #2026954).</b></p>
+						University of Colorado Boulder. <b>Currently, Argovis is funded by the NSF Earthcube program (Award #1928305 
+						and Award #2026954).</b></p>
 						<p>In the past, Argovis has been funded by (starting with the most recent):</p>
 						<ul>
 							<li>Giglio's research funds provided by University of Colorado Boulder</li>
@@ -129,7 +129,7 @@ class ArgoAbout extends React.Component {
 						</ul>
 						<p>The initial development of Argovis referenced the codes and ideas of the 4-Dimensional Visual Delivery 
 						(4DVD) technology developed at the Climate Informatics Lab, San Diego State University. The computer code 
-						for 4DVD is at https://github.com/dafrenchyman/4dvd, and is available for download under the GNU General 
+						for 4DVD is at <a href='https://github.com/dafrenchyman/4dvd'>https://github.com/dafrenchyman/4dvd</a>, and is available for download under the GNU General 
 						Public License open source license. All applicable restrictions, disclaimers of warranties, and limitations 
 						of liability in the GNU General Public License also applies to uses of 4DVD on this website.</p>
 
@@ -137,7 +137,7 @@ class ArgoAbout extends React.Component {
 						<p>More educational resources for using Argovis are planned for the near future. For now, see our <a href='https://github.com/argovis/demo_notebooks'>collection of Jupyter notebooks</a> for 
 							examples on how to consume our API, and try exploring our <a href='/'>web app</a> in Firefox or any
 							webkit browser (Chrome, Safari, Brave) on your laptop / desktop, or in Chrome or Safari on your mobile 
-							device.
+							device. Complete API docs are always up to date via <a href='/api/docs/'>Swagger</a>.
 						</p>
 
 						<h3>Contact us</h3>
@@ -152,9 +152,9 @@ class ArgoAbout extends React.Component {
 
 						<div className='row'>
 							<div className='col-12' style={{'textAlign': 'center'}}>
-								<img src='fulllogo.png' style={{'width': '10vw', 'margin':'1em'}}></img>
-								<img src='Boulder_FL.jpg' style={{'width': '10vw', 'margin':'1em'}}></img>
-								<img src='EarthCube-Blue-Long.png' style={{'width': '10vw', 'margin':'1em'}}></img>
+								<img alt='' src='fulllogo.png' style={{'width': '10vw', 'margin':'1em'}}></img>
+								<img alt='' src='Boulder_FL.jpg' style={{'width': '10vw', 'margin':'1em'}}></img>
+								<img alt='' src='EarthCube-Blue-Long.png' style={{'width': '10vw', 'margin':'1em'}}></img>
 							</div>
 						</div>
 					</div>

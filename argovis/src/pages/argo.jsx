@@ -45,7 +45,7 @@ class ArgoExplore extends React.Component {
 		helpers.mungeTime.bind(this)(q, this.state.maxDayspan)
 
         // if no query string specified at all or no categories selected turn on all argo categories
-        if(!window.location.search || !q.has('argocore') && !q.has('argobgc') && !q.has('argodeep') ){
+        if(!window.location.search || (!q.has('argocore') && !q.has('argobgc') && !q.has('argodeep')) ){
         	console.log('imposing defaults')
         	this.state.argocore = true
         	this.state.argobgc = true
@@ -280,15 +280,15 @@ class ArgoExplore extends React.Component {
 									<h6>Subsets</h6>
 									<div className="form-check">
 										<input className="form-check-input" checked={this.state.argocore} onChange={(v) => helpers.toggle.bind(this)(v, 'argocore')} type="checkbox" id='argocore'></input>
-										<label className="form-check-label" htmlFor='argocore'>Display Argo Core <span style={{'color':this.chooseColor([,,,,['argo_core']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
+										<label className="form-check-label" htmlFor='argocore'>Display Argo Core <span style={{'color':this.chooseColor([null,null,null,null,['argo_core']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 									<div className="form-check">
 										<input className="form-check-input" checked={this.state.argobgc} onChange={(v) => helpers.toggle.bind(this)(v, 'argobgc')} type="checkbox" id='argobgc'></input>
-										<label className="form-check-label" htmlFor='argobgc'>Display Argo BGC <span style={{'color':this.chooseColor([,,,,['argo_bgc']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
+										<label className="form-check-label" htmlFor='argobgc'>Display Argo BGC <span style={{'color':this.chooseColor([null,null,null,null,['argo_bgc']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 									<div className="form-check">
 										<input className="form-check-input" checked={this.state.argodeep} onChange={(v) => helpers.toggle.bind(this)(v, 'argodeep')} type="checkbox" id='argodeep'></input>
-										<label className="form-check-label" htmlFor='argodeep'>Display Argo Deep <span style={{'color':this.chooseColor([,,,,['argo_deep']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
+										<label className="form-check-label" htmlFor='argodeep'>Display Argo Deep <span style={{'color':this.chooseColor([null,null,null,null,['argo_deep']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 								</div>
 
