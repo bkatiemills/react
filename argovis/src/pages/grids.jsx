@@ -69,23 +69,25 @@ class Grids extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState, snapshot){
-    	if(this.state.refreshData){
+    	let s = {...this.state}  // transform a copy of state until we're happy with it, and write it back
+
+    	if(s.refreshData){
     		if(this.statusReporting.current){
 					helpers.manageStatus.bind(this)('downloading')
 				}
 	    	//kick off request for new data, redraw the map when complete
-	    	let url    = this.apiPrefix + 'grids/' + this.state.selectedGrid+'?data=all&compression=array&startDate='+this.state.timestep+'T00:00:00Z&endDate='+this.state.timestep+'T00:00:01Z&presRange='+(this.rawLevels[this.state.levelindex]-0.1)+','+(this.rawLevels[this.state.levelindex]+0.1)
-	    	let suburl = this.apiPrefix + 'grids/' + this.state.selectedGrid+'?data=all&compression=array&startDate='+this.state.subtimestep+'T00:00:00Z&endDate='+this.state.subtimestep+'T00:00:01Z&presRange='+(this.rawLevels[this.state.sublevelindex]-0.1)+','+(this.rawLevels[this.state.sublevelindex]+0.1)
-	    	if(this.state.polygon.length > 0){
-	    		url += '&polygon='+JSON.stringify(this.state.polygon)
-	    		suburl += '&polygon='+JSON.stringify(this.state.polygon)
+	    	let url    = this.apiPrefix + 'grids/' + s.selectedGrid+'?data=all&compression=array&startDate='+s.timestep+'T00:00:00Z&endDate='+s.timestep+'T00:00:01Z&presRange='+(this.rawLevels[s.levelindex]-0.1)+','+(this.rawLevels[s.levelindex]+0.1)
+	    	let suburl = this.apiPrefix + 'grids/' + s.selectedGrid+'?data=all&compression=array&startDate='+s.subtimestep+'T00:00:00Z&endDate='+s.subtimestep+'T00:00:01Z&presRange='+(this.rawLevels[s.sublevelindex]-0.1)+','+(this.rawLevels[s.sublevelindex]+0.1)
+	    	if(s.polygon.length > 0){
+	    		url += '&polygon='+JSON.stringify(s.polygon)
+	    		suburl += '&polygon='+JSON.stringify(s.polygon)
 	    	}
 
-	    	if(this.state.subgrid){
-					let x = Promise.all([url,suburl].map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+	    	if(s.subgrid){
+					Promise.all([url,suburl].map(x => fetch(x, {headers:{'x-argokey': s.apiKey}}))).then(responses => {
 						Promise.all(responses.map(res => res.json())).then(data => {
-							this.state.points = data[0]
-							this.state.subpoints = data[1]
+							s.points = data[0]
+							s.subpoints = data[1]
 							// construct grid subtraction delta
 							/// start by turning grids into kv keyed by unique concatenation of lon/lat so we can easily subtract the correct pairs of points
 							let grid1 = {}
@@ -103,33 +105,33 @@ class Grids extends React.Component {
 								}
 							}
 							/// subrtract grids, produce a list of objects that is 'profile-like' where data are the delta values
-							this.state.data = []
+							s.data = []
 							for(let i=0; i<Object.keys(grid1).length; i++){
 								let key = Object.keys(grid1)[i]
 								if(Object.keys(grid2).includes(key)){
-									this.state.data.push({
+									s.data.push({
 										geolocation: grid1[key].geolocation,
 										data: [[grid1[key].data[0][0] - grid2[key].data[0][0]]]
 									})
 								}
 							}
 							helpers.manageStatus.bind(this)('rendering')
-							let values = this.state.data.map(x=>x.data[0][0]).filter(x=>x!==null)
-							this.setScale(Math.min(...values), Math.max(...values))
+							let values = s.data.map(x=>x.data[0][0]).filter(x=>x!==null)
+							s = this.setScale(Math.min(...values), Math.max(...values), s)
 							helpers.setQueryString.bind(this)()
-							this.refreshMap(false, Math.min(...values), Math.max(...values))	
+							this.refreshMap(false, Math.min(...values), Math.max(...values), s)	
 						})
 					})
 				} else {
-					let x = Promise.all([url].map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+					Promise.all([url].map(x => fetch(x, {headers:{'x-argokey': s.apiKey}}))).then(responses => {
 						Promise.all(responses.map(res => res.json())).then(data => {
-							this.state.points = data[0]
-							this.state.data = data[0]
+							s.points = data[0]
+							s.data = data[0]
 							helpers.manageStatus.bind(this)('rendering')
-							let values = this.state.data.map(x=>x.data[0][0]).filter(x=>x!==null)
-							this.setScale(Math.min(...values), Math.max(...values))
+							let values = s.data.map(x=>x.data[0][0]).filter(x=>x!==null)
+							s = this.setScale(Math.min(...values), Math.max(...values), s)
 							helpers.setQueryString.bind(this)()
-							this.refreshMap(false, Math.min(...values), Math.max(...values))	
+							this.refreshMap(false, Math.min(...values), Math.max(...values), s)	
 						}) 
 					})
 				}
@@ -165,14 +167,14 @@ class Grids extends React.Component {
     		)})
     }
 
-    refreshMap(needNewData, min, max){
+    refreshMap(needNewData, min, max, state){
     	// redraw the map and render the dom
-    	if(this.state.points.length > 0){
-				this.setState({...this.state, 
-												grid: this.gridRasterfy(this.state.data, min, max), 
+    	if(state.points.length > 0){
+				this.setState({...state, 
+												grid: this.gridRasterfy(state), 
 												min: min, 
 												max: max, 
-												units: this.state.points[0].units[0], 
+												units: state.points[0].units[0], 
 												refreshData: needNewData
 											}, () => {
 													helpers.manageStatus.bind(this)('ready')
@@ -180,20 +182,20 @@ class Grids extends React.Component {
 	    }
     }
 
-    gridRasterfy(points, min, max){
+    gridRasterfy(state){
     	// expects a list from a data endpoint with compression=array
-			if(points.hasOwnProperty('code') || points[0].hasOwnProperty('code')){
+			if(state.data.hasOwnProperty('code') || state.data[0].hasOwnProperty('code')){
 				return null
 			}
 			else {
-				points = points.map(point => {return(
+				let points = state.data.map(point => {return(
 					<Rectangle 
 						key={Math.random()} 
 						bounds={[[point.geolocation.coordinates[1]-0.5, point.geolocation.coordinates[0]-0.5],[point.geolocation.coordinates[1]+0.5, point.geolocation.coordinates[0]+0.5]]} 
 						pathOptions={{ 
 							fillOpacity: 0.5, 
 							weight: 0, 
-							color: this.chooseColor(point.data[0][0], min, max) 
+							color: this.chooseColor(point.data[0][0], state) 
 						}}>
       				{this.genTooltip(point)}
     			</Rectangle>
@@ -202,16 +204,21 @@ class Grids extends React.Component {
 			}
     }
 
-    chooseColor(val, min, max){
+    chooseColor(val, state){
     	if(val === null){
     		return 'black'
     	}
 
-    	return this.state.scale(val).hex()
+    	return state.scale(val).hex()
     }
 
     fetchPolygon(coords){
     	helpers.fetchPolygon.bind(this)(coords)   	
+    }
+
+    dateRangeMultiplyer(s){
+    	// allowed date range will be multiplied by this much, as a function of the mutated state s
+    	return 1
     }
 
     unitTransform(unit, scale){
@@ -244,27 +251,29 @@ class Grids extends React.Component {
 		  }
     }
 
-    setScale(min, max){
+    setScale(min, max, state){
 
-    	if(this.state.subgrid){
+    	if(state.subgrid){
     		if(min > 0){
-    			this.state.scale = chroma.scale(['#FFFFFF', '#FF0000']).domain([0,max])
-    			this.state.colormin = 0
-    			this.state.colormax = max
+    			state.scale = chroma.scale(['#FFFFFF', '#FF0000']).domain([0,max])
+    			state.colormin = 0
+    			state.colormax = max
     		} else if(max < 0){
-    			this.state.scale = chroma.scale(['#0000FF', '#FFFFFF']).domain([min,0])
-    			this.state.colormin = min
-    			this.state.colormax = 0
+    			state.scale = chroma.scale(['#0000FF', '#FFFFFF']).domain([min,0])
+    			state.colormin = min
+    			state.colormax = 0
     		} else {
-    			this.state.scale = chroma.scale(['#0000FF', '#FFFFFF', '#FF0000']).domain([min,0,max])
-    			this.state.colormin = min
-    			this.state.colormax = max
+    			state.scale = chroma.scale(['#0000FF', '#FFFFFF', '#FF0000']).domain([min,0,max])
+    			state.colormin = min
+    			state.colormax = max
     		}
     	} else {
-    		this.state.scale = chroma.scale(['#440154', '#482777', '#3f4a8a', '#31678e', '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825']).domain([min,max])
-    		this.state.colormin = min
-    		this.state.colormax = max
+    		state.scale = chroma.scale(['#440154', '#482777', '#3f4a8a', '#31678e', '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825']).domain([min,max])
+    		state.colormin = min
+    		state.colormax = max
     	}
+
+    	return state
    }
 
 	toggleCoupling(s){

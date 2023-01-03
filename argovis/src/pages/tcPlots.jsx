@@ -16,7 +16,7 @@ class TCPlots extends React.Component {
     	    fetch(this.apiPrefix + 'summary?id=tc_labels', {headers:{'x-argokey': this.state.apiKey}})
         	.then(response => response.json())
 	        .then(data => {
-    	    	let name = data[0].summary.filter(x=>x._id==this.state.tcMeta)[0].label
+    	    	let name = data[0].summary.filter(x=>x._id === this.state.tcMeta)[0].label
         		this.state.title = name
         	})
 	    } else if(this.state.polygon){
@@ -32,7 +32,9 @@ class TCPlots extends React.Component {
 	}
 
     componentDidUpdate(prevProps, prevState, snapshot){
-    	this.state.refreshData = false
+    	if(this.state.refreshData){
+	    	this.setState({refreshData: false})
+	    }
 	    helpers.setQueryString.bind(this)()
     }
 

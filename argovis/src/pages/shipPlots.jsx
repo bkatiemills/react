@@ -46,13 +46,15 @@ class ShipPlots extends React.Component {
 		]
 
 		this.csv = this.header.join(',') + '\n'
-		this.csv += this.rows.map(r => JSON.stringify(r).replaceAll('\"', '').replaceAll('[', '').replaceAll(']', '')).join('\n')
+		this.csv += this.rows.map(r => JSON.stringify(r).replaceAll('"', '').replaceAll('[', '').replaceAll(']', '')).join('\n')
 		this.csv = new Blob([this.csv], {type: 'text/csv'})
 		this.csv = window.URL.createObjectURL(this.csv)
 	}
 
     componentDidUpdate(prevProps, prevState, snapshot){
-    	this.state.refreshData = false
+    	if(this.state.refreshData){
+	    	this.setState({refreshData: false})
+	    }
 	    helpers.setQueryString.bind(this)()
     }
 
