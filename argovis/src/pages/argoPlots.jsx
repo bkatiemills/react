@@ -69,13 +69,15 @@ class ArgoPlots extends React.Component {
 			return row.concat(core).concat(synth)
 		})
 		this.csv = this.header.slice(0,-1).concat('Original core file').concat('Original synthetic file').join(',') + '\n'
-		this.csv += rows.map(r => JSON.stringify(r).replaceAll('\"', '').replaceAll('[', '').replaceAll(']', '')).join('\n')
+		this.csv += rows.map(r => JSON.stringify(r).replaceAll('"', '').replaceAll('[', '').replaceAll(']', '')).join('\n')
 		this.csv = new Blob([this.csv], {type: 'text/csv'})
 		this.csv = window.URL.createObjectURL(this.csv)
 	}
 
     componentDidUpdate(prevProps, prevState, snapshot){
-    	this.state.refreshData = false
+    	if(this.state.refreshData){
+	    	this.setState({refreshData: false})
+	    }
 	    helpers.setQueryString.bind(this)()
     }
 

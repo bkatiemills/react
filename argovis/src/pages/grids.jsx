@@ -82,7 +82,7 @@ class Grids extends React.Component {
 	    	}
 
 	    	if(this.state.subgrid){
-					let x = Promise.all([url,suburl].map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+					Promise.all([url,suburl].map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 						Promise.all(responses.map(res => res.json())).then(data => {
 							this.state.points = data[0]
 							this.state.subpoints = data[1]
@@ -121,7 +121,7 @@ class Grids extends React.Component {
 						})
 					})
 				} else {
-					let x = Promise.all([url].map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+					Promise.all([url].map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 						Promise.all(responses.map(res => res.json())).then(data => {
 							this.state.points = data[0]
 							this.state.data = data[0]

@@ -28,7 +28,9 @@ class DrifterPlots extends React.Component {
 	}
 
     componentDidUpdate(prevProps, prevState, snapshot){
-    	this.state.refreshData = false
+    	if(this.state.refreshData){
+	    	this.setState({refreshData: false})
+	    }
 	    helpers.setQueryString.bind(this)()
     }
 
