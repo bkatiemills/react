@@ -99,3 +99,9 @@ hr {
 .aboutBlock{
   padding: 3em 12em 3em 12em;
 }
+
+#explore-dropdown {
+  background-color: #f8f9fa;
+  border-color: #f8f9fa;
+  color: #6c757d;
+}

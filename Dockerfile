@@ -14,7 +14,8 @@ RUN npm install --force react-leaflet \
 						react-autosuggest \
 						react-plotly.js \
 						plotly.js \
-						leaflet-geometryutil
+						leaflet-geometryutil \
+						react-bootstrap
 COPY argovis/src src
 COPY argovis/public public
 
