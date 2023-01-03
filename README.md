@@ -23,7 +23,7 @@ Visit the dev build at `localhost:3000`, and see React linter output in the term
 To go with github releases with matching tags:
 
 ```
-docker image build --target prod argovis/react:major.minor.patch .
+docker image build --target prod -t argovis/react:major.minor.patch .
 ```
 
 Run this alongside the full stack of Argovis containers per the deployment manifests in [https://github.com/argovis/argovis_deployment](https://github.com/argovis/argovis_deployment).
