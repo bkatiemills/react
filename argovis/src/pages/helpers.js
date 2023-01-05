@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapContainer, TileLayer, CircleMarker} from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker} from 'react-leaflet';
 import GeometryUtil from "leaflet-geometryutil";
 import Autosuggest from 'react-autosuggest';
 import Plot from 'react-plotly.js';

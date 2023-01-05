@@ -15,9 +15,11 @@ RUN npm install --force react-leaflet \
 						react-plotly.js \
 						plotly.js \
 						leaflet-geometryutil \
-						react-bootstrap
+						react-bootstrap \
+						jest-canvas-mock
 COPY argovis/src src
 COPY argovis/public public
+COPY argovis/package.json package.json
 
 FROM base as prod
 RUN npm run build
@@ -25,4 +27,5 @@ RUN npm install -g serve
 CMD serve -s build
 
 FROM base as dev
+RUN rm /react/argovis/src/App*
 CMD npm start

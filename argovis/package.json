@@ -7,6 +7,7 @@
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "chroma-js": "^2.4.2",
+    "jest-canvas-mock": "^2.4.0",
     "leaflet": "^1.8.0",
     "leaflet-geometryutil": "^0.10.1",
     "plotly.js": "^2.16.0",
@@ -15,8 +16,6 @@
     "react-dom": "^18.2.0",
     "react-leaflet": "^4.0.2",
     "react-leaflet-draw": "^0.20.4",
-    "react-leaflet-heatmap-layer": "^2.0.0",
-    "react-leaflet-heatmap-layer-v3": "^3.0.3-beta-1",
     "react-plotly.js": "^2.6.0",
     "react-router-dom": "^6.4.1",
     "react-scripts": "5.0.1",
@@ -32,6 +31,11 @@
     "extends": [
       "react-app",
       "react-app/jest"
+    ]
+  },
+  "jest": {
+    "transformIgnorePatterns": [
+      "!node_modules/"
     ]
   },
   "browserslist": [
