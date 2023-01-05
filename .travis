@@ -1,0 +1,8 @@
+language: minimal
+
+services:
+  - docker
+
+script:
+  - docker image build --target dev -t react:dev .
+  - docker container run -e CI=true react:dev npm test

@@ -27,4 +27,5 @@ RUN npm install -g serve
 CMD serve -s build
 
 FROM base as dev
+RUN rm /react/argovis/src/App*
 CMD npm start
