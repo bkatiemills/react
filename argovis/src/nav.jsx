@@ -24,9 +24,9 @@ class ArgovisNav extends React.Component {
 					        <Dropdown.Item className="dropdown-item" href="/tc">Tropical cyclones</Dropdown.Item>
 					        <div className="dropdown-divider"></div>
 					        <h6 className="dropdown-header">Gridded Products</h6>
-					        <Dropdown.Item className="dropdown-item" href="/grids?grid=temperature_rg">RG Temperature</Dropdown.Item>
-					        <Dropdown.Item className="dropdown-item" href="/grids?grid=salinity_rg">RG Salinity</Dropdown.Item>
-					        <Dropdown.Item className="dropdown-item" href="/grids?grid=ohc_kg">KG Ocean heat content</Dropdown.Item>
+					        <Dropdown.Item className="dropdown-item" href="/grids?lattice=grid_1_1_0.5_0.5&grid=rg09_temperature">RG Temperature</Dropdown.Item>
+					        <Dropdown.Item className="dropdown-item" href="/grids?lattice=grid_1_1_0.5_0.5&grid=rg09_salinity">RG Salinity</Dropdown.Item>
+					        <Dropdown.Item className="dropdown-item" href="/grids?lattice=grid_1_1_0.5_0.5&grid=kg21_ohc15to300">KG Ocean heat content</Dropdown.Item>
 						    </DropdownButton>
 						  </li>
 			      	<li className="nav-item">
