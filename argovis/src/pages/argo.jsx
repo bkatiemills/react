@@ -58,7 +58,7 @@ class ArgoExplore extends React.Component {
         this.platformRef = React.createRef()
 		this.statusReporting = React.createRef()
 		this.reautofocus = null
-        this.apiPrefix = 'https://argovisbeta01.colorado.edu/api/'
+        this.apiPrefix = 'https://argovis-api.colorado.edu/'
         this.vocab = {}
         this.dataset = 'argo'
         this.customQueryParams = ['startDate', 'endDate', 'polygon', 'argocore', 'argobgc', 'argodeep', 'argoPlatform', 'depthRequired', 'centerlon']
@@ -116,10 +116,12 @@ class ArgoExplore extends React.Component {
 	    	}
 
 	    	if(source.length === 0){
-	    		return [url]
+	    		url = [url]
 	    	} else{
-	    		return source.map(x => url+'&source='+x)
+	    		url = source.map(x => url+'&source='+x)
 	    	}
+	    	console.log(url)
+	    	return url
 	    }
     }
 

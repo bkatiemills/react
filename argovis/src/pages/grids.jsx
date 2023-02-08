@@ -21,7 +21,6 @@ class Grids extends React.Component {
       	polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : this.defaultPolygon,
       	min: 0,
       	max: 1,
-      	units: '',
       	levelindex: q.has('levelindex') ? q.get('levelindex') : 0,
       	sublevelindex: q.has('sublevelindex') ? q.get('sublevelindex') : 0,
       	timestep: q.has('timestep') ? q.get('timestep') : {
@@ -37,6 +36,11 @@ class Grids extends React.Component {
       	scale: chroma.scale(['#440154', '#482777', '#3f4a8a', '#31678e', '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825'])
       }
       this.state.subtimestep = q.has('subtimestep') ? q.get('subtimestep') : this.state.timestep
+      this.state.units = {
+      	'rg09_temperature': 'degree celcius (ITS-90)',
+      	'rg09_salinity':  'psu',
+      	'kg21_ohc15to300': 'J/m^2'
+      }[this.state.selectedGrid]
       this.rawLevels = {
       	'rg09_temperature': [2.5,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,182.5,200,220,240,260,280,300,320,340,360,380,400,420,440,462.5,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1412.5,1500,1600,1700,1800,1900,1975],
       	'rg09_salinity': [2.5,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,182.5,200,220,240,260,280,300,320,340,360,380,400,420,440,462.5,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1412.5,1500,1600,1700,1800,1900,1975],
@@ -61,7 +65,7 @@ class Grids extends React.Component {
       	'rg09_salinity': '',
       	'kg21_ohc15to300': 'G'
       }[this.state.selectedGrid]
-      this.apiPrefix = 'https://argovisbeta01.colorado.edu/api/'
+      this.apiPrefix = 'https://argovis-api.colorado.edu/'
      	this.customQueryParams = ['polygon', 'selectedGrid', 'levelindex', 'sublevelindex', 'timestep', 'subtimestep', 'subgrid']
       
 
@@ -76,8 +80,8 @@ class Grids extends React.Component {
 					helpers.manageStatus.bind(this)('downloading')
 				}
 	    	//kick off request for new data, redraw the map when complete
-	    	let url    = this.apiPrefix + 'grids/' + s.lattice+'?data='+s.selectedGrid+'&compression=array&startDate='+s.timestep+'T00:00:00Z&endDate='+s.timestep+'T00:00:01Z&presRange='+(this.rawLevels[s.levelindex]-0.1)+','+(this.rawLevels[s.levelindex]+0.1)
-	    	let suburl = this.apiPrefix + 'grids/' + s.lattice+'?data='+s.selectedGrid+'&compression=array&startDate='+s.subtimestep+'T00:00:00Z&endDate='+s.subtimestep+'T00:00:01Z&presRange='+(this.rawLevels[s.sublevelindex]-0.1)+','+(this.rawLevels[s.sublevelindex]+0.1)
+	    	let url    = this.apiPrefix + 'grids/' + s.lattice+'?data='+s.selectedGrid+'&startDate='+s.timestep+'T00:00:00Z&endDate='+s.timestep+'T00:00:01Z&presRange='+(this.rawLevels[s.levelindex]-0.1)+','+(this.rawLevels[s.levelindex]+0.1)
+	    	let suburl = this.apiPrefix + 'grids/' + s.lattice+'?data='+s.selectedGrid+'&startDate='+s.subtimestep+'T00:00:00Z&endDate='+s.subtimestep+'T00:00:01Z&presRange='+(this.rawLevels[s.sublevelindex]-0.1)+','+(this.rawLevels[s.sublevelindex]+0.1)
 	    	if(s.polygon.length > 0){
 	    		url += '&polygon='+JSON.stringify(s.polygon)
 	    		suburl += '&polygon='+JSON.stringify(s.polygon)
@@ -174,7 +178,6 @@ class Grids extends React.Component {
 												grid: this.gridRasterfy(state), 
 												min: min, 
 												max: max, 
-												units: state.points[0].units[0], 
 												refreshData: needNewData
 											}, () => {
 													helpers.manageStatus.bind(this)('ready')
@@ -183,7 +186,7 @@ class Grids extends React.Component {
     }
 
     gridRasterfy(state){
-    	// expects a list from a data endpoint with compression=array
+    	// expects a list from a data endpoint
 			if(state.data.hasOwnProperty('code') || state.data[0].hasOwnProperty('code')){
 				return null
 			}

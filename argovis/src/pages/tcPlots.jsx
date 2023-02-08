@@ -9,7 +9,7 @@ class TCPlots extends React.Component {
 		document.title = 'Argovis - Tropical cyclone plots'
 		super(props);
 
-		helpers.initPlottingPage.bind(this)(['tcMeta', 'startDate', 'endDate', 'polygon'])
+		helpers.initPlottingPage.bind(this)(['tcMeta', 'startDate', 'endDate', 'polygon'], 'https://argovis-api.colorado.edu/')
 
 		if(this.state.tcMeta){
 			// get human-friendly tc names
@@ -44,10 +44,12 @@ class TCPlots extends React.Component {
 		let urls = []
 
 		if(this.state.tcMeta){
-			urls = urls.concat(this.apiPrefix + 'tc/?compression=array&data=all&metadata=' + this.state.tcMeta)
+			urls = urls.concat(this.apiPrefix + 'tc/?data=all&metadata=' + this.state.tcMeta)
 		} else if(this.state.polygon && this.state.startDate && this.state.endDate){
-			urls = urls.concat(this.apiPrefix + 'tc/?compression=array&data=all&startDate=' + this.state.startDate + '&endDate=' + this.state.endDate + '&polygon=' + this.state.polygon)
+			urls = urls.concat(this.apiPrefix + 'tc/?data=all&startDate=' + this.state.startDate + '&endDate=' + this.state.endDate + '&polygon=' + this.state.polygon)
 		} 
+
+		console.log(urls)
 
 		return urls
 	}

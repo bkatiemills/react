@@ -9,7 +9,7 @@ class ArgoPlots extends React.Component {
 		document.title = 'Argovis - Argo plots'
 		super(props);
 
-		helpers.initPlottingPage.bind(this)(['argoPlatform', 'polygon', 'startDate', 'endDate'])
+		helpers.initPlottingPage.bind(this)(['argoPlatform', 'polygon', 'startDate', 'endDate'], 'https://argovis-api.colorado.edu/')
 		// fudge y to be inverted by default, to go with pressure
 		let q = new URLSearchParams(window.location.search)
 		if(!q.has('reverseY') && !q.has('yKey')){
@@ -87,11 +87,11 @@ class ArgoPlots extends React.Component {
 		let urls = []
 
 		if(this.state.argoPlatform){
-			urls = urls.concat(this.apiPrefix + 'argo/?compression=array&data=all&platform=' + this.state.argoPlatform)
+			urls = urls.concat(this.apiPrefix + 'argo/?data=all&platform=' + this.state.argoPlatform)
 		} else if(this.state.polygon && this.state.startDate && this.state.endDate){
-			urls = urls.concat(this.apiPrefix + 'argo/?compression=array&data=all&startDate=' + this.state.startDate + '&endDate=' + this.state.endDate + '&polygon=' + this.state.polygon)
+			urls = urls.concat(this.apiPrefix + 'argo/?data=all&startDate=' + this.state.startDate + '&endDate=' + this.state.endDate + '&polygon=' + this.state.polygon)
 		}
-
+		console.log(urls)
 		return urls
 	}
 

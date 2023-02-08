@@ -9,7 +9,7 @@ class DrifterPlots extends React.Component {
 		document.title = 'Argovis - drifter plots'
 		super(props);
 
-		helpers.initPlottingPage.bind(this)(['wmo', 'platform', 'startDate', 'endDate', 'polygon'])
+		helpers.initPlottingPage.bind(this)(['wmo', 'platform', 'startDate', 'endDate', 'polygon'], 'https://argovisbeta01.colorado.edu/api/')
 
 		if(this.state.wmo){
 			this.state.title = 'Drifter WMO ' + this.state.wmo
@@ -40,12 +40,14 @@ class DrifterPlots extends React.Component {
 		let urls = []
 
 		if(this.state.wmo){
-			urls = urls.concat(this.apiPrefix + 'drifters/?compression=array&data=all&wmo=' + this.state.wmo)
+			urls = urls.concat(this.apiPrefix + 'drifters/?data=all&wmo=' + this.state.wmo)
 		} else if(this.state.platform){
-			urls = urls.concat(this.apiPrefix + 'drifters/?compression=array&data=all&platform=' + this.state.platform)
+			urls = urls.concat(this.apiPrefix + 'drifters/?data=all&platform=' + this.state.platform)
 		} else if(this.state.polygon && this.state.startDate && this.state.endDate){
-			urls = urls.concat(this.apiPrefix + 'drifters/?compression=array&data=all&startDate=' + this.state.startDate + '&endDate=' + this.state.endDate + '&polygon=' + this.state.polygon)
+			urls = urls.concat(this.apiPrefix + 'drifters/?data=all&startDate=' + this.state.startDate + '&endDate=' + this.state.endDate + '&polygon=' + this.state.polygon)
 		} 
+
+		console.log(urls)
 
 		return urls
 	}

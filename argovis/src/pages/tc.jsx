@@ -43,7 +43,7 @@ class TCExplore extends React.Component {
         this.nameRef = React.createRef()
 		this.statusReporting = React.createRef()
 		this.reautofocus = null
-        this.apiPrefix = 'https://argovisbeta01.colorado.edu/api/'
+        this.apiPrefix = 'https://argovis-api.colorado.edu/'
         this.vocab = {}
         this.lookupLabel = {}
         this.dataset = 'tc'

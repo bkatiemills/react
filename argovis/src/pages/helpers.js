@@ -432,22 +432,25 @@ helpers.renderSuggestion = function(inputState, suggestion){
 
 // plotting page helpers
 
-helpers.transpose = function(profile){
-	// given a <profile> object returned with data from the API and compression=all,
+helpers.transpose = function(profile, metadata){
+	// given a <profile> object returned with data from the API
+	// and its corresponding metadata record <metadata>
 	// transpose the data record into an object keyed by data_key, and values as depth-ordered list of measurements
 	let t = {}
-	for(let i=0; i<profile.data_keys.length; i++){
-		t[profile.data_keys[i]] = profile.data.map(x => x[i])
-		if(!this.units.hasOwnProperty(profile.data_keys[i])){
-			this.units[profile.data_keys[i]] = profile.units[i]
+	let dinfo = {...metadata, ...profile}.data_info
+	for(let i=0; i<dinfo[0].length; i++){
+		t[dinfo[0][i]] = profile.data[i]
+		if(!this.units.hasOwnProperty(dinfo[0][i])){
+			this.units[dinfo[0][i]] = dinfo[2][i][dinfo[1].indexOf('units')]
 		}
 	}
-	t['longitude'] = Array(profile.data.length).fill(profile.geolocation.coordinates[0],0)
-	t['latitude'] = Array(profile.data.length).fill(profile.geolocation.coordinates[1],0)
+
+	t['longitude'] = Array(profile.data[0].length).fill(profile.geolocation.coordinates[0],0)
+	t['latitude'] = Array(profile.data[0].length).fill(profile.geolocation.coordinates[1],0)
 	let msse = new Date(profile.timestamp) // handle times internally as ms since epoch
-	t['timestamp'] = Array(profile.data.length).fill(msse.getTime(),0)
-	t['month'] = Array(profile.data.length).fill((msse.getMonth()+1),0)
-	t['year'] = Array(profile.data.length).fill(msse.getFullYear(),0)
+	t['timestamp'] = Array(profile.data[0].length).fill(msse.getTime(),0)
+	t['month'] = Array(profile.data[0].length).fill((msse.getMonth()+1),0)
+	t['year'] = Array(profile.data[0].length).fill(msse.getFullYear(),0)
 	t['_id'] = profile._id
 	t['metadata'] = profile.metadata
 	t['source'] = profile.source
@@ -471,12 +474,16 @@ helpers.mergePoints = function(points){
 	return m
 }
 
-helpers.getDataKeys = function(data){
-	// given an array of profile objects <data>. return a global list of keys, plus coordinates
+helpers.getDataKeys = function(data, meta){
+	// given an array of profile objects <data> and corresponding metadata <meta>, 
+	// return a global list of keys, plus coordinates
 
 	let keys = ['longitude', 'latitude', 'timestamp']
+	let dinfo = null
 	for(let i=0; i<data.length; i++){
-		keys = keys.concat(data[i].data_keys)
+		dinfo = {...meta[data[i].metadata], ...data[i]}.data_info
+		console.log(data, meta)
+		keys = keys.concat(dinfo[0])
 	}
 	let s = new Set(keys)
 	return Array.from(s)
@@ -1166,7 +1173,7 @@ helpers.plotHTML = function(){
 	)
 }
 
-helpers.initPlottingPage = function(customParams){
+helpers.initPlottingPage = function(customParams, apiroot){
 	let q = new URLSearchParams(window.location.search) // parse out query string
 
 	// default state, pulling in query string specifications
@@ -1205,7 +1212,7 @@ helpers.initPlottingPage = function(customParams){
 		centerlon: q.has('centerlon') ? q.get('centerlon') : 0,
 	}
 
-	this.apiPrefix = 'https://argovisbeta01.colorado.edu/api/'
+	this.apiPrefix = apiroot
 	this.vocab = {xKey: [], yKey: [], zKey: [], cKey: [], cscale: ['Blackbody','Bluered','Blues','Cividis','Earth','Electric','Greens','Greys','Hot','Jet','Picnic','Portland','Rainbow','RdBu','Reds', 'Thermnal', 'Viridis','YlGnBu','YlOrRd']}
 	this.statusReporting = React.createRef()
 	this.showAll = true // show all autoselect options when field is focused and empty
@@ -1252,27 +1259,6 @@ helpers.downloadData = function(defaultX, defaultY, defaultZ, defaultC, mergePoi
 			// get a list of metadata we'll need
 			let metakeys = Array.from(new Set(p.map(x=>x['metadata'])))
 
-			// set up vocab lists
-			let vars = ['month', 'year'].concat(helpers.getDataKeys.bind(this)(p)).sort()
-
-			// transpose data for traces
-			p = p.map(d => helpers.transpose.bind(this)(d))
-
-			let mappoints = p.map(point => {
-				return(
-					<CircleMarker key={point._id+Math.random()} center={[point.latitude[0], helpers.mutateLongitude(point.longitude[0], parseFloat(this.state.centerlon)) ]} radius={1} color={'red'}/>
-					)
-			})
-
-			if(mergePoints){
-				p = [helpers.mergePoints(p)]
-			}
-
-			this.vocab['xKey'] = vars
-			this.vocab['yKey'] = vars
-			this.vocab['zKey'] = ['[2D plot]'].concat(vars)
-			this.vocab['cKey'] = vars
-
 			Promise.all(this.generateMetadataURLs(metakeys).map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 				Promise.all(responses.map(mres => mres.json())).then(metadata => {
 					for(let i=0; i<metadata.length; i++){
@@ -1290,6 +1276,27 @@ helpers.downloadData = function(defaultX, defaultY, defaultZ, defaultC, mergePoi
 					for(let i=0; i<metadata.length; i++){
 						meta[metadata[i]._id] = metadata[i]
 					}
+
+					// set up vocab lists
+					let vars = ['month', 'year'].concat(helpers.getDataKeys.bind(this)(p, meta)).sort()
+
+					// transpose data for traces
+					p = p.map(d => helpers.transpose.bind(this)(d, meta[d.metadata]))
+
+					let mappoints = p.map(point => {
+						return(
+							<CircleMarker key={point._id+Math.random()} center={[point.latitude[0], helpers.mutateLongitude(point.longitude[0], parseFloat(this.state.centerlon)) ]} radius={1} color={'red'}/>
+							)
+					})
+
+					if(mergePoints){
+						p = [helpers.mergePoints(p)]
+					}
+
+					this.vocab['xKey'] = vars
+					this.vocab['yKey'] = vars
+					this.vocab['zKey'] = ['[2D plot]'].concat(vars)
+					this.vocab['cKey'] = vars
 
 					this.prepCSV(data, meta)
 
