@@ -60,6 +60,7 @@ class Grids extends React.Component {
 
       this.fgRef = React.createRef()
       this.statusReporting = React.createRef()
+      this.formRef = React.createRef()
       this.scales = {
       	'rg09_temperature': '',
       	'rg09_salinity': '',
@@ -76,6 +77,9 @@ class Grids extends React.Component {
     	let s = {...this.state}  // transform a copy of state until we're happy with it, and write it back
 
     	if(s.refreshData){
+    		if(this.formRef.current){
+	    		this.formRef.current.setAttribute('disabled', 'true')
+	    	}
     		if(this.statusReporting.current){
 					helpers.manageStatus.bind(this)('downloading')
 				}
@@ -183,6 +187,7 @@ class Grids extends React.Component {
 													helpers.manageStatus.bind(this)('ready')
 												})
 	    }
+	    this.formRef.current.removeAttribute('disabled')
     }
 
     gridRasterfy(state){
@@ -291,84 +296,86 @@ class Grids extends React.Component {
 				<div className='row' style={{'width':'100vw'}}>	
 					{/*search option sidebar*/}
 					<div className='col-3 overflow-auto'>
-						<span ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
-						<div className='mapSearchInputs'>
-							<h5>{this.state.selectedGrid + ' search control'}</h5>
-							<small><a target="_blank" rel="noreferrer" href={this.reflink}>Original Data Reference</a></small>
-							<div className="form-floating mb-3" style={{'marginTop': '0.5em'}}>
-								<input type="password" className="form-control" id="apiKey" value={this.state.apiKey} placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
-								<label htmlFor="apiKey">API Key</label>
-								<div id="apiKeyHelpBlock" className="form-text">
-				  					<a target="_blank" rel="noreferrer" href='https://argovisbeta02.colorado.edu/'>Get a free API key</a>
-								</div>
-							</div>
-							<div>
-								<div className='row'>
-									<div className='col-12'>
-										<small className="form-text text-muted">Depth Layer [m]</small>
-										<select className="form-select" value={this.state.levelindex} onChange={(v) => this.changeLevel(v, 'levelindex')}>
-											{this.levels}
-										</select>
+						<fieldset disabled ref={this.formRef}>
+							<span ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
+							<div className='mapSearchInputs'>
+								<h5>{this.state.selectedGrid + ' search control'}</h5>
+								<small><a target="_blank" rel="noreferrer" href={this.reflink}>Original Data Reference</a></small>
+								<div className="form-floating mb-3" style={{'marginTop': '0.5em'}}>
+									<input type="password" className="form-control" id="apiKey" value={this.state.apiKey} placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
+									<label htmlFor="apiKey">API Key</label>
+									<div id="apiKeyHelpBlock" className="form-text">
+					  					<a target="_blank" rel="noreferrer" href='https://argovisbeta02.colorado.edu/'>Get a free API key</a>
 									</div>
 								</div>
-								<div className='row'>
-									<div className='col-12'>
-										<small className="form-text text-muted">Month</small>
-										<select className="form-select" value={this.state.timestep} onChange={(v) => this.changeDate(v, 'timestep')}>
-											{this.timesteps}
-										</select>
+								<div>
+									<div className='row'>
+										<div className='col-12'>
+											<small className="form-text text-muted">Depth Layer [m]</small>
+											<select className="form-select" value={this.state.levelindex} onChange={(v) => this.changeLevel(v, 'levelindex')}>
+												{this.levels}
+											</select>
+										</div>
+									</div>
+									<div className='row'>
+										<div className='col-12'>
+											<small className="form-text text-muted">Month</small>
+											<select className="form-select" value={this.state.timestep} onChange={(v) => this.changeDate(v, 'timestep')}>
+												{this.timesteps}
+											</select>
+										</div>
 									</div>
 								</div>
-							</div>
 
-							<div className="form-check" style={{'marginTop': '1em'}}>
-								<input className="form-check-input" checked={this.state.subgrid} onChange={(v) => helpers.toggle.bind(this)(v, 'subgrid')} type="checkbox" id='subgrid'></input>
-								<label className="form-check-label" htmlFor='subgrid'>Subtract another level or date</label>
-							</div>
+								<div className="form-check" style={{'marginTop': '1em'}}>
+									<input className="form-check-input" checked={this.state.subgrid} onChange={(v) => helpers.toggle.bind(this)(v, 'subgrid')} type="checkbox" id='subgrid'></input>
+									<label className="form-check-label" htmlFor='subgrid'>Subtract another level or date</label>
+								</div>
 
-							<div style={{'display': this.state.subgrid ? 'block' : 'none'}}>
-								<div className='row'>
-									<div className='col-12'>
-										<small className="form-text text-muted">Subtraction Depth Layer [m]</small>
-										<select className="form-select" value={this.state.sublevelindex} onChange={(v) => this.changeLevel(v, 'sublevelindex')}>
-											{this.levels}
-										</select>
+								<div style={{'display': this.state.subgrid ? 'block' : 'none'}}>
+									<div className='row'>
+										<div className='col-12'>
+											<small className="form-text text-muted">Subtraction Depth Layer [m]</small>
+											<select className="form-select" value={this.state.sublevelindex} onChange={(v) => this.changeLevel(v, 'sublevelindex')}>
+												{this.levels}
+											</select>
+										</div>
+									</div>
+									<div className='row'>
+										<div className='col-12'>
+											<small className="form-text text-muted">Subtraction Month</small>
+											<select className="form-select" value={this.state.subtimestep} onChange={(v) => this.changeDate(v, 'subtimestep')}>
+												{this.timesteps}
+											</select>
+										</div>
 									</div>
 								</div>
-								<div className='row'>
-									<div className='col-12'>
-										<small className="form-text text-muted">Subtraction Month</small>
-										<select className="form-select" value={this.state.subtimestep} onChange={(v) => this.changeDate(v, 'subtimestep')}>
-											{this.timesteps}
-										</select>
-									</div>
-								</div>
+
+								
+								<svg style={{'width':'100%', 'marginTop': '1em'}} version="1.1" xmlns="http://www.w3.org/2000/svg">
+								  <defs>
+								    <linearGradient id="grad" x1="0" x2="1" y1="0" y2="0">
+								      <stop offset="0%" stopColor={this.state.scale(this.state.colormin)} />
+								      <stop offset="10%" stopColor={this.state.scale(this.state.colormin + 0.1*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="20%" stopColor={this.state.scale(this.state.colormin + 0.2*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="30%" stopColor={this.state.scale(this.state.colormin + 0.3*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="40%" stopColor={this.state.scale(this.state.colormin + 0.4*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="50%" stopColor={this.state.scale(this.state.colormin + 0.5*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="60%" stopColor={this.state.scale(this.state.colormin + 0.6*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="70%" stopColor={this.state.scale(this.state.colormin + 0.7*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="80%" stopColor={this.state.scale(this.state.colormin + 0.8*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="90%" stopColor={this.state.scale(this.state.colormin + 0.9*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="100%" stopColor={this.state.scale(this.state.colormax)} />
+								    </linearGradient>
+								  </defs>
+
+								  <rect width="100%" height="1em" fill="url(#grad)" />
+									<text style={{'transform': 'translate(0.2em, 1.5em) rotate(90deg)'}}>{this.unitTransform(this.state.min, this.scales)}</text>
+								  <text style={{'transform': 'translate(100%, 1.5em) rotate(90deg) translate(0, 1em)',}}>{this.unitTransform(this.state.max, this.scales)}</text>
+								  <text textAnchor="middle" style={{'transform': 'translate(50%, 2em)',}}>{this.scales+this.state.units}</text>
+								</svg>
 							</div>
-
-							
-							<svg style={{'width':'100%', 'marginTop': '1em'}} version="1.1" xmlns="http://www.w3.org/2000/svg">
-							  <defs>
-							    <linearGradient id="grad" x1="0" x2="1" y1="0" y2="0">
-							      <stop offset="0%" stopColor={this.state.scale(this.state.colormin)} />
-							      <stop offset="10%" stopColor={this.state.scale(this.state.colormin + 0.1*(this.state.colormax-this.state.colormin))} />
-							      <stop offset="20%" stopColor={this.state.scale(this.state.colormin + 0.2*(this.state.colormax-this.state.colormin))} />
-							      <stop offset="30%" stopColor={this.state.scale(this.state.colormin + 0.3*(this.state.colormax-this.state.colormin))} />
-							      <stop offset="40%" stopColor={this.state.scale(this.state.colormin + 0.4*(this.state.colormax-this.state.colormin))} />
-							      <stop offset="50%" stopColor={this.state.scale(this.state.colormin + 0.5*(this.state.colormax-this.state.colormin))} />
-							      <stop offset="60%" stopColor={this.state.scale(this.state.colormin + 0.6*(this.state.colormax-this.state.colormin))} />
-							      <stop offset="70%" stopColor={this.state.scale(this.state.colormin + 0.7*(this.state.colormax-this.state.colormin))} />
-							      <stop offset="80%" stopColor={this.state.scale(this.state.colormin + 0.8*(this.state.colormax-this.state.colormin))} />
-							      <stop offset="90%" stopColor={this.state.scale(this.state.colormin + 0.9*(this.state.colormax-this.state.colormin))} />
-							      <stop offset="100%" stopColor={this.state.scale(this.state.colormax)} />
-							    </linearGradient>
-							  </defs>
-
-							  <rect width="100%" height="1em" fill="url(#grad)" />
-								<text style={{'transform': 'translate(0.2em, 1.5em) rotate(90deg)'}}>{this.unitTransform(this.state.min, this.scales)}</text>
-							  <text style={{'transform': 'translate(100%, 1.5em) rotate(90deg) translate(0, 1em)',}}>{this.unitTransform(this.state.max, this.scales)}</text>
-							  <text textAnchor="middle" style={{'transform': 'translate(50%, 2em)',}}>{this.scales+this.state.units}</text>
-							</svg>
-						</div>
+						</fieldset>
 					</div>
 
 					{/*leaflet map*/}
