@@ -1149,7 +1149,7 @@ helpers.plotHTML = function(){
 									<input type="password" className="form-control" id="apiKey" placeholder="" value={this.state.apiKey} onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
 									<label htmlFor="apiKey">API Key</label>
 									<div id="apiKeyHelpBlock" className="form-text">
-					  					<a target="_blank" rel="noreferrer" href='https://argovisbeta02.colorado.edu/'>Get a free API key</a>
+					  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
 									</div>
 								</div>
 							</div>
