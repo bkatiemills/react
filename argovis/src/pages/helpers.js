@@ -224,10 +224,10 @@ helpers.refreshMap = function(state){
 		})
 }
 
-helpers.generateTemporoSpatialURL = function(route, state){
+helpers.generateTemporoSpatialURL = function(prefix, route, state){
 	//returns the api root, compression, time and space filters common to all endpoint queries
 
-	let url = this.apiPrefix + route + '?compression=minimal'
+	let url = prefix + route + '?compression=minimal'
 
 	if(state.depthRequired){
 		url += '&presRange=' + state.depthRequired + ',20000'
@@ -482,7 +482,6 @@ helpers.getDataKeys = function(data, meta){
 	let dinfo = null
 	for(let i=0; i<data.length; i++){
 		dinfo = {...meta[data[i].metadata], ...data[i]}.data_info
-		console.log(data, meta)
 		keys = keys.concat(dinfo[0])
 	}
 	let s = new Set(keys)

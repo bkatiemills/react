@@ -75,7 +75,7 @@ class TCExplore extends React.Component {
     	if(state.tcName !== ''){
     		return [this.apiPrefix +'tc?compression=minimal&metadata=' + this.lookupLabel[state.tcName]]
     	} else {
-    		return [helpers.generateTemporoSpatialURL.bind(this)('tc', state)]
+    		return [helpers.generateTemporoSpatialURL.bind(this)(this.apiPrefix, 'tc', state)]
     	}
     }	
 

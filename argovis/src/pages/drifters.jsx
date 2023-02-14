@@ -47,7 +47,7 @@ class DriftersExplore extends React.Component {
         this.platformRef = React.createRef()
 		this.statusReporting = React.createRef()
 		this.reautofocus = null
-        this.apiPrefix = 'https://argovisbeta01.colorado.edu/api/'
+        this.apiPrefix = 'http://54.90.68.158:8081/'
         this.vocab = {}
         this.lookupLabel = {}
         this.dataset = 'drifter'
@@ -79,7 +79,7 @@ class DriftersExplore extends React.Component {
     	} else if (state.platform !== ''){
     		return [this.apiPrefix +'drifters?compression=minimal&platform=' + state.platform]
     	} else {
-    		return [helpers.generateTemporoSpatialURL.bind(this)('drifters', state)]
+    		return [helpers.generateTemporoSpatialURL.bind(this)(this.apiPrefix, 'drifters', state)]
     	}
     }	
 

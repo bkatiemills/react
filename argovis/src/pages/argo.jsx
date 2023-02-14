@@ -93,7 +93,7 @@ class ArgoExplore extends React.Component {
     		return [this.apiPrefix +'argo?compression=minimal&platform=' + state.argoPlatform]
     	} else {
 
-	    	let url = helpers.generateTemporoSpatialURL.bind(this)('argo', state)	
+	    	let url = helpers.generateTemporoSpatialURL.bind(this)(this.apiPrefix, 'argo', state)	
 
 	    	// decide on source.source
 	    	let source = []

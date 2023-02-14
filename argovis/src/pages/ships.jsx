@@ -108,7 +108,7 @@ class ShipsExplore extends React.Component {
     		return [this.apiPrefix +'cchdo?compression=minimal&cchdo_cruise=' + state.cruise]
     	} else {
 
-	    	let url = helpers.generateTemporoSpatialURL.bind(this)('cchdo', state)	
+	    	let url = helpers.generateTemporoSpatialURL.bind(this)(this.apiPrefix, 'cchdo', state)	
 
 	    	// decide on source.source
 	    	let source = []
