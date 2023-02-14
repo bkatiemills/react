@@ -21,7 +21,6 @@ class Grids extends React.Component {
       	polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : this.defaultPolygon,
       	min: 0,
       	max: 1,
-      	units: '',
       	levelindex: q.has('levelindex') ? q.get('levelindex') : 0,
       	sublevelindex: q.has('sublevelindex') ? q.get('sublevelindex') : 0,
       	timestep: q.has('timestep') ? q.get('timestep') : {
@@ -37,6 +36,11 @@ class Grids extends React.Component {
       	scale: chroma.scale(['#440154', '#482777', '#3f4a8a', '#31678e', '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825'])
       }
       this.state.subtimestep = q.has('subtimestep') ? q.get('subtimestep') : this.state.timestep
+      this.state.units = {
+      	'rg09_temperature': 'degree celcius (ITS-90)',
+      	'rg09_salinity':  'psu',
+      	'kg21_ohc15to300': 'J/m^2'
+      }[this.state.selectedGrid]
       this.rawLevels = {
       	'rg09_temperature': [2.5,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,182.5,200,220,240,260,280,300,320,340,360,380,400,420,440,462.5,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1412.5,1500,1600,1700,1800,1900,1975],
       	'rg09_salinity': [2.5,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,182.5,200,220,240,260,280,300,320,340,360,380,400,420,440,462.5,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1412.5,1500,1600,1700,1800,1900,1975],
@@ -56,12 +60,13 @@ class Grids extends React.Component {
 
       this.fgRef = React.createRef()
       this.statusReporting = React.createRef()
+      this.formRef = React.createRef()
       this.scales = {
       	'rg09_temperature': '',
       	'rg09_salinity': '',
       	'kg21_ohc15to300': 'G'
       }[this.state.selectedGrid]
-      this.apiPrefix = 'https://argovisbeta01.colorado.edu/api/'
+      this.apiPrefix = 'https://argovis-api.colorado.edu/'
      	this.customQueryParams = ['polygon', 'selectedGrid', 'levelindex', 'sublevelindex', 'timestep', 'subtimestep', 'subgrid']
       
 
@@ -72,12 +77,15 @@ class Grids extends React.Component {
     	let s = {...this.state}  // transform a copy of state until we're happy with it, and write it back
 
     	if(s.refreshData){
+    		if(this.formRef.current){
+	    		this.formRef.current.setAttribute('disabled', 'true')
+	    	}
     		if(this.statusReporting.current){
 					helpers.manageStatus.bind(this)('downloading')
 				}
 	    	//kick off request for new data, redraw the map when complete
-	    	let url    = this.apiPrefix + 'grids/' + s.lattice+'?data='+s.selectedGrid+'&compression=array&startDate='+s.timestep+'T00:00:00Z&endDate='+s.timestep+'T00:00:01Z&presRange='+(this.rawLevels[s.levelindex]-0.1)+','+(this.rawLevels[s.levelindex]+0.1)
-	    	let suburl = this.apiPrefix + 'grids/' + s.lattice+'?data='+s.selectedGrid+'&compression=array&startDate='+s.subtimestep+'T00:00:00Z&endDate='+s.subtimestep+'T00:00:01Z&presRange='+(this.rawLevels[s.sublevelindex]-0.1)+','+(this.rawLevels[s.sublevelindex]+0.1)
+	    	let url    = this.apiPrefix + 'grids/' + s.lattice+'?data='+s.selectedGrid+'&startDate='+s.timestep+'T00:00:00Z&endDate='+s.timestep+'T00:00:01Z&presRange='+(this.rawLevels[s.levelindex]-0.1)+','+(this.rawLevels[s.levelindex]+0.1)
+	    	let suburl = this.apiPrefix + 'grids/' + s.lattice+'?data='+s.selectedGrid+'&startDate='+s.subtimestep+'T00:00:00Z&endDate='+s.subtimestep+'T00:00:01Z&presRange='+(this.rawLevels[s.sublevelindex]-0.1)+','+(this.rawLevels[s.sublevelindex]+0.1)
 	    	if(s.polygon.length > 0){
 	    		url += '&polygon='+JSON.stringify(s.polygon)
 	    		suburl += '&polygon='+JSON.stringify(s.polygon)
@@ -174,16 +182,16 @@ class Grids extends React.Component {
 												grid: this.gridRasterfy(state), 
 												min: min, 
 												max: max, 
-												units: state.points[0].units[0], 
 												refreshData: needNewData
 											}, () => {
 													helpers.manageStatus.bind(this)('ready')
 												})
 	    }
+	    this.formRef.current.removeAttribute('disabled')
     }
 
     gridRasterfy(state){
-    	// expects a list from a data endpoint with compression=array
+    	// expects a list from a data endpoint
 			if(state.data.hasOwnProperty('code') || state.data[0].hasOwnProperty('code')){
 				return null
 			}
@@ -288,84 +296,86 @@ class Grids extends React.Component {
 				<div className='row' style={{'width':'100vw'}}>	
 					{/*search option sidebar*/}
 					<div className='col-3 overflow-auto'>
-						<span ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
-						<div className='mapSearchInputs'>
-							<h5>{this.state.selectedGrid + ' search control'}</h5>
-							<small><a target="_blank" rel="noreferrer" href={this.reflink}>Original Data Reference</a></small>
-							<div className="form-floating mb-3" style={{'marginTop': '0.5em'}}>
-								<input type="password" className="form-control" id="apiKey" value={this.state.apiKey} placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
-								<label htmlFor="apiKey">API Key</label>
-								<div id="apiKeyHelpBlock" className="form-text">
-				  					<a target="_blank" rel="noreferrer" href='https://argovisbeta02.colorado.edu/'>Get a free API key</a>
-								</div>
-							</div>
-							<div>
-								<div className='row'>
-									<div className='col-12'>
-										<small className="form-text text-muted">Depth Layer [m]</small>
-										<select className="form-select" value={this.state.levelindex} onChange={(v) => this.changeLevel(v, 'levelindex')}>
-											{this.levels}
-										</select>
+						<fieldset disabled ref={this.formRef}>
+							<span ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
+							<div className='mapSearchInputs'>
+								<h5>{this.state.selectedGrid + ' search control'}</h5>
+								<small><a target="_blank" rel="noreferrer" href={this.reflink}>Original Data Reference</a></small>
+								<div className="form-floating mb-3" style={{'marginTop': '0.5em'}}>
+									<input type="password" className="form-control" id="apiKey" value={this.state.apiKey} placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
+									<label htmlFor="apiKey">API Key</label>
+									<div id="apiKeyHelpBlock" className="form-text">
+					  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
 									</div>
 								</div>
-								<div className='row'>
-									<div className='col-12'>
-										<small className="form-text text-muted">Month</small>
-										<select className="form-select" value={this.state.timestep} onChange={(v) => this.changeDate(v, 'timestep')}>
-											{this.timesteps}
-										</select>
+								<div>
+									<div className='row'>
+										<div className='col-12'>
+											<small className="form-text text-muted">Depth Layer [m]</small>
+											<select className="form-select" value={this.state.levelindex} onChange={(v) => this.changeLevel(v, 'levelindex')}>
+												{this.levels}
+											</select>
+										</div>
+									</div>
+									<div className='row'>
+										<div className='col-12'>
+											<small className="form-text text-muted">Month</small>
+											<select className="form-select" value={this.state.timestep} onChange={(v) => this.changeDate(v, 'timestep')}>
+												{this.timesteps}
+											</select>
+										</div>
 									</div>
 								</div>
-							</div>
 
-							<div className="form-check" style={{'marginTop': '1em'}}>
-								<input className="form-check-input" checked={this.state.subgrid} onChange={(v) => helpers.toggle.bind(this)(v, 'subgrid')} type="checkbox" id='subgrid'></input>
-								<label className="form-check-label" htmlFor='subgrid'>Subtract another level or date</label>
-							</div>
+								<div className="form-check" style={{'marginTop': '1em'}}>
+									<input className="form-check-input" checked={this.state.subgrid} onChange={(v) => helpers.toggle.bind(this)(v, 'subgrid')} type="checkbox" id='subgrid'></input>
+									<label className="form-check-label" htmlFor='subgrid'>Subtract another level or date</label>
+								</div>
 
-							<div style={{'display': this.state.subgrid ? 'block' : 'none'}}>
-								<div className='row'>
-									<div className='col-12'>
-										<small className="form-text text-muted">Subtraction Depth Layer [m]</small>
-										<select className="form-select" value={this.state.sublevelindex} onChange={(v) => this.changeLevel(v, 'sublevelindex')}>
-											{this.levels}
-										</select>
+								<div style={{'display': this.state.subgrid ? 'block' : 'none'}}>
+									<div className='row'>
+										<div className='col-12'>
+											<small className="form-text text-muted">Subtraction Depth Layer [m]</small>
+											<select className="form-select" value={this.state.sublevelindex} onChange={(v) => this.changeLevel(v, 'sublevelindex')}>
+												{this.levels}
+											</select>
+										</div>
+									</div>
+									<div className='row'>
+										<div className='col-12'>
+											<small className="form-text text-muted">Subtraction Month</small>
+											<select className="form-select" value={this.state.subtimestep} onChange={(v) => this.changeDate(v, 'subtimestep')}>
+												{this.timesteps}
+											</select>
+										</div>
 									</div>
 								</div>
-								<div className='row'>
-									<div className='col-12'>
-										<small className="form-text text-muted">Subtraction Month</small>
-										<select className="form-select" value={this.state.subtimestep} onChange={(v) => this.changeDate(v, 'subtimestep')}>
-											{this.timesteps}
-										</select>
-									</div>
-								</div>
+
+								
+								<svg style={{'width':'100%', 'marginTop': '1em'}} version="1.1" xmlns="http://www.w3.org/2000/svg">
+								  <defs>
+								    <linearGradient id="grad" x1="0" x2="1" y1="0" y2="0">
+								      <stop offset="0%" stopColor={this.state.scale(this.state.colormin)} />
+								      <stop offset="10%" stopColor={this.state.scale(this.state.colormin + 0.1*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="20%" stopColor={this.state.scale(this.state.colormin + 0.2*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="30%" stopColor={this.state.scale(this.state.colormin + 0.3*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="40%" stopColor={this.state.scale(this.state.colormin + 0.4*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="50%" stopColor={this.state.scale(this.state.colormin + 0.5*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="60%" stopColor={this.state.scale(this.state.colormin + 0.6*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="70%" stopColor={this.state.scale(this.state.colormin + 0.7*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="80%" stopColor={this.state.scale(this.state.colormin + 0.8*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="90%" stopColor={this.state.scale(this.state.colormin + 0.9*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="100%" stopColor={this.state.scale(this.state.colormax)} />
+								    </linearGradient>
+								  </defs>
+
+								  <rect width="100%" height="1em" fill="url(#grad)" />
+									<text style={{'transform': 'translate(0.2em, 1.5em) rotate(90deg)'}}>{this.unitTransform(this.state.min, this.scales)}</text>
+								  <text style={{'transform': 'translate(100%, 1.5em) rotate(90deg) translate(0, 1em)',}}>{this.unitTransform(this.state.max, this.scales)}</text>
+								  <text textAnchor="middle" style={{'transform': 'translate(50%, 2em)',}}>{this.scales+this.state.units}</text>
+								</svg>
 							</div>
-
-							
-							<svg style={{'width':'100%', 'marginTop': '1em'}} version="1.1" xmlns="http://www.w3.org/2000/svg">
-							  <defs>
-							    <linearGradient id="grad" x1="0" x2="1" y1="0" y2="0">
-							      <stop offset="0%" stopColor={this.state.scale(this.state.colormin)} />
-							      <stop offset="10%" stopColor={this.state.scale(this.state.colormin + 0.1*(this.state.colormax-this.state.colormin))} />
-							      <stop offset="20%" stopColor={this.state.scale(this.state.colormin + 0.2*(this.state.colormax-this.state.colormin))} />
-							      <stop offset="30%" stopColor={this.state.scale(this.state.colormin + 0.3*(this.state.colormax-this.state.colormin))} />
-							      <stop offset="40%" stopColor={this.state.scale(this.state.colormin + 0.4*(this.state.colormax-this.state.colormin))} />
-							      <stop offset="50%" stopColor={this.state.scale(this.state.colormin + 0.5*(this.state.colormax-this.state.colormin))} />
-							      <stop offset="60%" stopColor={this.state.scale(this.state.colormin + 0.6*(this.state.colormax-this.state.colormin))} />
-							      <stop offset="70%" stopColor={this.state.scale(this.state.colormin + 0.7*(this.state.colormax-this.state.colormin))} />
-							      <stop offset="80%" stopColor={this.state.scale(this.state.colormin + 0.8*(this.state.colormax-this.state.colormin))} />
-							      <stop offset="90%" stopColor={this.state.scale(this.state.colormin + 0.9*(this.state.colormax-this.state.colormin))} />
-							      <stop offset="100%" stopColor={this.state.scale(this.state.colormax)} />
-							    </linearGradient>
-							  </defs>
-
-							  <rect width="100%" height="1em" fill="url(#grad)" />
-								<text style={{'transform': 'translate(0.2em, 1.5em) rotate(90deg)'}}>{this.unitTransform(this.state.min, this.scales)}</text>
-							  <text style={{'transform': 'translate(100%, 1.5em) rotate(90deg) translate(0, 1em)',}}>{this.unitTransform(this.state.max, this.scales)}</text>
-							  <text textAnchor="middle" style={{'transform': 'translate(50%, 2em)',}}>{this.scales+this.state.units}</text>
-							</svg>
-						</div>
+						</fieldset>
 					</div>
 
 					{/*leaflet map*/}

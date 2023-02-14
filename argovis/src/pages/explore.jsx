@@ -67,7 +67,8 @@ class ArgovisExplore extends React.Component {
       this.fgRef = React.createRef()
 
       this.statusReporting = React.createRef()
-      this.apiPrefix = 'https://argovisbeta01.colorado.edu/api/'
+      this.apiPrefix = 'https://argovis-api.colorado.edu/'
+      this.drifterApiPrefix = 'http://54.90.68.158:8081'
       this.vocab = {}
 
 			helpers.setQueryString.bind(this)()
@@ -215,7 +216,7 @@ class ArgovisExplore extends React.Component {
     		return []
     	}
 
-    	let url = helpers.generateTemporoSpatialURL.bind(this)('argo', this.state)
+    	let url = helpers.generateTemporoSpatialURL.bind(this)(this.apiPrefix, 'argo', this.state)
 
     	// decide on source.source
     	let source = []
@@ -250,7 +251,7 @@ class ArgovisExplore extends React.Component {
     		return []
     	}
 
-    	let url = helpers.generateTemporoSpatialURL.bind(this)('cchdo', this.state)
+    	let url = helpers.generateTemporoSpatialURL.bind(this)(this.apiPrefix, 'cchdo', this.state)
 
 	    // decide on source.source
 	    let source = []
@@ -282,7 +283,7 @@ class ArgovisExplore extends React.Component {
     		return []
     	}
 
-    	let url = helpers.generateTemporoSpatialURL.bind(this)('drifters', this.state)
+    	let url = helpers.generateTemporoSpatialURL.bind(this)(this.drifterApiPrefix, 'drifters', this.state)
 
     	return [url]
     }
@@ -292,7 +293,7 @@ class ArgovisExplore extends React.Component {
     		return []
     	}
 
-    	let url = helpers.generateTemporoSpatialURL.bind(this)('tc', this.state)
+    	let url = helpers.generateTemporoSpatialURL.bind(this)(this.apiPrefix, 'tc', this.state)
 
     	return [url]
     }
@@ -416,7 +417,7 @@ class ArgovisExplore extends React.Component {
 											<input type="password" className="form-control" id="apiKey" placeholder="" value={this.state.apiKey} onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
 											<label htmlFor="apiKey">API Key</label>
 											<div id="apiKeyHelpBlock" className="form-text">
-							  					<a target="_blank" rel="noreferrer" href='https://argovisbeta02.colorado.edu/'>Get a free API key</a>
+							  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
 											</div>
 										</div>
 

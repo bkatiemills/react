@@ -58,7 +58,7 @@ class ArgoExplore extends React.Component {
         this.platformRef = React.createRef()
 		this.statusReporting = React.createRef()
 		this.reautofocus = null
-        this.apiPrefix = 'https://argovisbeta01.colorado.edu/api/'
+        this.apiPrefix = 'https://argovis-api.colorado.edu/'
         this.vocab = {}
         this.dataset = 'argo'
         this.customQueryParams = ['startDate', 'endDate', 'polygon', 'argocore', 'argobgc', 'argodeep', 'argoPlatform', 'depthRequired', 'centerlon']
@@ -93,7 +93,7 @@ class ArgoExplore extends React.Component {
     		return [this.apiPrefix +'argo?compression=minimal&platform=' + state.argoPlatform]
     	} else {
 
-	    	let url = helpers.generateTemporoSpatialURL.bind(this)('argo', state)	
+	    	let url = helpers.generateTemporoSpatialURL.bind(this)(this.apiPrefix, 'argo', state)	
 
 	    	// decide on source.source
 	    	let source = []
@@ -116,10 +116,12 @@ class ArgoExplore extends React.Component {
 	    	}
 
 	    	if(source.length === 0){
-	    		return [url]
+	    		url = [url]
 	    	} else{
-	    		return source.map(x => url+'&source='+x)
+	    		url = source.map(x => url+'&source='+x)
 	    	}
+	    	console.log(url)
+	    	return url
 	    }
     }
 
@@ -192,7 +194,7 @@ class ArgoExplore extends React.Component {
 										<input type="password" className="form-control" id="apiKey" value={this.state.apiKey} placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
 										<label htmlFor="apiKey">API Key</label>
 										<div id="apiKeyHelpBlock" className="form-text">
-						  					<a target="_blank" rel="noreferrer" href='https://argovisbeta02.colorado.edu/'>Get a free API key</a>
+						  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
 										</div>
 									</div>
 

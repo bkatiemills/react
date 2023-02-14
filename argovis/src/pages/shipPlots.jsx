@@ -10,7 +10,7 @@ class ShipPlots extends React.Component {
 
 		super(props);
 
-		helpers.initPlottingPage.bind(this)(['woceline', 'startDate', 'endDate', 'cruise', 'polygon'])
+		helpers.initPlottingPage.bind(this)(['woceline', 'startDate', 'endDate', 'cruise', 'polygon'], 'https://argovis-api.colorado.edu/')
 
 		if(this.state.woceline){
 			this.state.title = 'WOCE line ' + this.state.woceline + ', ' + this.state.startDate.slice(0,10) + ' to ' + this.state.endDate.slice(0,10)
@@ -64,12 +64,14 @@ class ShipPlots extends React.Component {
 		let urls = []
 
 		if(this.state.woceline){
-			urls = urls.concat(this.apiPrefix + 'cchdo?compression=array&data=all&woceline=' + this.state.woceline + '&startDate=' + this.state.startDate + '&endDate=' + this.state.endDate)
+			urls = urls.concat(this.apiPrefix + 'cchdo?data=all&woceline=' + this.state.woceline + '&startDate=' + this.state.startDate + '&endDate=' + this.state.endDate)
 		} else if(this.state.cruise){
-			urls = urls.concat(this.apiPrefix + 'cchdo?compression=array&data=all&cchdo_cruise=' + this.state.cruise)
+			urls = urls.concat(this.apiPrefix + 'cchdo?data=all&cchdo_cruise=' + this.state.cruise)
 		} else if(this.state.polygon && this.state.startDate && this.state.endDate){
-			urls = urls.concat(this.apiPrefix + 'cchdo?compression=array&data=all&startDate=' + this.state.startDate + '&endDate=' + this.state.endDate + '&polygon=' + this.state.polygon)
+			urls = urls.concat(this.apiPrefix + 'cchdo?data=all&startDate=' + this.state.startDate + '&endDate=' + this.state.endDate + '&polygon=' + this.state.polygon)
 		}
+		
+		console.log(urls)
 		
 		return urls
 	}

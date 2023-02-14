@@ -58,7 +58,7 @@ class ShipsExplore extends React.Component {
         this.cruiseRef = React.createRef()
 		this.statusReporting = React.createRef()
 		this.reautofocus = null
-        this.apiPrefix = 'https://argovisbeta01.colorado.edu/api/'
+        this.apiPrefix = 'https://argovis-api.colorado.edu/'
         this.vocab = {}
         this.wocelineLookup = {}
         this.wocegroupLookup = {}
@@ -108,7 +108,7 @@ class ShipsExplore extends React.Component {
     		return [this.apiPrefix +'cchdo?compression=minimal&cchdo_cruise=' + state.cruise]
     	} else {
 
-	    	let url = helpers.generateTemporoSpatialURL.bind(this)('cchdo', state)	
+	    	let url = helpers.generateTemporoSpatialURL.bind(this)(this.apiPrefix, 'cchdo', state)	
 
 	    	// decide on source.source
 	    	let source = []
@@ -221,7 +221,7 @@ class ShipsExplore extends React.Component {
 										<input type="password" className="form-control" id="apiKey" value={this.state.apiKey} placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
 										<label htmlFor="apiKey">API Key</label>
 										<div id="apiKeyHelpBlock" className="form-text">
-						  					<a target="_blank" rel="noreferrer" href='https://argovisbeta02.colorado.edu/'>Get a free API key</a>
+						  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
 										</div>
 									</div>
 									<h6>Time range</h6>
