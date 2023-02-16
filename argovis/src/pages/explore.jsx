@@ -68,7 +68,7 @@ class ArgovisExplore extends React.Component {
 
       this.statusReporting = React.createRef()
       this.apiPrefix = 'https://argovis-api.colorado.edu/'
-      this.drifterApiPrefix = 'http://54.90.68.158:8081'
+      this.drifterApiPrefix = 'https://argovisbeta01.colorado.edu/dapi/'
       this.vocab = {}
 
 			helpers.setQueryString.bind(this)()

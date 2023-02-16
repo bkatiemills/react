@@ -32,6 +32,10 @@ class ArgoAbout extends React.Component {
 						update their consumption of Argo data in near-real-time, and our web frontend is intended to
 						make it easy for students and educators to explore data about Earth's oceans at will.</p>
 
+						<p>The <a href='https://argovis.colorado.edu/'>landing page</a> of Argovis shows colocated data. 
+						For access to individual products (point or gridded data), 
+						see the "Explore" menu, e.g. the Argo profile page is <a href='https://argovis.colorado.edu/argo'>here</a>.</p>
+
 						<h3>News & events</h3>
 						<ul>
 							<li><b>14-16 June 2022:</b> Argovis featured at the <a href='https://www.conftool.org/earthcube2022/sessions.php' target="_blank" rel="noreferrer">2022 EarthCube Annual Meeting</a></li>
