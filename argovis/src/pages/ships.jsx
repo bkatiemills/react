@@ -70,18 +70,22 @@ class ShipsExplore extends React.Component {
         let vocabURLs = [this.apiPrefix + 'summary?id=cchdo_occupancies', this.apiPrefix + 'cchdo/vocabulary?parameter=cchdo_cruise']
 		Promise.all(vocabURLs.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 			Promise.all(responses.map(res => res.json())).then(data => {
-				this.vocab['woceline'] = Object.keys(data[0][0].summary).map(key => {
-					this.wocegroupLookup[key] = {}
-					return data[0][0].summary[key].map((x,i) => {
-						let label = key + ' - ' + String(x.startDate.slice(0,7) )
-						this.wocelineLookup[label] = data[0][0].summary[key][i]			// for lookups by <woceline - start yyyy-mm>
-						this.wocegroupLookup[key][label] = [new Date(data[0][0].summary[key][i].startDate), new Date(data[0][0].summary[key][i].endDate)]   // for lookups by woceline
-						return label
-					}) 
-				})
-				this.vocab['woceline'] = [].concat(...this.vocab['woceline'])
-				this.vocab['cruise'] = data[1].map(x=>String(x))
-				this.setState({refreshData:true})
+				if(data[0].hasOwnProperty('code') && data[0].code === 401){
+					helpers.manageStatus.bind(this)('error', 'Invalid API key; see the "Get a free API key" link below.')
+				} else {
+					this.vocab['woceline'] = Object.keys(data[0][0].summary).map(key => {
+						this.wocegroupLookup[key] = {}
+						return data[0][0].summary[key].map((x,i) => {
+							let label = key + ' - ' + String(x.startDate.slice(0,7) )
+							this.wocelineLookup[label] = data[0][0].summary[key][i]			// for lookups by <woceline - start yyyy-mm>
+							this.wocegroupLookup[key][label] = [new Date(data[0][0].summary[key][i].startDate), new Date(data[0][0].summary[key][i].endDate)]   // for lookups by woceline
+							return label
+						}) 
+					})
+					this.vocab['woceline'] = [].concat(...this.vocab['woceline'])
+					this.vocab['cruise'] = data[1].map(x=>String(x))
+					this.setState({refreshData:true})
+				}
 			})
 		})
 	}

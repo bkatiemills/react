@@ -149,9 +149,8 @@ helpers.componentDidUpdate = function(){
 					let newPoints = []
 					let timestamps = []
 					for(let i=0; i<data.length; i++){
-						if(data[i].code === 429){
-							console.log(429, urls)
-							helpers.manageStatus.bind(this)('error', 'Too many requests too fast; please wait a minute, and consider using an API key (link below).')
+						let bail = helpers.handleHTTPcodes.bind(this)(data[i].code)
+						if(bail){
 							return
 						}
 						if(data[i].length>0 && data[i][0].code !== 404){
@@ -175,6 +174,23 @@ helpers.componentDidUpdate = function(){
 			})
 		}
 	}
+}
+
+helpers.handleHTTPcodes = function(code){
+	let bail = false
+
+	if(code === 401){
+		helpers.manageStatus.bind(this)('error', 'Invalid API key; see the "Get a free API key" link below.')
+		this.formRef.current.removeAttribute('disabled')
+		bail = true
+	}
+	if(code === 429){
+		helpers.manageStatus.bind(this)('error', 'Too many requests too fast; please wait a minute, and consider using an API key (link below).')
+		this.formRef.current.removeAttribute('disabled')
+		bail = true
+	}
+
+	return bail
 }
 
 helpers.manageStatus = function(newStatus, messageArg){
