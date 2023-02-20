@@ -1246,6 +1246,7 @@ helpers.initPlottingPage = function(customParams, apiroot){
 		'cscale', 'connectingLines', 
 		'showAll', 'counterTraces'
 	]
+	this.formRef = React.createRef()
 
 	for(let i=0; i<customParams.length; i++){
 		this.state[customParams[i]] = q.has(customParams[i]) ? q.get(customParams[i]) : ''
@@ -1255,12 +1256,14 @@ helpers.initPlottingPage = function(customParams, apiroot){
 }
 
 helpers.downloadData = function(defaultX, defaultY, defaultZ, defaultC, mergePoints){
+	if(this.statusReporting.current){
+		helpers.manageStatus.bind(this)('downloading')
+	}
 	Promise.all(this.generateURLs().map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 		Promise.all(responses.map(res => res.json())).then(data => {
 			for(let i=0; i<data.length; i++){
-				if(data[i].code === 429){
-					console.log(429)
-					helpers.manageStatus.bind(this)('error', 'Too many requests too fast; please wait a minute, and consider using an API key (link below).')
+				let bail = helpers.handleHTTPcodes.bind(this)(data[i].code)
+				if(bail){
 					return
 				}
 			}
@@ -1272,8 +1275,7 @@ helpers.downloadData = function(defaultX, defaultY, defaultZ, defaultC, mergePoi
 			let p = [].concat(...data)
 
 			// get a list of metadata we'll need
-			let metakeys = Array.from(new Set(p.map(x=>x['metadata'])))
-
+			let metakeys = Array.from(new Set(p.map(x=>x['metadata'][0])))
 			Promise.all(this.generateMetadataURLs(metakeys).map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 				Promise.all(responses.map(mres => mres.json())).then(metadata => {
 					for(let i=0; i<metadata.length; i++){

@@ -16,6 +16,10 @@ class TCPlots extends React.Component {
     	    fetch(this.apiPrefix + 'summary?id=tc_labels', {headers:{'x-argokey': this.state.apiKey}})
         	.then(response => response.json())
 	        .then(data => {
+				let bail = helpers.handleHTTPcodes.bind(this)(data.hasOwnProperty('code') ? data.code : data[0].code)
+				if(bail){
+					return
+				}
     	    	let name = data[0].summary.filter(x=>x._id === this.state.tcMeta)[0].label
         		this.state.title = name
         	})
@@ -32,10 +36,14 @@ class TCPlots extends React.Component {
 	}
 
     componentDidUpdate(prevProps, prevState, snapshot){
-    	if(this.state.refreshData){
-	    	this.setState({refreshData: false})
+    	if(prevState && this.state.apiKey !== prevState.apiKey){
+    		helpers.downloadData.bind(this)('timestamp', 'surface_pressure', '[2D plot]', 'wind', true)
+    	} else {
+	    	if(this.state.refreshData){
+		    	this.setState({refreshData: false})
+	    	}
+	    	helpers.setQueryString.bind(this)()
 	    }
-	    helpers.setQueryString.bind(this)()
     }
 
 	generateURLs(){

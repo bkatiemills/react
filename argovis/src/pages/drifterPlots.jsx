@@ -28,10 +28,14 @@ class DrifterPlots extends React.Component {
 	}
 
     componentDidUpdate(prevProps, prevState, snapshot){
-    	if(this.state.refreshData){
-	    	this.setState({refreshData: false})
+    	if(prevState && this.state.apiKey !== prevState.apiKey){
+    		helpers.downloadData.bind(this)('sst', 'sst1', '[2D plot]', 'timestamp', true)	
+    	} else {
+	    	if(this.state.refreshData){
+		    	this.setState({refreshData: false})
+	    	}
+	    	helpers.setQueryString.bind(this)()
 	    }
-	    helpers.setQueryString.bind(this)()
     }
 
 	generateURLs(){
