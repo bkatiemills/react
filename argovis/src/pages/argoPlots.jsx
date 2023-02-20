@@ -75,10 +75,14 @@ class ArgoPlots extends React.Component {
 	}
 
     componentDidUpdate(prevProps, prevState, snapshot){
-    	if(this.state.refreshData){
-	    	this.setState({refreshData: false})
+    	if(prevState && this.state.apiKey !== prevState.apiKey){
+    		helpers.downloadData.bind(this)('temperature', 'pressure', '[2D plot]', 'timestamp')	
+    	} else {
+	    	if(this.state.refreshData){
+		    	this.setState({refreshData: false})
+	    	}
+	    	helpers.setQueryString.bind(this)()
 	    }
-	    helpers.setQueryString.bind(this)()
     }
 
 	generateURLs(){

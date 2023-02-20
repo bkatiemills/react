@@ -67,13 +67,17 @@ class ArgoExplore extends React.Component {
         let vocabURLs = [this.apiPrefix + 'argo/vocabulary?parameter=platform', this.apiPrefix + 'argo/overview']
 		Promise.all(vocabURLs.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 			Promise.all(responses.map(res => res.json())).then(data => {
-				this.vocab['argoPlatform'] = data[0]
-				this.setState({
-					refreshData:true,
-					nCore: data[1][0].summary.nCore,
-					nBGC: data[1][0].summary.nBGC,
-					nDeep: data[1][0].summary.nDeep
-				})
+				if(data[0].hasOwnProperty('code') && data[0].code === 401){
+					helpers.manageStatus.bind(this)('error', 'Invalid API key; see the "Get a free API key" link below.')
+				} else {
+					this.vocab['argoPlatform'] = data[0]
+					this.setState({
+						refreshData:true,
+						nCore: data[1][0].summary.nCore,
+						nBGC: data[1][0].summary.nBGC,
+						nDeep: data[1][0].summary.nDeep
+					})
+				}
 			})
 		})
 

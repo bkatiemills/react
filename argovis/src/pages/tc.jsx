@@ -53,12 +53,16 @@ class TCExplore extends React.Component {
         fetch(this.apiPrefix + 'summary?id=tc_labels', {headers:{'x-argokey': this.state.apiKey}})
         .then(response => response.json())
         .then(data => {
-        	this.vocab['tcName'] = data[0].summary.map(x=>x.label)
-        	this.lookupLabel = {}
-        	for(let i=0; i<data[0].summary.length; i++){
-        		this.lookupLabel[data[0].summary[i].label] = data[0].summary[i]._id
-        	}
-        	this.setState({refreshData:true})
+        	if(data[0].hasOwnProperty('code') && data[0].code === 401){
+					helpers.manageStatus.bind(this)('error', 'Invalid API key; see the "Get a free API key" link below.')
+			} else {
+	        	this.vocab['tcName'] = data[0].summary.map(x=>x.label)
+	        	this.lookupLabel = {}
+	        	for(let i=0; i<data[0].summary.length; i++){
+	        		this.lookupLabel[data[0].summary[i].label] = data[0].summary[i]._id
+	        	}
+	        	this.setState({refreshData:true})
+	        }
         })
 	}
 

@@ -35,6 +35,12 @@ class ArgovisExplore extends React.Component {
        		'drifters': [],
        		'tc': []
        	},
+       	rawPoints: {
+       		'argo': [],
+       		'cchdo': [],
+       		'drifters': [],
+       		'tc': []
+       	},
        	maxDayspan: q.has('polygon') ? helpers.calculateDayspan.bind(this)( {'polygon':JSON.parse(q.get('polygon'))} ) : this.defaultDayspan,
        	polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : this.defaultPolygon, // [[lon0, lat0], [lon1, lat1], ..., [lonn,latn], [lon0,lat0]]
        	refreshData: true,
@@ -79,7 +85,6 @@ class ArgovisExplore extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState, snapshot){
-
     	if(this.state.refreshData){
     		if(this.statusReporting.current){
 					helpers.manageStatus.bind(this)('downloading')
@@ -104,8 +109,8 @@ class ArgovisExplore extends React.Component {
 						continue
 					}
 
-					if(JSON.stringify(urls[dataset].sort())!==JSON.stringify(s.urls[dataset].sort())){
-						// urls have changed and aren't blank, need to hit the api
+					if(JSON.stringify(urls[dataset].sort())!==JSON.stringify(s.urls[dataset].sort()) || (prevState && this.state.apiKey !== prevState.apiKey) ){
+						// urls have changed and aren't blank OR api key has changed, need to hit the api
 						refresh = refresh.concat(urls[dataset])
 						s.urls[dataset] = urls[dataset]
 					}
@@ -129,9 +134,8 @@ class ArgovisExplore extends React.Component {
 							let newRawPoints = {}
 
 							for(let i=0; i<data.length; i++){
-								if(data[i].code === 429){
-									console.log(429, urls)
-									helpers.manageStatus.bind(this)('error', 'Too many requests too fast; please wait a minute, and consider using an API key (link below).')
+								let bail = helpers.handleHTTPcodes.bind(this)(data[i].code)
+								if(bail){
 									return
 								}
 								if(data.length>0 && data[i][0].code !== 404){

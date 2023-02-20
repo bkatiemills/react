@@ -68,7 +68,7 @@ class Grids extends React.Component {
       }[this.state.selectedGrid]
       this.apiPrefix = 'https://argovis-api.colorado.edu/'
      	this.customQueryParams = ['polygon', 'selectedGrid', 'levelindex', 'sublevelindex', 'timestep', 'subtimestep', 'subgrid']
-      
+      this.vocab = {}
 
       this.componentDidUpdate()
     }
@@ -94,6 +94,13 @@ class Grids extends React.Component {
 	    	if(s.subgrid){
 					Promise.all([url,suburl].map(x => fetch(x, {headers:{'x-argokey': s.apiKey}}))).then(responses => {
 						Promise.all(responses.map(res => res.json())).then(data => {
+							// start by checking for error codes
+							for(let i=0; i<data.length; i++){
+								let bail = helpers.handleHTTPcodes.bind(this)(data[i].code)
+								if(bail){
+									return
+								}
+							}
 							s.points = data[0]
 							s.subpoints = data[1]
 							// construct grid subtraction delta
@@ -133,6 +140,13 @@ class Grids extends React.Component {
 				} else {
 					Promise.all([url].map(x => fetch(x, {headers:{'x-argokey': s.apiKey}}))).then(responses => {
 						Promise.all(responses.map(res => res.json())).then(data => {
+							// start by checking for error codes
+							for(let i=0; i<data.length; i++){
+								let bail = helpers.handleHTTPcodes.bind(this)(data[i].code)
+								if(bail){
+									return
+								}
+							}
 							s.points = data[0]
 							s.data = data[0]
 							helpers.manageStatus.bind(this)('rendering')

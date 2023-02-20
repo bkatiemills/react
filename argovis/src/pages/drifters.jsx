@@ -57,9 +57,13 @@ class DriftersExplore extends React.Component {
         let vocabURLs = [this.apiPrefix + 'drifters/vocabulary?parameter=wmo', this.apiPrefix + 'drifters/vocabulary?parameter=platform']
 		Promise.all(vocabURLs.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 			Promise.all(responses.map(res => res.json())).then(data => {
-				this.vocab['wmo'] = data[0].map(x => String(x))
-				this.vocab['platform'] = data[1]
-				this.setState({refreshData:true})
+				if(data[0].hasOwnProperty('code') && data[0].code === 401){
+					helpers.manageStatus.bind(this)('error', 'Invalid API key; see the "Get a free API key" link below.')
+				} else {
+					this.vocab['wmo'] = data[0].map(x => String(x))
+					this.vocab['platform'] = data[1]
+					this.setState({refreshData:true})
+				}
 			})
 		})
 	}
