@@ -120,6 +120,7 @@ class ArgoAbout extends React.Component {
 							<li><b>Tropical cyclone data</b>: TBD</li>
 							<li><b><a href='https://sio-argo.ucsd.edu/RG_Climatology.html' target="_blank" rel="noreferrer">Roemmich-Gilson Argo gridded climatology</a></b>: Roemmich, D. and J. Gilson, 2009: The 2004-2008 mean and annual cycle of temperature, salinity, and steric height in the global ocean from the Argo Program. Progress in Oceanography, 82, 81-100. </li>
 							<li><b>Kuusela-Giglio ocean heat content grid</b>: Mikael Kuusela, & Donata Giglio. (2022). Global Ocean Heat Content Anomalies based on Argo data (1.0.0) [Data set]. Zenodo. <a href='https://doi.org/10.5281/zenodo.6131625' target="_blank" rel="noreferrer">https://doi.org/10.5281/zenodo.6131625</a></li>
+							<li><b>Scripps Argo Trajectory-Based Velocity Product: Global Estimates of Absolute Velocity Derived from Core, Biogeochemical, and Deep Argo Float Trajectories at Parking Depth</b>: <a href='https://journals.ametsoc.org/view/journals/atot/aop/JTECH-D-22-0065.1/JTECH-D-22-0065.1.xml'>https://journals.ametsoc.org/view/journals/atot/aop/JTECH-D-22-0065.1/JTECH-D-22-0065.1.xml</a>, DOI: <a href='https://doi.org/10.6075/J0FQ9WS6'>https://doi.org/10.6075/J0FQ9WS6</a></li>
 						</ul>
 
 						<h3>Data producer responsibility</h3>
