@@ -808,6 +808,9 @@ helpers.prepPlotlyState = function(markerSize){
 				datarevision: Math.random(),
 				autosize: true, 
 				showlegend: false,
+				font: {
+					size: 16
+				},
 				xaxis: {
 					title: helpers.generateAxisTitle.bind(this)(this.state.xKey),
 					range: xrange,
