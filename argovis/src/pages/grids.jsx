@@ -57,6 +57,11 @@ class Grids extends React.Component {
       	'rg09_salinity': 'https://sio-argo.ucsd.edu/RG_Climatology.html',
       	'kg21_ohc15to300': 'https://zenodo.org/record/6131625#.Y3P5FILMKWA'
       }[this.state.selectedGrid]
+      this.title = {
+      	'rg09_temperature': 'RG Temperature',
+      	'rg09_salinity': 'RG Salinity',
+      	'kg21_ohc15to300': 'KG Ocean heat content'
+      }[this.state.selectedGrid]
 
       this.fgRef = React.createRef()
       this.statusReporting = React.createRef()
@@ -313,7 +318,7 @@ class Grids extends React.Component {
 						<fieldset disabled ref={this.formRef}>
 							<span ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
 							<div className='mapSearchInputs'>
-								<h5>{this.state.selectedGrid + ' search control'}</h5>
+								<h5>{this.title + ' search control'}</h5>
 								<small><a target="_blank" rel="noreferrer" href={this.reflink}>Original Data Reference</a></small>
 								<div className="form-floating mb-3" style={{'marginTop': '0.5em'}}>
 									<input type="password" className="form-control" id="apiKey" value={this.state.apiKey} placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
