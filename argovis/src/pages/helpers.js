@@ -809,7 +809,7 @@ helpers.prepPlotlyState = function(markerSize){
 				autosize: true, 
 				showlegend: false,
 				font: {
-					size: 16
+					size: 20
 				},
 				xaxis: {
 					title: helpers.generateAxisTitle.bind(this)(this.state.xKey),
