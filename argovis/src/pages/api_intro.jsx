@@ -52,6 +52,7 @@ class APIintro extends React.Component {
 							<li>tropical cyclone data from HURDAT and JTWC, <pre style={{'display':'inline'}}>/tc</pre></li>
 							<li>Global Drifter Program data, <pre style={{'display':'inline'}}>/drifters</pre></li>
 							<li>Argone float location forecasts, <pre style={{'display':'inline'}}>/argone</pre></li>
+							<li>Argo float trajectories, <pre style={{'display':'inline'}}>/argotrajectories</pre></li>
 							<li>several gridded products:</li>
 							<ul>
 								<li>Roemmich-Gilson total temperature and salinity grids, <pre style={{'display':'inline'}}>/grids/rg09</pre></li>
