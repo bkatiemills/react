@@ -105,3 +105,7 @@ hr {
   border-color: #f8f9fa;
   color: #6c757d;
 }
+
+nav.navbar {
+  z-index: 10000;
+}
