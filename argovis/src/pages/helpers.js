@@ -1411,7 +1411,7 @@ helpers.mungePrecision = function(num){
 	if(num === null){
 		return null
 	} else{
-		return Number(num).toPrecision(7)
+		return parseFloat(num.toFixed(6))
 	}
 }
 

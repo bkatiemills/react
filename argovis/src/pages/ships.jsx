@@ -187,7 +187,7 @@ class ShipsExplore extends React.Component {
     	return(
 		    <Popup>
 		      ID: {point[0]} <br />
-		      Long / Lat: {point[1]} / {point[2]} <br />
+		      Long / Lat: {helpers.mungePrecision(point[1])} / {helpers.mungePrecision(point[2])} <br />
 		      Date: {point[3]} <br />
 		      Data Sources: {point[4]} <br />
 		      {woceoccupy.map(x => {

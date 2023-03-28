@@ -105,7 +105,7 @@ class DriftersExplore extends React.Component {
     	return(
 		    <Popup>
 		      ID: {point[0]} <br />
-		      Long / Lat: {point[1]} / {point[2]} <br />
+		      Long / Lat: {helpers.mungePrecision(point[1])} / {helpers.mungePrecision(point[2])} <br />
 		      Date: {point[3]} <br />
 		      <a target="_blank" rel="noreferrer" href={'/plots/drifters?showAll=true&wmo='+point[4]+'&centerlon='+this.state.centerlon}>{'WMO ' + point[4] + ' page'}</a><br />
 		      <a target="_blank" rel="noreferrer" href={'/plots/drifters?showAll=true&platform='+point[0].split('_')[0]+'&centerlon='+this.state.centerlon}>{'Drifter platform ' + point[0].split('_')[0] + ' Page'}</a><br/>

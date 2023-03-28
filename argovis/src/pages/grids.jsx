@@ -266,7 +266,7 @@ class Grids extends React.Component {
 
 		  if(this.state.subgrid){
 		   	return(<Popup>
-				  			Long / Lat: {point.geolocation.coordinates[0]} / {point.geolocation.coordinates[1]} <br />
+				  			Long / Lat: {helpers.mungePrecision(point.geolocation.coordinates[0])} / {helpers.mungePrecision(point.geolocation.coordinates[1])} <br />
 				  			Value: {point.data[0][0]}
 				  	  </Popup>)
 		  } else {
