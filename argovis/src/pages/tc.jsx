@@ -101,7 +101,7 @@ class TCExplore extends React.Component {
     	return(
 		    <Popup>
 		      ID: {point[0]} <br />
-		      Long / Lat: {point[1]} / {point[2]} <br />
+		      Long / Lat: {helpers.mungePrecision(point[1])} / {helpers.mungePrecision(point[2])} <br />
 		      Date: {point[3]} <br />
 		      <a target="_blank" rel="noreferrer" href={'/plots/tc?showAll=true&tcMeta='+point[0].split('_')[0]+'&centerlon='+this.state.centerlon}>Cyclone Page</a>
 		      {regionLink}

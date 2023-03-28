@@ -155,7 +155,7 @@ class ArgoExplore extends React.Component {
     	return(
 		    <Popup>
 		      ID: {point[0]} <br />
-		      Long / Lat: {point[1]} / {point[2]} <br />
+		      Long / Lat: {helpers.mungePrecision(point[1])} / {helpers.mungePrecision(point[2])} <br />
 		      Date: {point[3]} <br />
 		      Data Sources: {point[4].join(', ')} <br />
 		      <a target="_blank" rel="noreferrer" href={'/plots/argo?showAll=true&argoPlatform='+point[0].split('_')[0]+'&centerlon='+state.centerlon}>Platform Page</a><br />
