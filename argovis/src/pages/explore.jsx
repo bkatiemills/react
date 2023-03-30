@@ -132,13 +132,12 @@ class ArgovisExplore extends React.Component {
 						Promise.all(responses.map(res => res.json())).then(data => {
 							let newPoints = {}
 							let newRawPoints = {}
-
 							for(let i=0; i<data.length; i++){
 								let bail = helpers.handleHTTPcodes.bind(this)(data[i].code)
 								if(bail){
 									return
 								}
-								if(data.length>0 && data[i][0].code !== 404){
+								if(data.length>0 && data[i].length>0){
 									let points = data[i].map(x => x.concat([datasets[i]])) // so there's something in the source position for everything other than argo
 									let rawPoints = JSON.parse(JSON.stringify(points))
 									points = helpers.circlefy.bind(this)(points, s)

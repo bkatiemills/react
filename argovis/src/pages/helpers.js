@@ -153,7 +153,7 @@ helpers.componentDidUpdate = function(){
 						if(bail){
 							return
 						}
-						if(data[i].length>0 && data[i][0].code !== 404){
+						if(data[i].length>0){
 							timestamps = timestamps.concat(data[i].map(x => x[3]))
 							newPoints = newPoints.concat(data[i])
 						}
