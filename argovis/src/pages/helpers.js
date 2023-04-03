@@ -316,9 +316,9 @@ helpers.setQueryString = function(){
 		}
 	} 
 
-	window.argoPrevious = queryManagement.search // keep track of query string changes so we know when to refresh
+	window.argoPrevious = decodeURIComponent(queryManagement.search) // keep track of query string changes so we know when to refresh
 
-	window.history.pushState(null, '', queryManagement.toString());
+	window.history.pushState(null, '', decodeURIComponent(queryManagement.toString()));
 }
 
 // input setters
