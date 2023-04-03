@@ -119,7 +119,7 @@ class ArgoAbout extends React.Component {
 							<li><b>Global Drifter Program</b>: Cite as: Elipot, Shane; Sykulski, Adam; Lumpkin, Rick; Centurioni, Luca; Pazos, Mayra (2022). Hourly location, current velocity, and temperature collected from Global Drifter Program drifters world-wide. [indicate subset used]. NOAA National Centers for Environmental Information. Dataset. <a href='https://doi.org/10.25921/x46c-3620' target="_blank" rel="noreferrer">https://doi.org/10.25921/x46c-3620</a>. Accessed [date].</li>
 							<li><b>Tropical cyclone data</b>:
 								<ul>
-									<li><b>JTWC<b> (<a href='https://www.metoc.navy.mil/jtwc/jtwc.html?best-tracks'>https://www.metoc.navy.mil/jtwc/jtwc.html?best-tracks</a>): Chu, J. H., Sampson, C. R.,  Levine, A. S., & Fukada, E. (2002). The joint typhoon warning center tropical cyclone best-tracks, 1945-2000. Joint Typhoon Warning Center, Technical Report No. NRL/MR/7540-02-16.</li>
+									<li><b>JTWC</b> (<a href='https://www.metoc.navy.mil/jtwc/jtwc.html?best-tracks'>https://www.metoc.navy.mil/jtwc/jtwc.html?best-tracks</a>): Chu, J. H., Sampson, C. R.,  Levine, A. S., & Fukada, E. (2002). The joint typhoon warning center tropical cyclone best-tracks, 1945-2000. Joint Typhoon Warning Center, Technical Report No. NRL/MR/7540-02-16.</li>
 									<li><b>HURDAT</b> (<a href='https://www.nhc.noaa.gov/data/#hurdat'>https://www.nhc.noaa.gov/data/#hurdat</a>): Landsea, C. W., & Franklin, J. L. (2013). Atlantic hurricane database uncertainty and presentation of a new database format. Monthly Weather Review, 141(10), 3576–3592.</li>
 								</ul>
 							</li>
