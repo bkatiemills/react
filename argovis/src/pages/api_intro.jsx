@@ -109,6 +109,27 @@ class APIintro extends React.Component {
 						<p><a href='https://argovis-api.colorado.edu/argo?startDate=2017-08-01T00:00:00Z&endDate=2017-09-01T00:00:00Z&polygon=[[-150,-30],[-155,-30],[-155,-35],[-150,-35],[-150,-30]]&data=temperature,~doxy' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo?startDate=2017-08-01T00:00:00Z&endDate=2017-09-01T00:00:00Z&polygon=[[-150,-30],[-155,-30],[-155,-35],[-150,-35],[-150,-30]]&data=temperature,~doxy</a></p>
 						<p>We get a collection of profiles that appear in the region of interest, and have temperature but not dissolved oxygen. In this way, we can split up our downloads into groups of related and interesting profiles without re-downloading the same profiles over and over.</p>
 
+						<h5>QC filtering</h5>
+						<p>In addition to querying and filtering by what data is available, we can also make demands on the quality of that data by performing QC filtering. Let's start by looking at some particulate backscattering data:</p>
+						<p><a href='https://argovis-api.colorado.edu/argo?id=2902857_001&data=bbp700,bbp700_argoqc'>https://argovis-api.colorado.edu/argo?id=2902857_001&data=bbp700,bbp700_argoqc</a></p>
+						<p>We request both the measurement and its corresponding QC flags, for reference. Recall that for Argo:</p>
+						<ul>
+							<li>QC=1 means data is definitely good</li>
+							<li>QC=2 means data is probably good</li>
+							<li>QC=3 means data is probably bad</li>
+							<li>QC=4 means data is definitely bad</li>
+						</ul>
+						<p>If we didn't look at the QC flags for our particulate backscatter data, we could easily have missed that some of the measurements shown above (and many more in the profile not printed) have been marked as bad data by the upstream data distributor, and therefore might not be appropriate for your purposes. We can suppress measurements based on a list of allowed QC values by modifying what we pass to the data query parameter:</p>
+						<p><a href='https://argovis-api.colorado.edu/argo?id=2902857_001&data=bbp700,1,bbp700_argoqc'>https://argovis-api.colorado.edu/argo?id=2902857_001&data=bbp700,1,bbp700_argoqc</a></p>
+						<p>In our data query parameter, we listed which QC flags we find tolerable for each measurement parameter; in this case bbp700,1 indicates we only want bbp700 data if it has a corresponding QC flag of 1. Some things implied by this example that are worth highlighting:</p>
+						<ul>
+							<li>QC flags listed after a variable name only apply to that variable name. Try printing the pressure record for the profile found above, and you'll see none of its levels were suppressed.</li>
+							<li>The list of QC flags is an explicit-allow list and can contain as many flags as you want. For example, you might change the above data query to bbp700,1,2 to get both 1- and 2-flagged bbp700 measurements back.</li>
+							<li>We include the explicit QC flag in this example for illustrative purposes, but it's not required when doing QC filtering in this way. Try the above query while omitting bbp700_argoqc, and you'll get the same non-None values for bbp700.</li>
+							<li>ote however, as with all data requests, if all explicitly requested data variables are None for a level, that level is dropped. In the case where you omitted bbp700_argoqc and only requested bbp700, the levels where the QC filtration set the bbp700 value to None are dropped.</li>
+							<li>Similarly, if all levels of a requested variable are set to None by QC filtration, the entire profile will be dropped from the returns, on the grounds that it doesn't contain any of the data you requested at a level of quality you marked as acceptable.</li>
+						</ul>
+
 						<h5>Minimal data responses</h5>
 						<p>Sometimes, we might want to use the <pre style={{'display':'inline'}}>data</pre> filter as we've seen to confine our attention to only profiles that have data of interest, but we're only interested in general or metadata about those measurements, and don't want to download the actual measurements; for this, we can add the <pre style={{'display':'inline'}}>except-data-values</pre> token:</p>
 						<p><a href='https://argovis-api.colorado.edu/argo?startDate=2017-08-01T00:00:00Z&endDate=2017-09-01T00:00:00Z&polygon=[[-150,-30],[-155,-30],[-155,-35],[-150,-35],[-150,-30]]&data=doxy,except-data-values' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo?startDate=2017-08-01T00:00:00Z&endDate=2017-09-01T00:00:00Z&polygon=[[-150,-30],[-155,-30],[-155,-35],[-150,-35],[-150,-30]]&data=doxy,except-data-values</a></p>
@@ -116,6 +137,19 @@ class APIintro extends React.Component {
 						<p><a href='https://argovis-api.colorado.edu/argo?startDate=2017-08-01T00:00:00Z&endDate=2017-09-01T00:00:00Z&polygon=[[-150,-30],[-155,-30],[-155,-35],[-150,-35],[-150,-30]]&data=doxy&compression=minimal' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo?startDate=2017-08-01T00:00:00Z&endDate=2017-09-01T00:00:00Z&polygon=[[-150,-30],[-155,-30],[-155,-35],[-150,-35],[-150,-30]]&data=doxy&compression=minimal</a></p>
 						<p>With <pre style={{'display':'inline'}}>compression=minimal</pre>, for each profile we get only the ID, longitude, latitude, timestamp and list of data sources; this is intended for mapping applications that want to show this data on a map, and use the ID to link out to additional data with another query.</p>
 
+						<h5>Temporospatial request details</h5>
+						<p>You have seen in examples above that requests can be temporally limited by startDate and endDate, and confined to a geographic region with polygon. There are a few more features and facts about temporospatial requests in Argovis that are worth exploring.</p>
+						<h6>Very large spatial extents</h6>
+						<p>Argovis uses geojson polygons to define spatial regions of interest, as illustrated above. If we consider only vertexes, ambiguity exists: are we describing the portion of the globe on one side of the polygon line, or the other? By default, MongoDB and Argovis assume you are asking for the smaller of the two regions. If in fact you want the larger, we must use the winding order of points in the polygon to disambiguate. If we want the larger region, we must tell the API to consider winding order, and make sure the polygon vertexes are listed in counter-clockwise order around our region of interest, like so (note the number of profiles returned):</p>
+						<p><a href='https://argovis-api.colorado.edu/argo?startDate=2023-01-01T00:00:00Z&endDate=2023-01-10T00:00:00Z&polygon=[[-40,35],[-40,45],[-30,45],[-30,35],[-40,35]]&winding=true&compression=minimal'>https://argovis-api.colorado.edu/argo?startDate=2023-01-01T00:00:00Z&endDate=2023-01-10T00:00:00Z&polygon=[[-40,35],[-40,45],[-30,45],[-30,35],[-40,35]]&winding=true&compression=minimal</a></p>
+						<p>Note that if we leave off the winding: 'true' part, we get the smaller region regardless of winding (again see the number of profiles - much less this time since we're taking the smaller region by default):</p>
+						<p><a href='https://argovis-api.colorado.edu/argo?startDate=2023-01-01T00:00:00Z&endDate=2023-01-10T00:00:00Z&polygon=[[-40,35],[-40,45],[-30,45],[-30,35],[-40,35]]&compression=minimal'>https://argovis-api.colorado.edu/argo?startDate=2023-01-01T00:00:00Z&endDate=2023-01-10T00:00:00Z&polygon=[[-40,35],[-40,45],[-30,45],[-30,35],[-40,35]]&compression=minimal</a></p>
+						<p>Or, if we keep the winding requirement but reverse the winding of polygon, again we get the smaller region:</p>
+						<p><a href='https://argovis-api.colorado.edu/argo?startDate=2023-01-01T00:00:00Z&endDate=2023-01-10T00:00:00Z&polygon=[[-40,35],[-30,35],[-30,45],[-40,45],[-40,35]]&winding=true&compression=minimal'>https://argovis-api.colorado.edu/argo?startDate=2023-01-01T00:00:00Z&endDate=2023-01-10T00:00:00Z&polygon=[[-40,35],[-30,35],[-30,45],[-40,45],[-40,35]]&winding=true&compression=minimal</a></p>
+						<h6>Region intersections</h6>
+						<p>In the event we are curious to see results that are interior to the intersection of two or more polygons, Argovis also presents a multipolygon option:</p>
+						<p><a href='https://argovis-api.colorado.edu/argo?startDate=2023-01-01T00:00:00Z&endDate=2023-01-10T00:00:00Z&multipolygon=[[[-40,35],[-40,45],[-30,45],[-30,35],[-40,35]],[[-35,35],[-35,45],[-25,45],[-25,35],[-35,35]]]&compression=minimal'>https://argovis-api.colorado.edu/argo?startDate=2023-01-01T00:00:00Z&endDate=2023-01-10T00:00:00Z&multipolygon=[[[-40,35],[-40,45],[-30,45],[-30,35],[-40,35]],[[-35,35],[-35,45],[-25,45],[-25,35],[-35,35]]]&compression=minimal</a></p>
+						<p>Note the profiles returned in this case are interior to both polygons listed. There's no limit to the number of polygons you can list in multipolygon; each will further filter down the number of profiles returned to be interior to all of them.</p>
 					</div>
 				</div>
 			</>
