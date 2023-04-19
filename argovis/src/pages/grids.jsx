@@ -205,6 +205,8 @@ class Grids extends React.Component {
 											}, () => {
 													helpers.manageStatus.bind(this)('ready')
 												})
+	    } else {
+	    	helpers.manageStatus.bind(this)('error', 'No data found for this search.')
 	    }
 	    this.formRef.current.removeAttribute('disabled')
     }
