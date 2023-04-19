@@ -117,7 +117,12 @@ class ArgoAbout extends React.Component {
 							<li><b>Argo data</b>: see <a href='https://argo.ucsd.edu/data/acknowledging-argo/#:~:text=To%20acknowledge%20Argo%2C%20please%20use,ocean%2Dops.org).' target="_blank" rel="noreferrer"> guidance from the Argo collaboration</a></li>
 							<li><b>Ship-based profiles</b>: TBD</li>
 							<li><b>Global Drifter Program</b>: Cite as: Elipot, Shane; Sykulski, Adam; Lumpkin, Rick; Centurioni, Luca; Pazos, Mayra (2022). Hourly location, current velocity, and temperature collected from Global Drifter Program drifters world-wide. [indicate subset used]. NOAA National Centers for Environmental Information. Dataset. <a href='https://doi.org/10.25921/x46c-3620' target="_blank" rel="noreferrer">https://doi.org/10.25921/x46c-3620</a>. Accessed [date].</li>
-							<li><b>Tropical cyclone data</b>: TBD</li>
+							<li><b>Tropical cyclone data</b>:
+								<ul>
+									<li><b>JTWC</b> (<a href='https://www.metoc.navy.mil/jtwc/jtwc.html?best-tracks'>https://www.metoc.navy.mil/jtwc/jtwc.html?best-tracks</a>): Chu, J. H., Sampson, C. R.,  Levine, A. S., & Fukada, E. (2002). The joint typhoon warning center tropical cyclone best-tracks, 1945-2000. Joint Typhoon Warning Center, Technical Report No. NRL/MR/7540-02-16.</li>
+									<li><b>HURDAT</b> (<a href='https://www.nhc.noaa.gov/data/#hurdat'>https://www.nhc.noaa.gov/data/#hurdat</a>): Landsea, C. W., & Franklin, J. L. (2013). Atlantic hurricane database uncertainty and presentation of a new database format. Monthly Weather Review, 141(10), 3576–3592.</li>
+								</ul>
+							</li>
 							<li><b>Argone float location forecasts</b>: <a href='https://github.com/Chamberpain/ARGONE'>https://github.com/Chamberpain/ARGONE</a></li>
 							<li><b>Scripps Argo Trajectory-Based Velocity Product: Global Estimates of Absolute Velocity Derived from Core, Biogeochemical, and Deep Argo Float Trajectories at Parking Depth</b>: <a href='https://journals.ametsoc.org/view/journals/atot/aop/JTECH-D-22-0065.1/JTECH-D-22-0065.1.xml'>https://journals.ametsoc.org/view/journals/atot/aop/JTECH-D-22-0065.1/JTECH-D-22-0065.1.xml</a>, DOI: <a href='https://doi.org/10.6075/J0FQ9WS6'>https://doi.org/10.6075/J0FQ9WS6</a></li>
 							<li><b><a href='https://sio-argo.ucsd.edu/RG_Climatology.html' target="_blank" rel="noreferrer">Roemmich-Gilson Argo gridded climatology</a></b>: Roemmich, D. and J. Gilson, 2009: The 2004-2008 mean and annual cycle of temperature, salinity, and steric height in the global ocean from the Argo Program. Progress in Oceanography, 82, 81-100. </li>

@@ -109,6 +109,27 @@ class APIintro extends React.Component {
 						<p><a href='https://argovis-api.colorado.edu/argo?startDate=2017-08-01T00:00:00Z&endDate=2017-09-01T00:00:00Z&polygon=[[-150,-30],[-155,-30],[-155,-35],[-150,-35],[-150,-30]]&data=temperature,~doxy' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo?startDate=2017-08-01T00:00:00Z&endDate=2017-09-01T00:00:00Z&polygon=[[-150,-30],[-155,-30],[-155,-35],[-150,-35],[-150,-30]]&data=temperature,~doxy</a></p>
 						<p>We get a collection of profiles that appear in the region of interest, and have temperature but not dissolved oxygen. In this way, we can split up our downloads into groups of related and interesting profiles without re-downloading the same profiles over and over.</p>
 
+						<h5>QC filtering</h5>
+						<p>In addition to querying and filtering by what data is available, we can also make demands on the quality of that data by performing QC filtering. Let's start by looking at some particulate backscattering data:</p>
+						<p><a href='https://argovis-api.colorado.edu/argo?id=2902857_001&data=bbp700,bbp700_argoqc'>https://argovis-api.colorado.edu/argo?id=2902857_001&data=bbp700,bbp700_argoqc</a></p>
+						<p>We request both the measurement and its corresponding QC flags, for reference. Recall that for Argo:</p>
+						<ul>
+							<li>QC=1 means data is definitely good</li>
+							<li>QC=2 means data is probably good</li>
+							<li>QC=3 means data is probably bad</li>
+							<li>QC=4 means data is definitely bad</li>
+						</ul>
+						<p>If we didn't look at the QC flags for our particulate backscatter data, we could easily have missed that some of the measurements shown above (and many more in the profile not printed) have been marked as bad data by the upstream data distributor, and therefore might not be appropriate for your purposes. We can suppress measurements based on a list of allowed QC values by modifying what we pass to the data query parameter:</p>
+						<p><a href='https://argovis-api.colorado.edu/argo?id=2902857_001&data=bbp700,1,bbp700_argoqc'>https://argovis-api.colorado.edu/argo?id=2902857_001&data=bbp700,1,bbp700_argoqc</a></p>
+						<p>In our data query parameter, we listed which QC flags we find tolerable for each measurement parameter; in this case bbp700,1 indicates we only want bbp700 data if it has a corresponding QC flag of 1. Some things implied by this example that are worth highlighting:</p>
+						<ul>
+							<li>QC flags listed after a variable name only apply to that variable name. Try printing the pressure record for the profile found above, and you'll see none of its levels were suppressed.</li>
+							<li>The list of QC flags is an explicit-allow list and can contain as many flags as you want. For example, you might change the above data query to bbp700,1,2 to get both 1- and 2-flagged bbp700 measurements back.</li>
+							<li>We include the explicit QC flag in this example for illustrative purposes, but it's not required when doing QC filtering in this way. Try the above query while omitting bbp700_argoqc, and you'll get the same non-None values for bbp700.</li>
+							<li>ote however, as with all data requests, if all explicitly requested data variables are None for a level, that level is dropped. In the case where you omitted bbp700_argoqc and only requested bbp700, the levels where the QC filtration set the bbp700 value to None are dropped.</li>
+							<li>Similarly, if all levels of a requested variable are set to None by QC filtration, the entire profile will be dropped from the returns, on the grounds that it doesn't contain any of the data you requested at a level of quality you marked as acceptable.</li>
+						</ul>
+
 						<h5>Minimal data responses</h5>
 						<p>Sometimes, we might want to use the <pre style={{'display':'inline'}}>data</pre> filter as we've seen to confine our attention to only profiles that have data of interest, but we're only interested in general or metadata about those measurements, and don't want to download the actual measurements; for this, we can add the <pre style={{'display':'inline'}}>except-data-values</pre> token:</p>
 						<p><a href='https://argovis-api.colorado.edu/argo?startDate=2017-08-01T00:00:00Z&endDate=2017-09-01T00:00:00Z&polygon=[[-150,-30],[-155,-30],[-155,-35],[-150,-35],[-150,-30]]&data=doxy,except-data-values' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo?startDate=2017-08-01T00:00:00Z&endDate=2017-09-01T00:00:00Z&polygon=[[-150,-30],[-155,-30],[-155,-35],[-150,-35],[-150,-30]]&data=doxy,except-data-values</a></p>
