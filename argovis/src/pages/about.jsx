@@ -129,6 +129,7 @@ class ArgoAbout extends React.Component {
 							<li><b>Kuusela-Giglio ocean heat content grid</b>: Mikael Kuusela, & Donata Giglio. (2022). Global Ocean Heat Content Anomalies based on Argo data (1.0.0) [Data set]. Zenodo. <a href='https://doi.org/10.5281/zenodo.6131625' target="_blank" rel="noreferrer">https://doi.org/10.5281/zenodo.6131625</a></li>
 							<li><b>NOAA Sea surface temperature timeseries</b>: <a href='ftp://ftp.emc.ncep.noaa.gov/cmb/sst/papers/oiv2pap/'>Reynolds, R.W., N.A. Rayner, T.M. Smith, D.C. Stokes, and W. Wang, 2002: An improved in situ and satellite SST analysis for climate. J. Climate, 15, 1609-1625.</a></li>
 							<li><b>Copernicus sea level anomaly timeseries</b>: Copernicus Climate Change Service, Climate Data Store, (2018): Sea level gridded data from satellite observations for the global ocean from 1993 to present. Copernicus Climate Change Service (C3S) Climate Data Store (CDS). DOI: <a href='https://doi.org/10.24381/cds.4c328c78'>10.24381/cds.4c328c78</a> (Accessed on 06-Jul-2023)</li>
+							<li><b>GLODAPv2.2016b mapped data product</b>: Lauvset, S. K, R. M. Key, A. Olsen, S. van Heuven, A. Velo, X. Lin, C. Schirnick, A. Kozyr, T. Tanhua, M. Hoppema, S. Jutterström, R. Steinfeldt, E. Jeansson, M. Ishii, F. F. Pérez, T. Suzuki & S. Watelet: A new global interior ocean mapped climatology: the 1°x1° GLODAP version 2, Earth Syst. Sci. Data, 8, 325–340, 2016, <a href='https://doi.org/10.5194/essd-8-325-2016'>doi:10.5194/essd-8-325-2016</a></li>
 						</ul>
 
 						<h3>Data producer responsibility</h3>
