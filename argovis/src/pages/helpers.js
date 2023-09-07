@@ -757,6 +757,7 @@ helpers.prepPlotlyState = function(markerSize){
 					// filter off any points that have null for color value, don't plot these.
 					let x = d[this.state.xKey].filter((e,j) => {return d[this.state.cKey][j] !== null})
 					let y = d[this.state.yKey].filter((e,j) => {return d[this.state.cKey][j] !== null})
+					let t = d['timestamp'].filter((e,j) => {return d[this.state.cKey][j] !== null}) // timestamp gets used to step through valid points later, keep it synced with the filtering 
 					let z = []
 					if(this.state.zKey !== '[2D plot]'){
 						z = d[this.state.zKey].filter((e,j) => {return d[this.state.cKey][j] !== null})
@@ -767,7 +768,7 @@ helpers.prepPlotlyState = function(markerSize){
 					filteredData[this.state.yKey] = y
 					filteredData[this.state.zKey] = z
 					filteredData[this.state.cKey] = c
-
+					filteredData['timestamp'] = t
 					return {
 						x: filteredData[this.state.xKey],
 						y: filteredData[this.state.yKey],

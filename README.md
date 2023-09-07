@@ -27,3 +27,5 @@ docker image build --target prod -t argovis/react:major.minor.patch .
 ```
 
 Run this alongside the full stack of Argovis containers per the deployment manifests in [https://github.com/argovis/argovis_deployment](https://github.com/argovis/argovis_deployment).
+
+
