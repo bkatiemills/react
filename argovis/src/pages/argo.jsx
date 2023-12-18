@@ -145,12 +145,7 @@ class ArgoExplore extends React.Component {
     	// given an array <point> corresponding to a single point returned by an API data route with compression=minimal,
     	// return the jsx for an appropriate tooltip for this point.
 
-    	let regionLink = ''
-      	if(JSON.stringify(state.polygon) !== '[]'){
-      		let endDate = new Date(state.endDate)
-      		endDate.setDate(endDate.getDate() + 1)
-      		regionLink = <><br /><a target="_blank" rel="noreferrer" href={'/plots/argo?showAll=true&startDate=' + state.startDate + 'T00:00:00Z&endDate='+ endDate.toISOString().replace('.000Z', 'Z') +'&polygon='+JSON.stringify(helpers.tidypoly(state.polygon))+'&centerlon='+state.centerlon}>Regional Selection Page</a></>		
-      	}
+    	let regionLink = helpers.genRegionLink(state.polygon, state.startDate, state.endDate, state.centerlon, 'argo')
 
     	return(
 		    <Popup>

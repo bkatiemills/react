@@ -1416,4 +1416,29 @@ helpers.mungePrecision = function(num){
 	}
 }
 
+helpers.determineWoceGroup = function(woce, date, wocegroupLookup){
+	// given the woce tag and date of a measurement,
+	// determine the start and end date of the group of measurements this measurement belongs to
+
+	let groups = wocegroupLookup[woce]
+	for(let i=0; i<Object.keys(groups).length; i++){
+		let key = Object.keys(groups)[i]
+		if(date >= groups[key][0] && date <= groups[key][1]){
+			return groups[key].concat(key)
+		}
+	}
+}
+
+helpers.genRegionLink = function(polygon, sDate, eDate, centerlon, dataset){
+	// generate the link to see all data in <dataset> for the given temporospatial window
+  let regionLink = ''
+  if(JSON.stringify(polygon) !== '[]'){
+    let endDate = new Date(eDate)
+    endDate.setDate(endDate.getDate() + 1)
+    regionLink = <><br /><a target="_blank" rel="noreferrer" href={'/plots/'+dataset+'?showAll=true&startDate=' + sDate + 'T00:00:00Z&endDate='+ endDate.toISOString().replace('.000Z', 'Z') +'&polygon='+JSON.stringify(this.tidypoly(polygon))+'&centerlon='+centerlon}>Regional Selection Page</a></>		
+  }
+
+  return regionLink
+}
+
 export default helpers

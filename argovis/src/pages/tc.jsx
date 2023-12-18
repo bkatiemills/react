@@ -87,16 +87,11 @@ class TCExplore extends React.Component {
     	return 'red'
     }
 
-    genTooltip(point){
+    genTooltip(point, state){
     	// given an array <point> corresponding to a single point returned by an API data route with compression=minimal,
     	// return the jsx for an appropriate tooltip for this point.
 
-    	let regionLink = ''
-      	if(JSON.stringify(this.state.polygon) !== '[]'){
-      		let endDate = new Date(this.state.endDate)
-      		endDate.setDate(endDate.getDate() + 1)
-      		regionLink = <><br /><a target="_blank" rel="noreferrer" href={'/plots/tc?showAll=true&startDate=' + this.state.startDate + 'T00:00:00Z&endDate='+ endDate.toISOString().replace('.000Z', 'Z') +'&polygon='+JSON.stringify(this.state.polygon)+'&centerlon='+this.state.centerlon}>Regional Selection Page</a></>		
-      	}
+    	let regionLink = helpers.genRegionLink(state.polygon, state.startDate, state.endDate, state.centerlon, 'tc')
 
     	return(
 		    <Popup>

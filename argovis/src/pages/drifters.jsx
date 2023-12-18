@@ -91,16 +91,11 @@ class DriftersExplore extends React.Component {
     	return 'black'
     }
 
-    genTooltip(point){
+    genTooltip(point, state){
     	// given an array <point> corresponding to a single point returned by an API data route with compression=minimal,
     	// return the jsx for an appropriate tooltip for this point.
 
-    	let regionLink = ''
-      	if(JSON.stringify(this.state.polygon) !== '[]'){
-      		let endDate = new Date(this.state.endDate)
-      		endDate.setDate(endDate.getDate() + 1)
-      		regionLink = <><a target="_blank" rel="noreferrer" href={'/plots/drifters?showAll=true&startDate=' + this.state.startDate + 'T00:00:00Z&endDate='+ endDate.toISOString().replace('.000Z', 'Z') +'&polygon='+JSON.stringify(this.state.polygon)+'&centerlon='+this.state.centerlon}>Regional Selection Page</a></>		
-      	}
+    	let regionLink = helpers.genRegionLink(state.polygon, state.startDate, state.endDate, state.centerlon, 'drifters')
 
     	return(
 		    <Popup>
@@ -108,7 +103,7 @@ class DriftersExplore extends React.Component {
 		      Long / Lat: {helpers.mungePrecision(point[1])} / {helpers.mungePrecision(point[2])} <br />
 		      Date: {point[3]} <br />
 		      <a target="_blank" rel="noreferrer" href={'/plots/drifters?showAll=true&wmo='+point[4]+'&centerlon='+this.state.centerlon}>{'WMO ' + point[4] + ' page'}</a><br />
-		      <a target="_blank" rel="noreferrer" href={'/plots/drifters?showAll=true&platform='+point[0].split('_')[0]+'&centerlon='+this.state.centerlon}>{'Drifter platform ' + point[0].split('_')[0] + ' Page'}</a><br/>
+		      <a target="_blank" rel="noreferrer" href={'/plots/drifters?showAll=true&platform='+point[0].split('_')[0]+'&centerlon='+this.state.centerlon}>{'Drifter platform ' + point[0].split('_')[0] + ' Page'}</a>
 		      {regionLink}
 		    </Popup>
     	)
