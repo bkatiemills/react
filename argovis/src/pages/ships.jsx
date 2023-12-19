@@ -152,37 +152,19 @@ class ShipsExplore extends React.Component {
 	    }
     }
 
-    determineWoceGroup(woce, date){
-    	// given the woce tag and date of a measurement,
-    	// determine the start and end date of the group of measurements this measurement belongs to
-
-    	let groups = this.wocegroupLookup[woce]
-    	for(let i=0; i<Object.keys(groups).length; i++){
-    		let key = Object.keys(groups)[i]
-    		if(date >= groups[key][0] && date <= groups[key][1]){
-    			return groups[key].concat(key)
-    		}
-    	}
-    }
-
-    genTooltip(point){
+    genTooltip(point, state){
     	// given an array <point> corresponding to a single point returned by an API data route with compression=minimal,
     	// return the jsx for an appropriate tooltip for this point.
 
     	// determine the woceline occupancies for this point, if any; give an extra hour on either end to capture edges. 
     	let woceoccupy = point[5].map(x => {
-    		let timespan = this.determineWoceGroup(x, new Date(point[3]))
+    		let timespan = helpers.determineWoceGroup(x, new Date(point[3]), this.wocegroupLookup)
     		timespan[0].setHours(timespan[0].getHours() - 1)
     		timespan[1].setHours(timespan[1].getHours() + 1)
     		return [x].concat(timespan)
     	})
 
-    	let regionLink = ''
-      	if(JSON.stringify(this.state.polygon) !== '[]'){
-      		let endDate = new Date(this.state.endDate)
-      		endDate.setDate(endDate.getDate() + 1)
-      		regionLink = <a target="_blank" rel="noreferrer" href={'/plots/ships?showAll=true&startDate=' + this.state.startDate + 'T00:00:00Z&endDate='+ endDate.toISOString().replace('.000Z', 'Z') +'&polygon='+JSON.stringify(this.state.polygon)+'&centerlon='+this.state.centerlon}>Regional Selection Page</a>		
-      	}
+      	let regionLink = helpers.genRegionLink(state.polygon, state.startDate, state.endDate, state.centerlon, 'ships')
 
     	return(
 		    <Popup>

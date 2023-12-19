@@ -13,12 +13,12 @@ class ArgovisExplore extends React.Component {
       document.title = 'Argovis - Colocate datasets'
 
 			// limits for polygon / time coupling
-			this.minDays = 10
+			this.minDays = 90
 			this.maxDays = 365
 			this.minArea = 1000000
 			this.maxArea = 10000000
 			this.defaultDayspan = 10
-			this.defaultPolygon = [[143.08593750000003,54.345565137665986],[125.33203125000001,29.195649047460172],[151.87500000000003,18.94300774825732],[166.64062500000003,49.012894879297036],[143.08593750000003,54.345565137665986]]
+			this.defaultPolygon = [[146.25000000000003,58.315645839486486],[101.95312500000001,13.336890292294035],[165.58593750000003,-22.176551235191518],[174.0234375,57.75732988507421],[146.25000000000003,58.315645839486486]]
 			this.defaultDayspan = helpers.calculateDayspan.bind(this)({'polygon':this.defaultPolygon})
 
       this.state = {
@@ -65,8 +65,8 @@ class ArgovisExplore extends React.Component {
       	this.state.argodeep = true
       	this.state.tc = true
       	this.state.goship = true
-      	this.state.startDate = '2019-06-01'
-      	this.state.endDate = '2019-08-01'
+      	this.state.startDate = '2019-06-03'
+      	this.state.endDate = '2019-09-01'
       }
 
       this.formRef = React.createRef()
@@ -76,8 +76,33 @@ class ArgovisExplore extends React.Component {
       this.apiPrefix = 'https://argovis-api.colorado.edu/'
       this.drifterApiPrefix = 'https://argovisbeta01.colorado.edu/dapi/'
       this.vocab = {}
+      this.wocelineLookup = {}
+      this.wocegroupLookup = {}
 
 			helpers.setQueryString.bind(this)()
+
+      // populate vocabularies, and trigger first render
+      let vocabURLs = [this.apiPrefix + 'summary?id=cchdo_occupancies', this.apiPrefix + 'cchdo/vocabulary?parameter=cchdo_cruise']
+			Promise.all(vocabURLs.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+				Promise.all(responses.map(res => res.json())).then(data => {
+					if(data[0].hasOwnProperty('code') && data[0].code === 401){
+						helpers.manageStatus.bind(this)('error', 'Invalid API key; see the "Get a free API key" link below.')
+					} else {
+						this.vocab['woceline'] = Object.keys(data[0][0].summary).map(key => {
+							this.wocegroupLookup[key] = {}
+							return data[0][0].summary[key].map((x,i) => {
+							let label = key + ' - ' + String(x.startDate.slice(0,7) )
+								this.wocelineLookup[label] = data[0][0].summary[key][i]			// for lookups by <woceline - start yyyy-mm>
+								this.wocegroupLookup[key][label] = [new Date(data[0][0].summary[key][i].startDate), new Date(data[0][0].summary[key][i].endDate)]   // for lookups by woceline
+								return label
+							}) 
+						})
+						this.vocab['woceline'] = [].concat(...this.vocab['woceline'])
+						this.vocab['cruise'] = data[1].map(x=>String(x))
+						this.setState({refreshData:true})
+					}
+				})
+			})
     }
 
     componentDidMount(){
@@ -306,12 +331,36 @@ class ArgovisExplore extends React.Component {
     	return urls
     }
 
+    genPlotURLs(point, state){
+    	if(point[point.length-1] === 'argo'){
+    		let regionLink = helpers.genRegionLink(state.polygon, state.startDate, state.endDate, state.centerlon, 'argo')
+    		return <div><a target="_blank" rel="noreferrer" href={'/plots/argo?showAll=true&argoPlatform='+point[0].split('_')[0]+'&centerlon='+this.state.centerlon}>Platform Page</a><br /><a target="_blank" rel="noreferrer" href={'/plots/argo?argoPlatform='+point[0].split('_')[0]+'&counterTraces=["'+point[0]+'"]&centerlon='+this.state.centerlon}>Profile Page</a>{regionLink}</div>
+    	} else if (point[point.length-1] === 'tc'){
+    		let regionLink = helpers.genRegionLink(state.polygon, state.startDate, state.endDate, state.centerlon, 'tc')
+    		return <div><a target="_blank" rel="noreferrer" href={'/plots/tc?showAll=true&tcMeta='+point[0].split('_')[0]+'&centerlon='+this.state.centerlon}>Cyclone Page</a>{regionLink}</div>
+    	} else if (point[point.length-1] === 'cchdo'){
+
+    		// determine the woceline occupancies for this point, if any; give an extra hour on either end to capture edges. 
+    		let woceoccupy = point[5].map(x => {
+    			let timespan = helpers.determineWoceGroup(x, new Date(point[3]), this.wocegroupLookup)
+    			timespan[0].setHours(timespan[0].getHours() - 1)
+    			timespan[1].setHours(timespan[1].getHours() + 1)
+    			return [x].concat(timespan)
+    		})
+
+    		let regionLink = helpers.genRegionLink(state.polygon, state.startDate, state.endDate, state.centerlon, 'ships')
+
+				return <div>{woceoccupy.map(x => {return(<span key={Math.random()}><a target="_blank" rel="noreferrer" href={'/plots/ships?showAll=true&woceline='+x[0]+'&startDate=' + x[1].toISOString().replace('.000Z', 'Z') + '&endDate=' + x[2].toISOString().replace('.000Z', 'Z')+'&centerlon='+this.state.centerlon}>{'Plots for ' + x[3]}</a><br /></span>)})} <a target="_blank" rel="noreferrer" href={'/plots/ships?showAll=true&cruise='+point[6]+'&centerlon='+this.state.centerlon}>{'Plots for cruise ' + point[6]}</a><br /><a target="_blank" rel="noreferrer" href={'/plots/ships?cruise='+point[6]+'&centerlon='+this.state.centerlon+'&counterTraces=["'+point[0]+'"]'}>Profile Page</a>{regionLink}</div>
+    	}
+    }
+
     genTooltip(point){
     	return(
 		    <Popup>
 		      ID: {point[0]} <br />
 		      Long / Lat: {helpers.mungePrecision(point[1])} / {helpers.mungePrecision(point[2])} <br />
-		      Date: {point[3]}
+		      Date: {point[3]}<br />
+		      {this.genPlotURLs(point, this.state)}
 		    </Popup>
     	)
     }
