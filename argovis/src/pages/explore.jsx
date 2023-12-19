@@ -332,13 +332,13 @@ class ArgovisExplore extends React.Component {
     }
 
     genPlotURLs(point, state){
-    	if(point[point.length-1] == 'argo'){
+    	if(point[point.length-1] === 'argo'){
     		let regionLink = helpers.genRegionLink(state.polygon, state.startDate, state.endDate, state.centerlon, 'argo')
     		return <div><a target="_blank" rel="noreferrer" href={'/plots/argo?showAll=true&argoPlatform='+point[0].split('_')[0]+'&centerlon='+this.state.centerlon}>Platform Page</a><br /><a target="_blank" rel="noreferrer" href={'/plots/argo?argoPlatform='+point[0].split('_')[0]+'&counterTraces=["'+point[0]+'"]&centerlon='+this.state.centerlon}>Profile Page</a>{regionLink}</div>
-    	} else if (point[point.length-1] == 'tc'){
+    	} else if (point[point.length-1] === 'tc'){
     		let regionLink = helpers.genRegionLink(state.polygon, state.startDate, state.endDate, state.centerlon, 'tc')
     		return <div><a target="_blank" rel="noreferrer" href={'/plots/tc?showAll=true&tcMeta='+point[0].split('_')[0]+'&centerlon='+this.state.centerlon}>Cyclone Page</a>{regionLink}</div>
-    	} else if (point[point.length-1] == 'cchdo'){
+    	} else if (point[point.length-1] === 'cchdo'){
 
     		// determine the woceline occupancies for this point, if any; give an extra hour on either end to capture edges. 
     		let woceoccupy = point[5].map(x => {
