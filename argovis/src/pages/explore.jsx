@@ -552,7 +552,7 @@ class ArgovisExplore extends React.Component {
 				      		<h6 style={{'color': '#888888'}}>Ship-based profiles</h6>
 					        <div className="form-check">
 										<input className="form-check-input" checked={this.state.woce} onChange={(v) => this.toggle(v)} type="checkbox" id='woce'></input>
-										<label className="form-check-label" htmlFor='woce'>Display WOCE ships <span style={{'color':this.chooseColor([null,null,null,null,['cchdo_woce'],'cchdo']), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
+										<label className="form-check-label" htmlFor='woce'>Display WOCE <span style={{'color':this.chooseColor([null,null,null,null,['cchdo_woce'],'cchdo']), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 						    	<div className="form-check">
 										<input className="form-check-input" checked={this.state.goship} onChange={(v) => this.toggle(v)} type="checkbox" id='goship'></input>

@@ -294,7 +294,7 @@ class ShipsExplore extends React.Component {
 									<h6>Subsets</h6>
 									<div className="form-check">
 										<input className="form-check-input" disabled={this.state.observingEntity} checked={this.state.woce} onChange={(v) => helpers.toggle.bind(this)(v, 'woce')} type="checkbox" id='woce'></input>
-										<label className="form-check-label" htmlFor='woce'>Display WOCE ships <span style={{'color':this.chooseColor([null,null,null,null,['cchdo_woce']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
+										<label className="form-check-label" htmlFor='woce'>Display WOCE <span style={{'color':this.chooseColor([null,null,null,null,['cchdo_woce']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 									<div className="form-check">
 										<input className="form-check-input" disabled={this.state.observingEntity} checked={this.state.goship} onChange={(v) => helpers.toggle.bind(this)(v, 'goship')} type="checkbox" id='goship'></input>
