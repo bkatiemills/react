@@ -148,7 +148,7 @@ class ShipPlots extends React.Component {
 				{helpers.plotHTML.bind(this)()}
 				<hr/>
 				<div className='row' style={{'width':'100vw'}}>
-					<div className='col-12' style={{'paddingLeft': '2em', 'paddingRight': '5em', 'height': '50vh', 'overflow': 'scroll'}}>
+					<div className='col-12 scrollit' style={{'paddingLeft': '2em', 'paddingRight': '5em', 'height': '50vh'}}>
 						<h5>Profiles</h5>
 						<a className="btn btn-primary" role='button' style={{'marginRight': '1em'}} href={this.csv} download={'shipProfiles.csv'}>Download Table CSV</a>
 						<a className="btn btn-primary" role='button' style={{'marginRight': '1em'}} href={this.json} download={'shipProfiles.json'}>Download Complete JSON</a>

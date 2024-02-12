@@ -791,7 +791,7 @@ helpers.prepPlotlyState = function(markerSize){
 							reversescale: this.state.reverseC,
 							colorbar: {
 								title: helpers.generateAxisTitle.bind(this)(this.state.cKey),
-								titleside: 'left',
+								titleside: 'right',
 								tickmode: this.state.cKey === 'timestamp' ? 'array' : 'auto',
 								ticktext: colortics[0],
 								tickvals: colortics[1]
@@ -849,8 +849,10 @@ helpers.prepPlotlyState = function(markerSize){
 
 helpers.plotHTML = function(){
 	return(
+		<>
+		<div style={{'width':'100vw', 'textAlign': 'center', 'padding':'0.5em', 'font-style':'italic'}} className='d-lg-none'>Scroll down for plot controls</div>
 		<div className='row' style={{'width':'100vw'}}>
-			<div className='col-3'>
+			<div className='col-lg-3 order-last order-lg-first'>
 				<fieldset ref={this.formRef}>
 					<span id='statusBanner' ref={this.statusReporting} className={'statusBanner busy'}>Downloading...</span>
 					<MapContainer style={{'height': '30vh'}} center={[25,parseFloat(this.state.centerlon)]} zoom={0} scrollWheelZoom={true}>
@@ -860,7 +862,7 @@ helpers.plotHTML = function(){
 						/>
 						{this.state.points}
 					</MapContainer>
-					<div className='mapSearchInputs overflow-scroll' style={{'height':'55vh'}}>
+					<div className='mapSearchInputs plotting-scrollit'>
 						<div className='verticalGroup'>
 							<h5>Axis Controls</h5>
 							<div className="form-floating mb-3">
@@ -1178,7 +1180,7 @@ helpers.plotHTML = function(){
 			</div>
 
 			{/* plots */}
-			<div className='col-9'>
+			<div className='col-lg-9'>
 					<h5 style={{'marginTop':'0.5em'}}>{this.state.title}</h5>
 			    <Plot
 			      data={this.data}
@@ -1189,6 +1191,7 @@ helpers.plotHTML = function(){
 			    />
 			</div>
 		</div>
+		</>
 	)
 }
 

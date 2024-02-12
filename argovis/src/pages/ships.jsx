@@ -36,7 +36,7 @@ class ShipsExplore extends React.Component {
 			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [],
 			urls: [],
 			depthRequired: q.has('depthRequired') ? q.get('depthRequired') : 0,
-			centerlon: q.has('centerlon') ? q.get('centerlon') : 0,
+			centerlon: q.has('centerlon') ? q.get('centerlon') : -30,
 			mapkey: Math.random()
 		}
 		this.state.maxDayspan = helpers.calculateDayspan.bind(this)(this.state)
@@ -196,11 +196,12 @@ class ShipsExplore extends React.Component {
 		console.log(this.state)
 		return(
 			<>
+				<div style={{'width':'100vw', 'textAlign': 'center', 'padding':'0.5em', 'font-style':'italic'}} className='d-lg-none'>Scroll down for search controls</div>
 				<div className='row' style={{'width':'100vw'}}>
-					<div className='col-3 overflow-auto'>
+					<div className='col-lg-3 order-last order-lg-first'>
 						<fieldset ref={this.formRef}>
 							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
-							<div className='mapSearchInputs overflow-scroll' style={{'height':'90vh'}}>
+							<div className='mapSearchInputs scrollit' style={{'height':'90vh'}}>
 								<h5>Explore Ship-Based Profiles</h5>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">
@@ -345,7 +346,7 @@ class ShipsExplore extends React.Component {
 					</div>
 
 					{/*leaflet map*/}
-					<div className='col-9'>
+					<div className='col-lg-9'>
 						<MapContainer key={this.state.mapkey} center={[25, parseFloat(this.state.centerlon)]} zoom={2} scrollWheelZoom={true}>
 							<TileLayer
 							attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
