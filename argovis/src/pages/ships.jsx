@@ -196,9 +196,9 @@ class ShipsExplore extends React.Component {
 		console.log(this.state)
 		return(
 			<>
-				<div style={{'width':'100vw', 'textAlign': 'center', 'padding':'0.5em', 'font-style':'italic'}} className='d-md-none'>Scroll down for search controls</div>
+				<div style={{'width':'100vw', 'textAlign': 'center', 'padding':'0.5em', 'font-style':'italic'}} className='d-lg-none'>Scroll down for search controls</div>
 				<div className='row' style={{'width':'100vw'}}>
-					<div className='col-sm-3 order-last order-md-first'>
+					<div className='col-lg-3 order-last order-lg-first'>
 						<fieldset ref={this.formRef}>
 							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
 							<div className='mapSearchInputs scrollit' style={{'height':'90vh'}}>
@@ -346,7 +346,7 @@ class ShipsExplore extends React.Component {
 					</div>
 
 					{/*leaflet map*/}
-					<div className='col-sm-9 order-xs-first order-md-last'>
+					<div className='col-lg-9'>
 						<MapContainer key={this.state.mapkey} center={[25, parseFloat(this.state.centerlon)]} zoom={2} scrollWheelZoom={true}>
 							<TileLayer
 							attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
