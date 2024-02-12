@@ -52,7 +52,7 @@ class ArgovisExplore extends React.Component {
        	cchdoother: q.has('cchdoother') ? q.get('cchdoother') === 'true' : false,
        	drifters: q.has('drifters') ? q.get('drifters') === 'true' : false,
        	tc: q.has('tc') ? q.get('tc') === 'true' : false,
-       	centerlon: q.has('centerlon') ? q.get('centerlon') : 0
+       	centerlon: q.has('centerlon') ? q.get('centerlon') : 140
       }
       this.customQueryParams = ['startDate', 'endDate', 'polygon', 'argocore', 'argobgc', 'argodeep', 'cchdoother', 'woce', 'goship', 'drifters', 'tc', 'centerlon']
 
@@ -456,13 +456,13 @@ class ArgovisExplore extends React.Component {
 		console.log(this.state)
 		return(
 			<>
+				<div style={{'width':'100vw', 'textAlign': 'center', 'padding':'0.5em', 'font-style':'italic'}} className='d-md-none'>Scroll down for search controls</div>
 				<div className='row' style={{'width':'100vw'}}>
-					
 					{/*search option sidebar*/}
-					<div className='col-3 overflow-auto'>
+					<div className='col-sm-3 order-last order-md-first'>
 						<fieldset ref={this.formRef}>
 							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
-							<div className='mapSearchInputs'>
+							<div className='mapSearchInputs scrollit' style={{'height':'90vh'}}>
 									<h5>Colocate datasets</h5>
 									<div className='verticalGroup'>
 										<div className="form-floating mb-3">
@@ -584,7 +584,7 @@ class ArgovisExplore extends React.Component {
 					</div>
 
 					{/*leaflet map*/}
-					<div className='col-9'>
+					<div className='col-sm-9 order-xs-first order-md-last'>
 						<MapContainer key={this.state.mapkey} center={[25, parseFloat(this.state.centerlon)]} zoom={2} scrollWheelZoom={true}>
 						  <TileLayer
 						    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

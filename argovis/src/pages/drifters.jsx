@@ -33,7 +33,7 @@ class DriftersExplore extends React.Component {
 			points: [],
 			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : this.defaultPolygon,
 			urls: [],
-			centerlon: q.has('centerlon') ? q.get('centerlon') : 0,
+			centerlon: q.has('centerlon') ? q.get('centerlon') : -70,
 			mapkey: Math.random()
 		}
 		this.state.maxDayspan = helpers.calculateDayspan.bind(this)(this.state)
@@ -123,11 +123,12 @@ class DriftersExplore extends React.Component {
 		console.log(this.state)
 		return(
 			<>
+				<div style={{'width':'100vw', 'textAlign': 'center', 'padding':'0.5em', 'font-style':'italic'}} className='d-md-none'>Scroll down for search controls</div>
 				<div className='row' style={{'width':'100vw'}}>
-					<div className='col-3 overflow-auto'>
+					<div className='col-sm-3 order-last order-md-first'>
 						<fieldset ref={this.formRef}>
 							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
-							<div className='mapSearchInputs'>
+							<div className='mapSearchInputs scrollit' style={{'height':'90vh'}}>
 								<h5>Explore Global Drifter Program</h5>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">
@@ -235,7 +236,7 @@ class DriftersExplore extends React.Component {
 					</div>
 
 					{/*leaflet map*/}
-					<div className='col-9'>
+					<div className='col-sm-9 order-xs-first order-md-last'>
 						<MapContainer key={this.state.mapkey} center={[25, parseFloat(this.state.centerlon)]} zoom={2} scrollWheelZoom={true}>
 							<TileLayer
 							attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

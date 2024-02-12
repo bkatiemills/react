@@ -182,11 +182,12 @@ class ArgoExplore extends React.Component {
 
 		return(
 			<>
+				<div style={{'width':'100vw', 'textAlign': 'center', 'padding':'0.5em', 'font-style':'italic'}} className='d-md-none'>Scroll down for search controls</div>
 				<div className='row' style={{'width':'100vw'}}>
-					<div className='col-3 overflow-auto'>
+					<div className='col-sm-3 order-last order-md-first'>
 						<fieldset ref={this.formRef}>
 							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
-							<div className='mapSearchInputs overflow-scroll' style={{'height':'90vh'}}> 
+							<div className='mapSearchInputs scrollit' style={{'height':'90vh'}}> 
 								<h5>Explore Argo Profiles</h5>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">
@@ -323,7 +324,7 @@ class ArgoExplore extends React.Component {
 					</div>
 
 					{/*leaflet map*/}
-					<div className='col-9'>
+					<div className='col-sm-9 order-xs-first order-md-last'>
 						<MapContainer key={this.state.mapkey} center={[25, parseFloat(this.state.centerlon)]} zoom={2} scrollWheelZoom={true}>
 							<TileLayer
 							attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

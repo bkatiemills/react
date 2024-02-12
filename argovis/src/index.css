@@ -108,4 +108,11 @@ hr {
 
 nav.navbar {
   z-index: 10000;
+  border-bottom: 1px solid black;
+}
+
+@media (min-width: 768px) {
+  .scrollit {
+    overflow: scroll;
+  }
 }
