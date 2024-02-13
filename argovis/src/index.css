@@ -96,10 +96,6 @@ hr {
   padding: 3em;
 }
 
-.aboutBlock{
-  padding: 3em 12em 3em 12em;
-}
-
 #explore-dropdown, #api-dropdown {
   background-color: #f8f9fa;
   border-color: #f8f9fa;
@@ -120,6 +116,10 @@ nav.navbar {
     overflow: scroll;
     height: 55vh;
   }
+
+  .aboutBlock{
+    padding: 3em 12em 3em 12em;
+  }
 }
 
 @media (max-width: 992px) {
@@ -131,5 +131,9 @@ nav.navbar {
 
   body {
     overflow-y: scroll;
+  }
+
+  .aboutBlock{
+    padding: 3em;
   }
 }

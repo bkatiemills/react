@@ -54,8 +54,8 @@ class ArgoAbout extends React.Component {
 
 						<h3>The Argovis team</h3>
 						<div className='row'>
-							<div className='col-2'><img alt='' src='donata_giglio2_crop.jpg' style={{'width':'100%'}}></img></div>
-							<div className='col-10'>
+							<div className='col-sm-2'><img alt='' src='donata_giglio2_crop.jpg' style={{'width':'100%'}}></img></div>
+							<div className='col-sm-10'>
 								<p><b>Donata Giglio</b> is an Assistant Professor in the Department of Atmospheric and Ocean
 								Science at University of Colorado Boulder and is the PI of the Argovis project. Her research 
 								interests are in large scale ocean-atmosphere dynamics, geophysical fluid dynamics, data science,
@@ -63,8 +63,8 @@ class ArgoAbout extends React.Component {
 							</div>
 						</div>
 						<div className='row' style={{'paddingTop': '1em'}}>
-							<div className='col-2'><img alt='' src='bill-selfie.png' style={{'width':'100%'}}></img></div>
-							<div className='col-10'>
+							<div className='col-sm-2'><img alt='' src='bill-selfie.png' style={{'width':'100%'}}></img></div>
+							<div className='col-sm-10'>
 								<p><b>Bill Mills</b> is a scientific software developer based in Brooklyn, NY. They
 								started their career by developing novel reconstruction algorithms in high energy particle 
 								physics for the ATLAS experiment at the LHC, and developed web apps for the nuclear
@@ -75,16 +75,16 @@ class ArgoAbout extends React.Component {
 							</div>
 						</div>
 						<div className='row' style={{'paddingTop': '1em'}}>
-							<div className='col-2'><img alt='' src='scanderbeg_head_shot_sm.jpg' style={{'width':'100%'}}></img></div>
-							<div className='col-10'>
+							<div className='col-sm-2'><img alt='' src='scanderbeg_head_shot_sm.jpg' style={{'width':'100%'}}></img></div>
+							<div className='col-sm-10'>
 								<p><b>Megan Scanderbeg</b> is the Argo Program Science Coordinator and the Argo Data Management Team 
 								Co-chair. She works at Scripps Institution of Oceanography and is interested in making 
 								oceanographic data freely available and understandable for all.</p>
 							</div>
 						</div>
 						<div className='row' style={{'paddingTop': '1em'}}>
-							<div className='col-2'><img alt='' src='ttucker_crop.jpg' style={{'width':'100%'}}></img></div>
-							<div className='col-10'>
+							<div className='col-sm-2'><img alt='' src='ttucker_crop.jpg' style={{'width':'100%'}}></img></div>
+							<div className='col-sm-10'>
 								<p><b>Tyler Tucker</b> lives and works (and plays) on the Big Island of Hawaii. He is currently
 								a scientific software engineer at the W. M. Keck Observatory on the Big Island. In 2019-2020, he
 								worked as a Research Assistant in Professor Giglio's group at University of Colorado Boulder. Tyler
