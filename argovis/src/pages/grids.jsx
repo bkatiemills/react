@@ -314,7 +314,7 @@ class Grids extends React.Component {
 		console.log(this.state)
 		return(
 			<>
-				<div style={{'width':'100vw', 'textAlign': 'center', 'padding':'0.5em', 'font-style':'italic'}} className='d-lg-none'>Scroll down for search controls</div>
+				<div style={{'width':'100vw', 'textAlign': 'center', 'padding':'0.5em', 'font-style':'italic'}} className='d-lg-none'>Use the right-hand scroll bar to scroll down for search controls</div>
 				<div className='row' style={{'width':'100vw'}}>	
 					{/*search option sidebar*/}
 					<div className='col-lg-3 order-last order-lg-first'>
@@ -392,9 +392,9 @@ class Grids extends React.Component {
 								  </defs>
 
 								  <rect width="100%" height="1em" fill="url(#grad)" />
-									<text style={{'transform': 'translate(0.2em, 1.5em) rotate(90deg)'}}>{this.unitTransform(this.state.min, this.scales)}</text>
-								  <text style={{'transform': 'translate(100%, 1.5em) rotate(90deg) translate(0, 1em)',}}>{this.unitTransform(this.state.max, this.scales)}</text>
-								  <text textAnchor="middle" style={{'transform': 'translate(50%, 2em)',}}>{this.scales+this.state.units}</text>
+									<text style={{'transform': 'translate(0.2em, 1.5em) rotate(90deg)', '-webkit-transform': 'translate(0.2em, 1.5em) rotate(90deg)'}}>{this.unitTransform(this.state.min, this.scales)}</text>
+								  <text style={{'transform': 'translate(100%, 1.5em) rotate(90deg) translate(0, 1em)', '-webkit-transform': 'translate(100%em, 1.5em) rotate(90deg)'}}>{this.unitTransform(this.state.max, this.scales)}</text>
+								  <text textAnchor="middle" style={{'transform': 'translate(50%, 2em)', '-webkit-transform':'translate(50%, 2em)'}}>{this.scales+this.state.units}</text>
 								</svg>
 							</div>
 						</fieldset>
