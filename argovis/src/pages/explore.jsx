@@ -456,7 +456,7 @@ class ArgovisExplore extends React.Component {
 		console.log(this.state)
 		return(
 			<>
-				<div style={{'width':'100vw', 'textAlign': 'center', 'padding':'0.5em', 'font-style':'italic'}} className='d-lg-none'>Scroll down for search controls</div>
+				<div style={{'width':'100vw', 'textAlign': 'center', 'padding':'0.5em', 'font-style':'italic'}} className='d-lg-none'>Use the right-hand scroll bar to scroll down for search controls</div>
 				<div className='row' style={{'width':'100vw'}}>
 					{/*search option sidebar*/}
 					<div className='col-lg-3 order-last order-lg-first'>
