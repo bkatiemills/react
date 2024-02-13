@@ -1187,7 +1187,7 @@ helpers.plotHTML = function(){
 			      onRelayout={e=>helpers.zoomSync.bind(this)(e)}
 			      layout={this.layout}
 			      style={{width: '100%', height: '90vh'}}
-			      config={{showTips: false}}
+			      config={{showTips: false, responsive: true}}
 			    />
 			</div>
 		</div>

@@ -121,3 +121,15 @@ nav.navbar {
     height: 55vh;
   }
 }
+
+@media (max-width: 992px) {
+  .tablewidth {
+    max-width: 100vw;
+    overflow: visible;
+    overflow-x: scroll;
+  }
+
+  body {
+    overflow-y: scroll;
+  }
+}
