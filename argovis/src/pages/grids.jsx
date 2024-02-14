@@ -374,7 +374,7 @@ class Grids extends React.Component {
 								</div>
 
 								
-								<svg style={{'width':'100%', 'marginTop': '1em'}} version="1.1" xmlns="http://www.w3.org/2000/svg">
+								<svg style={{'width':'100%', 'height':'1em', 'marginTop': '1em'}} version="1.1" xmlns="http://www.w3.org/2000/svg">
 								  <defs>
 								    <linearGradient id="grad" x1="0" x2="1" y1="0" y2="0">
 								      <stop offset="0%" stopColor={this.state.scale(this.state.colormin)} />
@@ -390,12 +390,13 @@ class Grids extends React.Component {
 								      <stop offset="100%" stopColor={this.state.scale(this.state.colormax)} />
 								    </linearGradient>
 								  </defs>
-
 								  <rect width="100%" height="1em" fill="url(#grad)" />
-									<text style={{'transform': 'translate(0.2em, 1.5em) rotate(90deg)', '-webkit-transform': 'translate(0.2em, 1.5em) rotate(90deg)'}}>{this.unitTransform(this.state.min, this.scales)}</text>
-								  <text style={{'transform': 'translate(100%, 1.5em) rotate(90deg) translate(0, 1em)', '-webkit-transform': 'translate(100%em, 1.5em) rotate(90deg)'}}>{this.unitTransform(this.state.max, this.scales)}</text>
-								  <text textAnchor="middle" style={{'transform': 'translate(50%, 2em)', '-webkit-transform':'translate(50%, 2em)'}}>{this.scales+this.state.units}</text>
 								</svg>
+								<div style={{'width':'100%', 'textAlign': 'center'}}>
+									<span style={{'writing-mode': 'vertical-rl', 'text-orientation': 'mixed', 'float': 'left', 'margin-top':'0.5em'}}>{this.unitTransform(this.state.min, this.scales)}</span>
+									<span>{this.scales+this.state.units}</span>
+									<span style={{'writing-mode': 'vertical-rl', 'text-orientation': 'mixed', 'float':'right', 'margin-top':'0.5em'}}>{this.unitTransform(this.state.max, this.scales)}</span>
+								</div>
 							</div>
 						</fieldset>
 					</div>
