@@ -33,7 +33,8 @@ class Grids extends React.Component {
       	refreshData: true,
       	apiKey: localStorage.getItem('apiKey') ? localStorage.getItem('apiKey') : 'guest',
       	subgrid: q.has('subgrid') ? q.get('subgrid') : false,
-      	scale: chroma.scale(['#440154', '#482777', '#3f4a8a', '#31678e', '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825'])
+      	scale: chroma.scale(['#440154', '#482777', '#3f4a8a', '#31678e', '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825']),
+      	centerlon: -70
       }
       this.state.subtimestep = q.has('subtimestep') ? q.get('subtimestep') : this.state.timestep
       this.state.units = {
@@ -314,7 +315,7 @@ class Grids extends React.Component {
 		console.log(this.state)
 		return(
 			<>
-				<div style={{'width':'100vw', 'textAlign': 'center', 'padding':'0.5em', 'font-style':'italic'}} className='d-lg-none'>Use the right-hand scroll bar to scroll down for search controls</div>
+				<div style={{'width':'100vw', 'textAlign': 'center', 'padding':'0.5em', 'fontStyle':'italic'}} className='d-lg-none'>Use the right-hand scroll bar to scroll down for search controls</div>
 				<div className='row' style={{'width':'100vw'}}>	
 					{/*search option sidebar*/}
 					<div className='col-lg-3 order-last order-lg-first'>
@@ -403,7 +404,7 @@ class Grids extends React.Component {
 
 					{/*leaflet map*/}
 					<div className='col-lg-9'>
-						<MapContainer center={[25, -70]} zoom={2} scrollWheelZoom={true}>
+						<MapContainer center={[25, this.state.centerlon]} maxBounds={[[-90,this.state.centerlon-180],[90,this.state.centerlon+180]]} zoomSnap={0.01} zoomDelta={1} zoom={2.05} minZoom={2.05} scrollWheelZoom={true}>
 						  <TileLayer
 						    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 						    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

@@ -118,7 +118,7 @@ class TCExplore extends React.Component {
 		console.log(this.state)
 		return(
 			<>
-				<div style={{'width':'100vw', 'textAlign': 'center', 'padding':'0.5em', 'font-style':'italic'}} className='d-lg-none'>Use the right-hand scroll bar to scroll down for search controls</div>
+				<div style={{'width':'100vw', 'textAlign': 'center', 'padding':'0.5em', 'fontStyle':'italic'}} className='d-lg-none'>Use the right-hand scroll bar to scroll down for search controls</div>
 				<div className='row' style={{'width':'100vw'}}>
 					<div className='col-lg-3 order-last order-lg-first'>
 						<fieldset ref={this.formRef}>
@@ -216,7 +216,7 @@ class TCExplore extends React.Component {
 
 					{/*leaflet map*/}
 					<div className='col-lg-9'>
-						<MapContainer key={this.state.mapkey} center={[25, parseFloat(this.state.centerlon)]} zoom={2} scrollWheelZoom={true}>
+						<MapContainer key={this.state.mapkey} center={[25, parseFloat(this.state.centerlon)]} maxBounds={[[-90,this.state.centerlon-180],[90,this.state.centerlon+180]]} zoomSnap={0.01} zoomDelta={1} zoom={2.05} minZoom={2.05} scrollWheelZoom={true}>
 							<TileLayer
 							attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 							url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
