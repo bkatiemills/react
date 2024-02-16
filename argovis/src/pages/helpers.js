@@ -13,7 +13,7 @@ helpers.onPolyCreate = function(payload){
 }
 
 helpers.onPolyDelete = function(defaultPoly, payload){
-	this.setState({polygon: defaultPoly, maxDayspan: this.defaultDayspan, startDate: this.earlier, endDate: this.today, refreshData: true})
+	this.setState({polygon: defaultPoly, maxDayspan: this.defaultDayspan, startDate: this.state.startDate, endDate: this.state.endDate, refreshData: true})
 }
 
 helpers.onPolyEdit = function(payload){
@@ -216,6 +216,7 @@ helpers.refreshMap = function(state){
 	helpers.manageStatus.bind(this)('rendering')
 
 	if(JSON.stringify(state.polygon) === '[]'){
+		console.log(8888)
 		helpers.clearLeafletDraw.bind(this)()
 	}
 
@@ -850,7 +851,7 @@ helpers.prepPlotlyState = function(markerSize){
 helpers.plotHTML = function(){
 	return(
 		<>
-		<div style={{'width':'100vw', 'textAlign': 'center', 'padding':'0.5em', 'font-style':'italic'}} className='d-lg-none'>Use the right-hand scroll bar to scroll down for plot controls</div>
+		<div style={{'width':'100vw', 'textAlign': 'center', 'padding':'0.5em', 'fontStyle':'italic'}} className='d-lg-none'>Use the right-hand scroll bar to scroll down for plot controls</div>
 		<div className='row' style={{'width':'100vw'}}>
 			<div className='col-lg-3 order-last order-lg-first'>
 				<fieldset ref={this.formRef}>

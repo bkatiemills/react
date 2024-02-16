@@ -18,7 +18,7 @@ class ArgovisExplore extends React.Component {
 			this.minArea = 1000000
 			this.maxArea = 10000000
 			this.defaultDayspan = 10
-			this.defaultPolygon = [[146.25000000000003,58.315645839486486],[101.95312500000001,13.336890292294035],[165.58593750000003,-22.176551235191518],[174.0234375,57.75732988507421],[146.25000000000003,58.315645839486486]]
+			this.defaultPolygon = [[-97.673601848372,22.885110124806],[-102.96337821312578,29.423999093502953],[-101.90542294017503,35.08813382357759],[-96.49809598953782,39.66434175349062],[-90.62056669536695,43.70195227382903],[-82.50957626941113,47.56429889487994],[-74.3985858434553,49.739009952924114],[-64.52433662924821,50.716917706856776],[-57.00109913270949,50.4181580475676],[-47.24440050438584,48.74098923312187],[-39.72116300784711,46.36057030355044],[-33.72608312779282,43.18971187199796],[-27.263085342297984,36.613054011709224],[-26.086555175241674,29.11626649340519],[-30.08675774323312,21.360090709822067],[-38.087162879216116,14.654857870125182],[-47.61705723237225,10.524339189723026],[-58.794093819407266,9.250074393405415],[-68.79460023938596,11.447818472507375],[-72.79480280737744,12.94196371139217],[-77.50092347560269,9.598086459248549],[-81.50112604359414,9.829896891316018],[-83.38357431088428,11.332543160952566],[-83.26592129417863,14.768594001462352],[-85.26602257817437,16.805273170537433],[-88.56030704593205,16.467266454192085],[-87.14847084546449,20.15056092317585],[-87.14847084546449,22.12466319561307],[-90.08979626310527,21.360090709822067],[-92.20755056380663,18.93158885095828],[-95.50183503156434,19.375913925110194],[-97.673601848372,22.885110124806]]
 			this.defaultDayspan = helpers.calculateDayspan.bind(this)({'polygon':this.defaultPolygon})
 
       this.state = {
@@ -52,7 +52,7 @@ class ArgovisExplore extends React.Component {
        	cchdoother: q.has('cchdoother') ? q.get('cchdoother') === 'true' : false,
        	drifters: q.has('drifters') ? q.get('drifters') === 'true' : false,
        	tc: q.has('tc') ? q.get('tc') === 'true' : false,
-       	centerlon: q.has('centerlon') ? q.get('centerlon') : 140
+       	centerlon: q.has('centerlon') ? parseFloat(q.get('centerlon')) : -70
       }
       this.customQueryParams = ['startDate', 'endDate', 'polygon', 'argocore', 'argobgc', 'argodeep', 'cchdoother', 'woce', 'goship', 'drifters', 'tc', 'centerlon']
 
@@ -611,7 +611,7 @@ class ArgovisExplore extends React.Component {
                     						}
 						      }}
 						    />
-						    <Polygon key={JSON.stringify(this.state.polygon)} positions={this.state.polygon.map(x => [x[1],helpers.mutateLongitude(x[0], this.state.centerlon)])} fillOpacity={0}></Polygon>
+						    <Polygon key={Math.random()} positions={this.state.polygon.map(x => [x[1],helpers.mutateLongitude(x[0], this.state.centerlon)])} fillOpacity={0}></Polygon>
 						  </FeatureGroup>
 						  {this.state.points.argo}
 						  {this.state.points.cchdo}

@@ -34,7 +34,7 @@ class ArgoExplore extends React.Component {
 			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [],
 			urls: [],
 			depthRequired: q.has('depthRequired') ? q.get('depthRequired') : 0,
-			centerlon: q.has('centerlon') ? q.get('centerlon') : 0,
+			centerlon: q.has('centerlon') ? parseFloat(q.get('centerlon')) : -160,
 			mapkey: Math.random(),
 			nCore: 0,
 			nBGC: 0,
@@ -351,7 +351,7 @@ class ArgoExplore extends React.Component {
 									}
 								}}
 								/>
-								<Polygon key={JSON.stringify(this.state.polygon)} positions={this.state.polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
+								<Polygon key={Math.random()} positions={this.state.polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
 							</FeatureGroup>
 							{this.state.points}
 						</MapContainer>
