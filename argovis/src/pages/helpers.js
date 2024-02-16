@@ -216,7 +216,6 @@ helpers.refreshMap = function(state){
 	helpers.manageStatus.bind(this)('rendering')
 
 	if(JSON.stringify(state.polygon) === '[]'){
-		console.log(8888)
 		helpers.clearLeafletDraw.bind(this)()
 	}
 
