@@ -42,6 +42,11 @@ class Grids extends React.Component {
       	'rg09_salinity':  'psu',
       	'kg21_ohc15to300': 'J/m^2'
       }[this.state.selectedGrid]
+      this.state.levelunits = {
+      	'rg09_temperature': 'dbar',
+      	'rg09_salinity':  'dbar',
+      	'kg21_ohc15to300': 'integral, 15-300 dbar'
+      }[this.state.selectedGrid]
       this.rawLevels = {
       	'rg09_temperature': [2.5,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,182.5,200,220,240,260,280,300,320,340,360,380,400,420,440,462.5,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1412.5,1500,1600,1700,1800,1900,1975],
       	'rg09_salinity': [2.5,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,182.5,200,220,240,260,280,300,320,340,360,380,400,420,440,462.5,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1412.5,1500,1600,1700,1800,1900,1975],
@@ -334,7 +339,7 @@ class Grids extends React.Component {
 								<div>
 									<div className='row'>
 										<div className='col-12'>
-											<small className="form-text text-muted">Depth Layer [dbar]</small>
+											<small className="form-text text-muted">Depth Layer [{this.state.levelunits}]</small>
 											<select className="form-select" value={this.state.levelindex} onChange={(v) => this.changeLevel(v, 'levelindex')}>
 												{this.levels}
 											</select>
