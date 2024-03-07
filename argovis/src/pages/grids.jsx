@@ -334,7 +334,7 @@ class Grids extends React.Component {
 								<div>
 									<div className='row'>
 										<div className='col-12'>
-											<small className="form-text text-muted">Depth Layer [m]</small>
+											<small className="form-text text-muted">Depth Layer [dbar]</small>
 											<select className="form-select" value={this.state.levelindex} onChange={(v) => this.changeLevel(v, 'levelindex')}>
 												{this.levels}
 											</select>

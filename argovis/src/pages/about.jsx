@@ -38,6 +38,13 @@ class ArgoAbout extends React.Component {
 
 						<h3>News & events</h3>
 						<ul>
+							<li><b>29 April - 1 May 2024:</b> Online Argovis Hackathon (links coming soon!)</li>
+							<li>In person Argovis working sessions:
+								<ul>
+									<li><b>March 26 2024, 10:30-12:30 PT:</b> Scripps Institution of Oceanography, University of California San Diego</li>
+									<li><b>April 16 2024, 10:30-12:30 MT:</b> University of Colorado Boulder</li>
+								</ul>
+							</li>
 							<li><b>19-22 February 2024:</b> Argovis booth at <a href='https://www.agu.org/ocean-sciences-meeting' target="_blank" rel="noreferrer">OSM2024</a></li>
 							<li><b>14-16 June 2022:</b> Argovis featured at the <a href='https://www.conftool.org/earthcube2022/sessions.php' target="_blank" rel="noreferrer">2022 EarthCube Annual Meeting</a></li>
 							<li><b>2-4 May 2022:</b> <a href='https://argovis.colorado.edu/docs/Argovis_Events.html' target="_blank" rel="noreferrer">Argovis Hackathon (supported by EarthCube TAC)</a></li>
@@ -65,7 +72,7 @@ class ArgoAbout extends React.Component {
 						<div className='row' style={{'paddingTop': '1em'}}>
 							<div className='col-sm-2'><img alt='' src='bill-selfie.png' style={{'width':'100%'}}></img></div>
 							<div className='col-sm-10'>
-								<p><b>Bill Mills</b> is a scientific software developer based in Brooklyn, NY. They
+								<p><b>Bill Katie-Anne Mills</b> is a scientific software developer based in Brooklyn, NY. They
 								started their career by developing novel reconstruction algorithms in high energy particle 
 								physics for the ATLAS experiment at the LHC, and developed web apps for the nuclear
 								structure community for years before heading to the private sector to teach organizations

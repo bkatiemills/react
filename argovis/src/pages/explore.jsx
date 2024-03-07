@@ -65,8 +65,8 @@ class ArgovisExplore extends React.Component {
       	this.state.argodeep = true
       	this.state.tc = true
       	this.state.goship = true
-      	this.state.startDate = '2019-06-03'
-      	this.state.endDate = '2019-09-01'
+      	this.state.startDate = '2017-04-01'
+      	this.state.endDate = '2017-06-30'
       }
 
       this.formRef = React.createRef()
