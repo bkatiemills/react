@@ -8,15 +8,97 @@ let helpers = {}
 
 // polygon management
 
+helpers.insertPointsInPolygon = function(coordinates) {
+    let insertedPoints = [];
+
+		for (let i = 0; i < coordinates.length-1; i++) {
+	    const distance = helpers.calculateDistance(coordinates[i], coordinates[i+1]);
+	    const numPoints = Math.min(Math.ceil(distance / 100), Math.floor(100/coordinates.length)); // ie put a point every 100 km, but not more than about 100 points per polygon
+
+			insertedPoints.push(coordinates[i])
+
+      for (let k = 0; k < numPoints; k++) {
+          let interpolatedPoint = helpers.interpolatePoint(coordinates[i], coordinates[i+1], k/numPoints);
+          insertedPoints.push(interpolatedPoint);
+      }
+		}    
+
+    insertedPoints.push(insertedPoints[0])
+
+    return insertedPoints
+}
+
+helpers.calculateDistance = function(point1, point2) {
+    const lon1 = point1[0]
+    const lat1 = point1[1]
+    const lon2 = point2[0]
+    const lat2 = point2[1]
+
+    const toRadians = (degrees) => degrees * (Math.PI / 180);
+    const earthRadius = 6371; // Earth's radius in kilometers
+
+    const deltaLat = toRadians(lat2 - lat1);
+    const deltaLon = toRadians(lon2 - lon1);
+
+    const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+        Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+        Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    const distance = earthRadius * c;
+    return distance;
+}
+
+helpers.interpolatePoint = function(startPoint, endPoint, fraction) {
+    const lon1 = startPoint[0]
+    const lat1 = startPoint[1]
+    const lon2 = endPoint[0]
+    const lat2 = endPoint[1]
+
+    const toRadians = (degrees) => degrees * (Math.PI / 180);
+    const toDegrees = (radians) => radians * (180 / Math.PI);
+
+    const deltaLon = (Math.PI / 180)*(lon2 - lon1);
+
+    const lat1Rad = toRadians(lat1);
+    const lat2Rad = toRadians(lat2);
+    const lon1Rad = toRadians(lon1);
+
+    const bearing = Math.atan2(
+        Math.sin(deltaLon) * Math.cos(lat2Rad),
+        Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(deltaLon)
+    );
+
+    const angularDistance = Math.acos(Math.sin(lat1Rad) * Math.sin(lat2Rad) + Math.cos(lat1Rad) * Math.cos(lat2Rad) * Math.cos(deltaLon));
+
+    const interpolatedLat = Math.asin(Math.sin(lat1Rad) * Math.cos(fraction * angularDistance) + Math.cos(lat1Rad) * Math.sin(fraction * angularDistance) * Math.cos(bearing));
+    const interpolatedLon = lon1Rad + Math.atan2(Math.sin(bearing) * Math.sin(fraction * angularDistance) * Math.cos(lat1Rad), Math.cos(fraction * angularDistance) - Math.sin(lat1Rad) * Math.sin(interpolatedLat));
+
+    const interpolatedPoint = [toDegrees(interpolatedLon), toDegrees(interpolatedLat)];
+    
+    return interpolatedPoint;
+}
+
 helpers.onPolyCreate = function(payload){
-	helpers.fetchPolygon.bind(this)(payload.layer.getLatLngs()[0])
+
+	let original_vertexes = payload.layer.getLatLngs()[0]
+	let vertexes = original_vertexes.map(x => [x['lng'], x['lat']])
+	vertexes.push(vertexes[0])
+	vertexes = helpers.insertPointsInPolygon(vertexes)
+	vertexes = vertexes.map(x => ({'lng': x[0], 'lat': x[1]}))
+	payload.layer.setLatLngs(vertexes)
+
+	helpers.fetchPolygon.bind(this)(original_vertexes)
 }
 
 helpers.onPolyDelete = function(defaultPoly, payload){
+
 	this.setState({polygon: defaultPoly, maxDayspan: this.defaultDayspan, startDate: this.state.startDate, endDate: this.state.endDate, refreshData: true})
 }
 
 helpers.onPolyEdit = function(payload){
+
 	payload.layers.eachLayer(layer => helpers.fetchPolygon.bind(this)(layer.getLatLngs()[0]))
 }
 
@@ -38,6 +120,7 @@ helpers.manageAllowedDates = function(vertexes){
 
 	let s = {...this.state}
 	s.polygon = vertexes
+	s.interpolated_polygon = helpers.insertPointsInPolygon(vertexes)
 
 	let maxdays = helpers.calculateDayspan.bind(this)(s)
 	s.maxDayspan = maxdays

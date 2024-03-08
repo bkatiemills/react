@@ -123,7 +123,7 @@ class ArgoAbout extends React.Component {
 						<p><b>In addition to citing Argovis, please cite the reference for the dataset you are using, enumerated below:</b></p>
 						<ul>
 							<li><b>Argo data</b>: see <a href='https://argo.ucsd.edu/data/acknowledging-argo/#:~:text=To%20acknowledge%20Argo%2C%20please%20use,ocean%2Dops.org).' target="_blank" rel="noreferrer"> guidance from the Argo collaboration</a></li>
-							<li><b>Ship-based profiles</b>: TBD</li>
+							<li><b>Ship-based profiles</b>: CCHDO Hydrographic Data Office (2023). CCHDO Hydrographic Data Archive, Version 2023-09-01. In CCHDO Hydrographic Data Archive. UC San Diego Library Digital Collections. <a href='https://doi.org/10.6075/J0CCHDT8'>https://doi.org/10.6075/J0CCHDT8</a></li>
 							<li><b>Global Drifter Program</b>: Cite as: Elipot, Shane; Sykulski, Adam; Lumpkin, Rick; Centurioni, Luca; Pazos, Mayra (2022). Hourly location, current velocity, and temperature collected from Global Drifter Program drifters world-wide. [indicate subset used]. NOAA National Centers for Environmental Information. Dataset. <a href='https://doi.org/10.25921/x46c-3620' target="_blank" rel="noreferrer">https://doi.org/10.25921/x46c-3620</a>. Accessed [date].</li>
 							<li><b>Tropical cyclone data</b>:
 								<ul>
