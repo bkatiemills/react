@@ -32,6 +32,7 @@ class ArgoExplore extends React.Component {
 			refreshData: true,
 			points: [],
 			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [],
+			interpolated_polygon: q.has('polygon') ? helpers.insertPointsInPolygon(JSON.parse(q.get('polygon'))) : [],
 			urls: [],
 			depthRequired: q.has('depthRequired') ? q.get('depthRequired') : 0,
 			centerlon: q.has('centerlon') ? parseFloat(q.get('centerlon')) : -160,
@@ -40,6 +41,7 @@ class ArgoExplore extends React.Component {
 			nBGC: 0,
 			nDeep: 0
 		}
+
 		this.state.maxDayspan = helpers.calculateDayspan.bind(this)(this.state)
 
 		helpers.mungeTime.bind(this)(q, this.state.maxDayspan)
@@ -351,7 +353,7 @@ class ArgoExplore extends React.Component {
 									}
 								}}
 								/>
-								<Polygon key={Math.random()} positions={this.state.polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
+								<Polygon key={Math.random()} positions={this.state.interpolated_polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
 							</FeatureGroup>
 							{this.state.points}
 						</MapContainer>

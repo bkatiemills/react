@@ -29,6 +29,7 @@ class TCExplore extends React.Component {
 			refreshData: false,
 			points: [],
 			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [],
+			interpolated_polygon: q.has('polygon') ? helpers.insertPointsInPolygon(JSON.parse(q.get('polygon'))) : [],
 			urls: [],
 			centerlon: q.has('centerlon') ? parseFloat(q.get('centerlon')) : -70,
 			mapkey: Math.random()
@@ -242,7 +243,7 @@ class TCExplore extends React.Component {
 									}
 								}}
 								/>
-								<Polygon key={Math.random()} positions={this.state.polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
+								<Polygon key={Math.random()} positions={this.state.interpolated_polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
 							</FeatureGroup>
 							{this.state.points}
 						</MapContainer>

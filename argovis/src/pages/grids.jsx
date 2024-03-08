@@ -9,7 +9,7 @@ class Grids extends React.Component {
     constructor(props) {
       super(props);
 
-      this.defaultPolygon = [[-52.382812,53.225768],[-62.050781,48.107431],[-72.773438,43.325178],[-77.695313,37.996163],[-81.5625,32.990236],[-82.089844,27.683528],[-78.925781,22.755921],[-71.547389,23.008026],[-64.160156,22.917923],[-57.673458,28.712256],[-50.449219,34.161818],[-40.078125,44.590467],[-35.683594,51.618017],[-43.066406,54.265224],[-52.382812,53.225768]]
+      this.defaultPolygon = helpers.insertPointsInPolygon([[-52.382812,53.225768],[-62.050781,48.107431],[-72.773438,43.325178],[-77.695313,37.996163],[-81.5625,32.990236],[-82.089844,27.683528],[-78.925781,22.755921],[-71.547389,23.008026],[-64.160156,22.917923],[-57.673458,28.712256],[-50.449219,34.161818],[-40.078125,44.590467],[-35.683594,51.618017],[-43.066406,54.265224],[-52.382812,53.225768]])
 
       let q = new URLSearchParams(window.location.search) // parse out query string
       document.title = 'Argovis - Explore ' + q.get('grid') + ' grid'
@@ -19,6 +19,7 @@ class Grids extends React.Component {
       	subpoints: [],
       	data: [],
       	polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : this.defaultPolygon,
+      	interpolated_polygon: q.has('polygon') ? helpers.insertPointsInPolygon(JSON.parse(q.get('polygon'))) : this.defaultPolygon,
       	min: 0,
       	max: 1,
       	levelindex: q.has('levelindex') ? q.get('levelindex') : 0,
@@ -435,7 +436,7 @@ class Grids extends React.Component {
                     }
 						      }}
 						    />
-						    <Polygon key={Math.random()} positions={this.state.polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
+						    <Polygon key={Math.random()} positions={this.state.interpolated_polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
 						  </FeatureGroup>
               {this.state.grid}
 						</MapContainer>
