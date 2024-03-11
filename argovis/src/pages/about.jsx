@@ -41,8 +41,8 @@ class ArgoAbout extends React.Component {
 							<li><b>29 April - 1 May 2024:</b> Online Argovis Hackathon (links coming soon!)</li>
 							<li>In person Argovis working sessions:
 								<ul>
-									<li><b>March 26 2024, 10:30-12:30 PT:</b> Scripps Institution of Oceanography, University of California San Diego</li>
-									<li><b>April 16 2024, 10:30-12:30 MT:</b> University of Colorado Boulder</li>
+									<li><b>March 26 2024, 11:00-12:30 PT:</b> Scripps Institution of Oceanography, University of California San Diego</li>
+									<li><b>April 16 2024, 11:00-12:30 MT:</b> University of Colorado Boulder</li>
 								</ul>
 							</li>
 							<li><b>19-22 February 2024:</b> Argovis booth at <a href='https://www.agu.org/ocean-sciences-meeting' target="_blank" rel="noreferrer">OSM2024</a></li>
