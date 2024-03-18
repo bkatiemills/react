@@ -116,7 +116,7 @@ class ArgoAbout extends React.Component {
 							</div>
 						</div>
 
-						<h3>Identification of data sources</h3>
+						<h3 id='datasources'>Identification of data sources</h3>
 						<p><b>Citation for the Argovis web application and the Argovis database:</b> Tucker, T., D. Giglio, 
 						M. Scanderbeg, and S.S.P. Shen: Argovis: A Web Application for Fast Delivery, Visualization, and 
 						Analysis of Argo Data. J. Atmos. Oceanic Technol., 37, 401–416, <a href="https://doi.org/10.1175/JTECH-D-19-0041.1" target="_blank" rel="noreferrer">https://doi.org/10.1175/JTECH-D-19-0041.1</a></p>
