@@ -28,7 +28,7 @@ class Hackathon extends React.Component {
 						<ul>
 							<li><b>When:</b> April 29-May 1, 11am-1pm MT each day</li>
 							<li><b>Where:</b> online (on Zoom)</li>
-							<li><b>How to register for the event</b> (and receive the Zoom link to attend): <b>fill in <a href='https://docs.google.com/forms/d/e/1FAIpQLScgl0YXeKOXqfA10hWhSTg2CTV5vnmFYhuUdZksBAYe0gwMTw/viewform'>this Google form</a> by Friday, April 12, 2024</b></li>
+							<li><b>How to register for the event</b> (and receive the Zoom link to attend): <b>fill in <a href='https://docs.google.com/forms/d/e/1FAIpQLScgl0YXeKOXqfA10hWhSTg2CTV5vnmFYhuUdZksBAYe0gwMTw/viewform' target="_blank" rel="noreferrer">this Google form</a> by Friday, April 12, 2024</b></li>
 						</ul>
 
 						<p>
@@ -41,7 +41,7 @@ class Hackathon extends React.Component {
 						</p>
 
 						<p>
-							Argovis (<a href='https://argovis.colorado.edu'>argovis.colorado.edu</a>) is a data search, distribution, and visualization service developed at the University of Colorado Boulder that leverages modern technologies to enable <b>targeted searches of and fast access to</b> oceanic profiles (from Argo profiling floats and GO-SHIP hydrography) and derived gridded products, drifter observations, weather events, and satellite data products. (Please find a full list of datasets currently in Argovis at the end of the page).  
+							Argovis (<a href='https://argovis.colorado.edu' target="_blank" rel="noreferrer">argovis.colorado.edu</a>) is a data search, distribution, and visualization service developed at the University of Colorado Boulder that leverages modern technologies to enable <b>targeted searches of and fast access to</b> oceanic profiles (from Argo profiling floats and GO-SHIP hydrography) and derived gridded products, drifter observations, weather events, and satellite data products. (Please find a full list of datasets currently in Argovis at the end of the page).  
 						</p>
 
 						<p>
@@ -61,7 +61,14 @@ class Hackathon extends React.Component {
 							<li>Other: BSOSE (in progress), Argo trajectories, ARGONE </li>
 						</ul>
 
-						<p>*Dataset details at <a href='https://argovis.colorado.edu/about#datasources'>https://argovis.colorado.edu/about</a></p>
+						<p>*Dataset details at <a href='https://argovis.colorado.edu/about#datasources' target="_blank" rel="noreferrer">https://argovis.colorado.edu/about</a></p>
+
+						<h4>Notes and resources</h4>
+						<ul>
+							<li>UCSD DataHub: <a href='https://datahub.ucsd.edu/hub' target="_blank" rel="noreferrer">https://datahub.ucsd.edu/hub</a></li>
+							<li>Cloning Argovis demo notebooks: <pre style={{'display':'inline'}}>git clone https://github.com/argovis/demo_notebooks</pre> </li>
+							<li>Feedback form (26 March): <a href='https://docs.google.com/forms/d/e/1FAIpQLSdKLD0S3D9N2mgfp7eJTS27CO4d8MhU4ezciEV3ubmMcPWZTQ/viewform' target="_blank" rel="noreferrer">https://docs.google.com/forms/d/e/1FAIpQLSdKLD0S3D9N2mgfp7eJTS27CO4d8MhU4ezciEV3ubmMcPWZTQ/viewform</a></li>
+						</ul>
 
 						<div className='row'>
 							<div className='col-12' style={{'textAlign': 'center'}}>
