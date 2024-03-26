@@ -177,7 +177,7 @@ class ArgoAbout extends React.Component {
 						<p>argovis@colorado.edu</p>
 						<p>Donata Giglio, University of Colorado Boulder</p>
 						<p>donata.giglio@colorado.edu</p>
-						<p>Bill Mills, University of Colorado Boulder</p>
+						<p>Katie Mills, University of Colorado Boulder</p>
 						<p>william.mills-1@colorado.edu</p>
 						<p>Megan Scanderbeg, Scripps Institution of Oceanography</p>
 						<p>mscanderbeg@ucsd.edu</p>

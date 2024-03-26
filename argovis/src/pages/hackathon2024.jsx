@@ -70,6 +70,7 @@ class Hackathon extends React.Component {
 							<li>Cloning Argovis demo notebooks: <pre style={{'display':'inline'}}>git clone https://github.com/argovis/demo_notebooks</pre> </li>
 							<li>Feedback form (26 March): <a href='https://docs.google.com/forms/d/e/1FAIpQLSdKLD0S3D9N2mgfp7eJTS27CO4d8MhU4ezciEV3ubmMcPWZTQ/viewform' target="_blank" rel="noreferrer">https://docs.google.com/forms/d/e/1FAIpQLSdKLD0S3D9N2mgfp7eJTS27CO4d8MhU4ezciEV3ubmMcPWZTQ/viewform</a></li>
 							<li>API docs: <a href='https://argovis-api.colorado.edu/docs/' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/docs/</a></li>
+							<li>Zoom root: https://cuboulder.zoom.us/j/</li>
 
 						</ul>
 
