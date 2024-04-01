@@ -32,7 +32,7 @@ class Hackathon extends React.Component {
 						</ul>
 
 						<p>
-							For questions about the event, please email: <a href="mailto:donata.giglio@colorado.edu">donata.giglio@colorado.edu</a> or <a href='mscanderbeg@colorado.edu'>mscanderbeg@colorado.edu</a>.
+							For questions about the event, please email: <a href="mailto:donata.giglio@colorado.edu">donata.giglio@colorado.edu</a> or <a href='mscanderbeg@ucsd.edu'>mscanderbeg@ucsd.edu</a>.
 						</p>
 
 						<h4>Description</h4>
@@ -71,6 +71,7 @@ class Hackathon extends React.Component {
 							<li>Feedback form (26 March): <a href='https://docs.google.com/forms/d/e/1FAIpQLSdKLD0S3D9N2mgfp7eJTS27CO4d8MhU4ezciEV3ubmMcPWZTQ/viewform' target="_blank" rel="noreferrer">https://docs.google.com/forms/d/e/1FAIpQLSdKLD0S3D9N2mgfp7eJTS27CO4d8MhU4ezciEV3ubmMcPWZTQ/viewform</a></li>
 							<li>API docs: <a href='https://argovis-api.colorado.edu/docs/' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/docs/</a></li>
 							<li>Zoom root: https://cuboulder.zoom.us/j/</li>
+							<li>Docker image for notebook environment: <a href='https://hub.docker.com/repository/docker/argovis/notebooks/general'>https://hub.docker.com/repository/docker/argovis/notebooks/general</a></li>
 
 						</ul>
 
