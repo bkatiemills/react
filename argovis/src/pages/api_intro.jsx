@@ -86,7 +86,9 @@ class APIintro extends React.Component {
 						<p><a href='https://argovis-api.colorado.edu/argo/meta?id=4901283_m0' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/meta?id=4901283_m0</a></p>
 						<p>In addition to temporospatial searches, data and metadata routes typically support category searches, which are searches for documents that belong to certain categories. Which categories are available to search by changes logically from dataset to dataset; Argo floats can be searched by platform number, for example, while tropical cyclones can be searched by storm name. See the swagger docs for the full set of possibilities for each category; let's now use Argo's platform category search to get all profiles collected by the same platform as the metadata above:</p>
 						<p><a href='https://argovis-api.colorado.edu/argo?platform=4901283' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo?platform=4901283</a></p>
-						<p>For all category searches, we may wish to know the full list of all possible values a category can take on; for this, there are the vocabulary routes. Let's get a list of all possible Argo platforms we can search by:</p>
+						<p>For all category searches, we may wish to know the full list of all possible values a category can take on; for this, there are the vocabulary routes. All vocabulary routes support a parameter enum, to list what other categorical parameters are available to filter this dataset by:</p>
+						<p><a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=enum' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=enum</a></p>
+						<p>Evidently we can filter Argo data by platform, for example. Let's see what platforms are available:</p>
 						<p><a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform</a></p>
 
 						<h4>Using the data query option</h4>
