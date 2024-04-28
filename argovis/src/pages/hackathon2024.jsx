@@ -65,13 +65,24 @@ class Hackathon extends React.Component {
 
 						<h4>Notes and resources</h4>
 						<ul>
-							<li>UCSD DataHub: <a href='https://datahub.ucsd.edu/hub' target="_blank" rel="noreferrer">https://datahub.ucsd.edu/hub</a></li>
 							<li>Argovis demo notebooks: <a href='https://github.com/argovis/demo_notebooks' target="_blank" rel="noreferrer">https://github.com/argovis/demo_notebooks</a> </li>
 							<li>Cloning Argovis demo notebooks: <pre style={{'display':'inline'}}>git clone https://github.com/argovis/demo_notebooks</pre> </li>
-							<li>Feedback form (26 March): <a href='https://docs.google.com/forms/d/e/1FAIpQLSdKLD0S3D9N2mgfp7eJTS27CO4d8MhU4ezciEV3ubmMcPWZTQ/viewform' target="_blank" rel="noreferrer">https://docs.google.com/forms/d/e/1FAIpQLSdKLD0S3D9N2mgfp7eJTS27CO4d8MhU4ezciEV3ubmMcPWZTQ/viewform</a></li>
+							<li>Docker image for notebook environment: <a href='https://hub.docker.com/repository/docker/argovis/notebooks/general' target="_blank" rel="noreferrer">https://hub.docker.com/repository/docker/argovis/notebooks/general</a></li>
 							<li>API docs: <a href='https://argovis-api.colorado.edu/docs/' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/docs/</a></li>
-							<li>Zoom root: https://cuboulder.zoom.us/j/</li>
-							<li>Docker image for notebook environment: <a href='https://hub.docker.com/repository/docker/argovis/notebooks/general'>https://hub.docker.com/repository/docker/argovis/notebooks/general</a></li>
+							<li>
+								Slides:
+								<ul>
+									<li><a href='Argovis_working_session_CU_S2024_Giglio.pdf' target="_blank" rel="noreferrer">Slides (16 April)</a></li>
+									<li><a href='Argovis_hackathon_S2024_Giglio.pdf' target="_blank" rel="noreferrer">Slides (29 April)</a></li>
+								</ul>
+							</li>
+							<li>CU Boulder On Demand notebook environment: <a href='https://ondemand.rc.colorado.edu/pun/sys/dashboard/batch_connect/sessions' target="_blank" rel="noreferrer">https://ondemand.rc.colorado.edu/pun/sys/dashboard/batch_connect/sessions</a></li>
+							<li>UCSD DataHub: <a href='https://datahub.ucsd.edu/hub' target="_blank" rel="noreferrer">https://datahub.ucsd.edu/hub</a></li>
+							<li>Feedback form (1 May): <a href='https://docs.google.com/forms/d/e/1FAIpQLSfkB2f3Y2xxX8GbOJk1O5wmFTCa4-qPjX5ORV1tyPO4_WjFyQ/viewform' target="_blank" rel="noreferrer">https://docs.google.com/forms/d/e/1FAIpQLSfkB2f3Y2xxX8GbOJk1O5wmFTCa4-qPjX5ORV1tyPO4_WjFyQ/viewform</a></li>
+							
+
+							
+							
 
 						</ul>
 
