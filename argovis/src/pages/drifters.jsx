@@ -20,7 +20,7 @@ class DriftersExplore extends React.Component {
 		this.maxArea = 1000000
 		this.defaultDayspan = 0
 
-		this.defaultPolygon = helpers.insertPointsInPolygon([[-62.57812500000001,52.482780222078226],[-84.37500000000001,34.016241889667036],[-87.18750000000001,15.623036831528264],[-64.33593750000001,13.923403897723347],[-40.42968750000001,46.07323062540835],[-62.57812500000001,52.482780222078226]])
+		this.defaultPolygon = [[-62.57812500000001,52.482780222078226],[-84.37500000000001,34.016241889667036],[-87.18750000000001,15.623036831528264],[-64.33593750000001,13.923403897723347],[-40.42968750000001,46.07323062540835],[-62.57812500000001,52.482780222078226]]
 		// default state, pulling in query string specifications
 		this.state = {
 			observingEntity: false,
@@ -32,7 +32,7 @@ class DriftersExplore extends React.Component {
 			refreshData: false,
 			points: [],
 			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : this.defaultPolygon,
-			interpolated_polygon: q.has('polygon') ? helpers.insertPointsInPolygon(JSON.parse(q.get('polygon'))) : this.defaultPolygon,
+			interpolated_polygon: q.has('polygon') ? helpers.insertPointsInPolygon(JSON.parse(q.get('polygon'))) : helpers.insertPointsInPolygon(this.defaultPolygon),
 			urls: [],
 			centerlon: q.has('centerlon') ? parseFloat(q.get('centerlon')) : -70,
 			mapkey: Math.random()

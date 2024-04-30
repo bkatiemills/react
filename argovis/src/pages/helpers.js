@@ -11,17 +11,21 @@ let helpers = {}
 helpers.insertPointsInPolygon = function(coordinates) {
     let insertedPoints = [];
 
+    	if(coordinates.length == 0){
+    		return []
+    	}
+
 		for (let i = 0; i < coordinates.length-1; i++) {
 	    const distance = helpers.calculateDistance(coordinates[i], coordinates[i+1]);
 	    const numPoints = Math.min(Math.ceil(distance / 100), Math.floor(100/coordinates.length)); // ie put a point every 100 km, but not more than about 100 points per polygon
 
 			insertedPoints.push(coordinates[i])
 
-      for (let k = 0; k < numPoints; k++) {
-          let interpolatedPoint = helpers.interpolatePoint(coordinates[i], coordinates[i+1], k/numPoints);
-          insertedPoints.push(interpolatedPoint);
-      }
-		}    
+		    for (let k = 0; k < numPoints; k++) {
+		        let interpolatedPoint = helpers.interpolatePoint(coordinates[i], coordinates[i+1], k/numPoints);
+		        insertedPoints.push(interpolatedPoint);
+		    }
+		}
 
     insertedPoints.push(insertedPoints[0])
 
@@ -94,7 +98,7 @@ helpers.onPolyCreate = function(payload){
 
 helpers.onPolyDelete = function(defaultPoly, payload){
 
-	this.setState({polygon: defaultPoly, interpolated_polygon: defaultPoly, maxDayspan: this.defaultDayspan, startDate: this.state.startDate, endDate: this.state.endDate, refreshData: true})
+	this.setState({polygon: defaultPoly, interpolated_polygon: helpers.insertPointsInPolygon(defaultPoly), maxDayspan: this.defaultDayspan, startDate: this.state.startDate, endDate: this.state.endDate, refreshData: true})
 }
 
 helpers.fetchPolygon = function(coords){
