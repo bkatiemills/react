@@ -16,7 +16,8 @@ RUN npm install --force react-leaflet \
 						plotly.js \
 						leaflet-geometryutil \
 						react-bootstrap \
-						jest-canvas-mock
+						jest-canvas-mock \
+                                                react-datetime
 COPY argovis/src src
 COPY argovis/public public
 COPY argovis/package.json package.json

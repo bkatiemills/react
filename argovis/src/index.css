@@ -137,3 +137,7 @@ nav.navbar {
     padding: 3em;
   }
 }
+
+.invalid {
+  border: 1px solid red;
+}
