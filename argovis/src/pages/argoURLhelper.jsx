@@ -26,8 +26,8 @@ class ArgoURLhelper extends React.Component {
 
       temp_startDate: '',
       temp_endDate: '',
-      datesValid: true, polygonValid: true, boxValid: true, centerValid: true, radiusValid: true, profileSourceValid: true, mostRecentValid: true, dataValid: true, pressureRangeValid: true,
-      polygonTouched: false, boxTouched: false, centerTouched: false, radiusTouched: false, profileSourceTouched: false, mostRecentTouched: false, dataTouched: false, pressureRangeTouched: false,
+      datesValid: true, polygonValid: true, boxValid: true, centerValid: true, radiusValid: true, positionQCValid: true, profileSourceValid: true, mostRecentValid: true, dataValid: true, pressureRangeValid: true,
+      polygonTouched: false, boxTouched: false, centerTouched: false, radiusTouched: false, positionQCTouched: false, profileSourceTouched: false, mostRecentTouched: false, dataTouched: false, pressureRangeTouched: false,
     };
   }
 
@@ -149,6 +149,15 @@ class ArgoURLhelper extends React.Component {
     return !isNaN(first) && !isNaN(second) && first >= 0 && second >= 0 && second > first;
   }
 
+isLocationValid = () => {
+    const { polygon, box, center, radius } = this.state;
+    const centerAndRadiusDefined = center != null && center !== '' && radius != null && radius !== '';
+    const polygonDefined = polygon != null && polygon !== '';
+    const boxDefined = box != null && box !== '';
+
+    return (centerAndRadiusDefined ? 1 : 0) + (polygonDefined ? 1 : 0) + (boxDefined ? 1 : 0) <= 1;
+}
+
   handleDateBlur = (name) => {
     this.setState({
       [name]: this.state[`temp_${name}`].format('YYYY-MM-DDTHH:mm:ss'),
@@ -215,6 +224,13 @@ class ArgoURLhelper extends React.Component {
     });
   }
 
+  handlePositionQCChange = (event) => {
+    const positionQC = event.target.value;
+    const positionQCArray = positionQC.split(',').map(Number);
+    const positionQCValid = positionQCArray.every(num => Number.isInteger(num) && num >= -1 && num <= 9);
+    this.setState({ positionQC, positionQCValid });
+  }
+
   handleProfileSourceChange = (event) => {
     let profileSource = event.target.value;
     const isValid = this.isValidProfileSource(profileSource);
@@ -268,9 +284,11 @@ class ArgoURLhelper extends React.Component {
       data, pressureRange, batchMetadata,
       temp_startDate,
       temp_endDate,
-      datesValid, polygonValid, boxValid, centerValid, radiusValid, profileSourceValid, mostRecentValid, dataValid, pressureRangeValid,
-      polygonTouched, boxTouched, centerTouched, radiusTouched, profileSourceTouched, mostRecentTouched, dataTouched, pressureRangeTouched,
+      datesValid, polygonValid, boxValid, centerValid, radiusValid, positionQCValid, profileSourceValid, mostRecentValid, dataValid, pressureRangeValid,
+      polygonTouched, boxTouched, centerTouched, radiusTouched, positionQCTouched, profileSourceTouched, mostRecentTouched, dataTouched, pressureRangeTouched,
     } = this.state;
+
+    const locationValid = this.isLocationValid();    
 
     // Create an array of parameters
     const params = [
@@ -284,7 +302,7 @@ class ArgoURLhelper extends React.Component {
       metadata && `metadata=${encodeURIComponent(metadata)}`,
       platformId && `platform=${encodeURIComponent(platformId)}`,
       platformType && `platform_type=${encodeURIComponent(platformType)}`,
-      positionQC && `positionqc=${encodeURIComponent(positionQC)}`,
+      positionQC && `positionqc=${positionQC}`,
       profileSource && `source=${profileSource}`,
       compression && `compression=${encodeURIComponent(compression)}`,
       mostRecent && `mostrecent=${encodeURIComponent(mostRecent)}`,
@@ -302,209 +320,221 @@ class ArgoURLhelper extends React.Component {
     <div>
         <form>
             <div>
-                <label>
-                    Profile ID:
-                    <input type="text" name="profileId" value={profileId} onChange={this.handleChange} />
-                </label>
-            </div>
-            <div className={datesValid ? '' : 'invalid'}>
-                <label>
-                    Start Date:
-                    <Datetime
-                        dateFormat="YYYY-MM-DD"
-                        timeFormat="HH:mm:ss"
-                        value={this.state.temp_startDate}
-                        onChange={date => this.handleDateChange('startDate', date)}
-                        onBlur={() => this.handleDateBlur('startDate')}
-                    />
-                </label>
-                <label>
-                    End Date:
-                    <Datetime
-                        dateFormat="YYYY-MM-DD"
-                        timeFormat="HH:mm:ss"
-                        value={this.state.temp_endDate}
-                        onChange={date => this.handleDateChange('endDate', date)}
-                        onBlur={() => this.handleDateBlur('endDate')}
-                    />
-                </label>
-                {!datesValid && <span className="validation-message">Invalid dates. Start date must be before end date, if both are defined.</span>}
-            </div>
-            <div>
-                <label>
-                    Polygon:
-                    <input
-                        type="text"
-                        value={this.state.polygon}
-                        onChange={this.handlePolygonChange}
-                        onBlur={this.handleGenericBlur.bind(this, 'polygonTouched')}
-                        onFocus={this.handleGenericFocus.bind(this, 'polygonTouched')}
-                        className={polygonValid ? '' : 'invalid'}
-                    />
-                    {!polygonValid && !polygonTouched && <span className="validation-message">Invalid polygon. A valid polygon is an array of longitude, longitude pairs, for example: [[0,0],[0,1],[1,1],[1,0],[0,0]]. Notice the first and last vertexes match, per the geoJSON spec.</span>}
-                </label>
-            </div>
-            <div>
-                <label>
-                    Box:
-                    <input
-                        type="text"
-                        value={this.state.box}
-                        onChange={this.handleBoxChange}
-                        onBlur={this.handleGenericBlur.bind(this, 'boxTouched')}
-                        onFocus={this.handleGenericFocus.bind(this, 'boxTouched')}
-                        className={boxValid ? '' : 'invalid'}
-                    />
-                    {!boxValid && !boxTouched && <span className="validation-message">Invalid box. A valid box is descrbed by its southwest corner followed by its northeast corner, set as longitude,latitude, for example: [[0,0],[10,10]].</span>}
-                </label>
-            </div>
-            <div>
-                <label>
-                    Center:
-                    <input
-                        type="text"
-                        value={this.state.center}
-                        onChange={this.handleCenterChange}
-                        onBlur={this.handleGenericBlur.bind(this, 'centerTouched')}
-                        onFocus={this.handleGenericFocus.bind(this, 'centerTouched')}
-                        className={centerValid ? '' : 'invalid'}
-                    />
-                    {!centerValid && !centerTouched && <span className="validation-message">Invalid center. A valid center is descrbed by a longitude, latitude pair, for example: [0,0].</span>}
-                </label>
-                <label>
-                    Radius:
-                    <input
-                        type="text"
-                        value={this.state.radius}
-                        onChange={this.handleRadiusChange}
-                        onBlur={this.handleGenericBlur.bind(this, 'radiusTouched')}
-                        onFocus={this.handleGenericFocus.bind(this, 'radiusTouched')}
-                        className={radiusValid ? '' : 'invalid'}
-                    />
-                    {!radiusValid && !radiusTouched && <span className="validation-message">Invalid radius. A valid radius is descrbed by a single number, in kilometers.</span>}
-                </label>
-            </div>
-            <div>
-                <label>
-                    Metadata:
-                    <input type="text" name="metadata" value={metadata} onChange={this.handleChange} />
-                </label>
-            </div>
-            <div>
-                <label>
-                    Platform ID:
-                    <input type="text" name="platformId" value={platformId} onChange={this.handleChange} />
-                </label>
-            </div>
-            <div>
-                <label>
-                    Platform Type:
-                    <input type="text" name="platformType" value={platformType} onChange={this.handleChange} />
-                </label>
-            </div>
-            <div>
-                <label>
-                    Position QC:
-                    <select
-                        value={positionQC}
-                        onChange={this.handlePositionQCChange}
-                    >
-                        <option value="">No filter</option>
-                        {Array.from({length: 11}, (_, i) => i - 1).map(value => (
-                            <option key={value} value={value}>{value}</option>
-                        ))}
-                    </select>
-                </label>
-            </div>
-            <div>
-                <label>
-                    Profile Source:
-                    <input
-                        type="text"
-                        name="profileSource"
-                        value={this.state.profileSource}
-                        onChange={this.handleProfileSourceChange}
-                        onBlur={this.handleGenericBlur.bind(this, 'profileSourceTouched')}
-                        onFocus={this.handleGenericFocus.bind(this, 'profileSourceTouched')}
-                        className={profileSourceValid ? '' : 'invalid'}
-                    />
-                    {!profileSourceValid && !profileSourceTouched && <span className="validation-message">Invalid profile source. A valid profile source is a list of the tokens argo_core, argo_bgc, and / or argo_deep, each possibly negated with a ~. For example, argo_core,~argo_deep filters for argo core profiles that are not also argo deep profiles.</span>}
-                </label>
-            </div>
-            <div>
-                <label>
-                    Compression:
+                <h2>Temporospatial Filters</h2>
+                <div className={datesValid ? '' : 'invalid'}>
+                    <label>
+                        Start Date:
+                        <Datetime
+                            dateFormat="YYYY-MM-DD"
+                            timeFormat="HH:mm:ss"
+                            value={this.state.temp_startDate}
+                            onChange={date => this.handleDateChange('startDate', date)}
+                            onBlur={() => this.handleDateBlur('startDate')}
+                        />
+                    </label>
+                    <label>
+                        End Date:
+                        <Datetime
+                            dateFormat="YYYY-MM-DD"
+                            timeFormat="HH:mm:ss"
+                            value={this.state.temp_endDate}
+                            onChange={date => this.handleDateChange('endDate', date)}
+                            onBlur={() => this.handleDateBlur('endDate')}
+                        />
+                    </label>
+                    {!datesValid && <span className="validation-message">Invalid dates. Start date must be before end date, if both are defined.</span>}
+                </div>
+                <div className={locationValid ? '' : 'invalid'}>
                     <div>
                         <label>
+                            Polygon:
                             <input
-                                type="radio"
-                                value="none"
-                                checked={compression === null}
-                                onChange={this.handleCompressionChange}
+                                type="text"
+                                value={this.state.polygon}
+                                onChange={this.handlePolygonChange}
+                                onBlur={this.handleGenericBlur.bind(this, 'polygonTouched')}
+                                onFocus={this.handleGenericFocus.bind(this, 'polygonTouched')}
+                                className={polygonValid ? '' : 'invalid'}
                             />
-                            None
-                        </label>
-                        <label>
-                            <input
-                                type="radio"
-                                value="minimal"
-                                checked={compression === 'minimal'}
-                                onChange={this.handleCompressionChange}
-                            />
-                            Minimal
+                            {!polygonValid && !polygonTouched && <span className="validation-message">Invalid polygon. A valid polygon is an array of longitude, longitude pairs, for example: [[0,0],[0,1],[1,1],[1,0],[0,0]]. Notice the first and last vertexes match, per the geoJSON spec.</span>}
                         </label>
                     </div>
-                </label>
+                    <div>
+                        <label>
+                            Box:
+                            <input
+                                type="text"
+                                value={this.state.box}
+                                onChange={this.handleBoxChange}
+                                onBlur={this.handleGenericBlur.bind(this, 'boxTouched')}
+                                onFocus={this.handleGenericFocus.bind(this, 'boxTouched')}
+                                className={boxValid ? '' : 'invalid'}
+                            />
+                            {!boxValid && !boxTouched && <span className="validation-message">Invalid box. A valid box is descrbed by its southwest corner followed by its northeast corner, set as longitude,latitude, for example: [[0,0],[10,10]].</span>}
+                        </label>
+                    </div>
+                    <div>
+                        <label>
+                            Center:
+                            <input
+                                type="text"
+                                value={this.state.center}
+                                onChange={this.handleCenterChange}
+                                onBlur={this.handleGenericBlur.bind(this, 'centerTouched')}
+                                onFocus={this.handleGenericFocus.bind(this, 'centerTouched')}
+                                className={centerValid ? '' : 'invalid'}
+                            />
+                            {!centerValid && !centerTouched && <span className="validation-message">Invalid center. A valid center is descrbed by a longitude, latitude pair, for example: [0,0].</span>}
+                        </label>
+                        <label>
+                            Radius:
+                            <input
+                                type="text"
+                                value={this.state.radius}
+                                onChange={this.handleRadiusChange}
+                                onBlur={this.handleGenericBlur.bind(this, 'radiusTouched')}
+                                onFocus={this.handleGenericFocus.bind(this, 'radiusTouched')}
+                                className={radiusValid ? '' : 'invalid'}
+                            />
+                            {!radiusValid && !radiusTouched && <span className="validation-message">Invalid radius. A valid radius is descrbed by a single number, in kilometers.</span>}
+                        </label>
+                    </div>
+                    {!locationValid && <span className="validation-message">Invalid location. Please only specify one of polygon, box, or center plus radius.</span>}
+                </div>
             </div>
             <div>
-                <label>
-                    Most Recent:
-                    <input
-                        type="text"
-                        value={this.state.mostRecent}
-                        onChange={this.handleMostRecentChange}
-                        onBlur={this.handleGenericBlur.bind(this, 'mostRecentTouched')}
-                        onFocus={this.handleGenericFocus.bind(this, 'mostRecentTouched')}
-                        className={mostRecentValid ? '' : 'invalid'}
-                    />
-                    {!mostRecentValid && !mostRecentTouched && <span className="validation-message">Invalid most recent value. Most recent should be an integer, corresponding to the maximum number of profiles you want returned. Setting it to 7 means you'll get the 7 most chronologically recent profiles that match your other filter parameters. </span>}
-                </label>
+                <h2>Data Filters</h2>
+                <div>
+                    <label>
+                        Data:
+                        <input
+                            type="text"
+                            name="data"
+                            value={this.state.data}
+                            onChange={this.handleDataChange}
+                            onBlur={this.handleGenericBlur.bind(this, 'dataTouched')}
+                            onFocus={this.handleGenericFocus.bind(this, 'dataTouched')}
+                            className={dataValid ? '' : 'invalid'}
+                        />
+                        {!dataValid && !dataTouched && <span className="validation-message">Invalid data string. data should be a comma separated list of the measurements you want profiles for; you may also negate a parameter with ~ to get profiles that do not include this measurement. Furthermore, you can add 'all' to the list to get every measurement avaialble in the profile, or 'except-data-values' to perform the same filtering, but then suppress the actual data values (typically for mapping applications). See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=data' target="_blank" rel="noreferrer">this vocabulary</a> for a list of Argo data variables.</span>}
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        Pressure Range:
+                        <input
+                            type="text"
+                            name="pressureRange"
+                            value={this.state.pressureRange}
+                            onChange={this.handlePressureRangeChange}
+                            onBlur={this.handleGenericBlur.bind(this, 'pressureRangeTouched')}
+                            onFocus={this.handleGenericFocus.bind(this, 'pressureRangeTouched')}
+                            className={pressureRangeValid ? '' : 'invalid'}
+                        />
+                        {!pressureRangeValid && !pressureRangeTouched && <span className="validation-message">Invalid pressure range. Should be two comma separated numbers representing dbar below surface; so, 0,10 would filter for levels at the surface down to 10 dbar.</span>}
+                    </label>
+                </div>
             </div>
             <div>
-                <label>
-                    Data:
-                    <input
-                        type="text"
-                        name="data"
-                        value={this.state.data}
-                        onChange={this.handleDataChange}
-                        onBlur={this.handleGenericBlur.bind(this, 'dataTouched')}
-                        onFocus={this.handleGenericFocus.bind(this, 'dataTouched')}
-                        className={dataValid ? '' : 'invalid'}
-                    />
-                    {!dataValid && !dataTouched && <span className="validation-message">Invalid data string. data should be a comma separated list of the measurements you want profiles for; you may also negate a parameter with ~ to get profiles that do not include this measurement. Furthermore, you can add 'all' to the list to get every measurement avaialble in the profile, or 'except-data-values' to perform the same filtering, but then suppress the actual data values (typically for mapping applications). See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=data' target="_blank" rel="noreferrer">this vocabulary</a> for a list of Argo data variables.</span>}
-                </label>
-            </div>
-            <div>
-                <label>
-                    Pressure Range:
-                    <input
-                        type="text"
-                        name="pressureRange"
-                        value={this.state.pressureRange}
-                        onChange={this.handlePressureRangeChange}
-                        onBlur={this.handleGenericBlur.bind(this, 'pressureRangeTouched')}
-                        onFocus={this.handleGenericFocus.bind(this, 'pressureRangeTouched')}
-                        className={pressureRangeValid ? '' : 'invalid'}
-                    />
-                    {!pressureRangeValid && !pressureRangeTouched && <span className="validation-message">Invalid pressure range. Should be two comma separated numbers representing dbar below surface; so, 0,10 would filter for levels at the surface down to 10 dbar.</span>}
-                </label>
-            </div>
-            <div>
-                <label>
-                    Batch Metadata:
-                    <input type="text" name="batchMetadata" value={batchMetadata} onChange={this.handleChange} />
-                </label>
+                <h2>Other Filters</h2>
+                <div>
+                    <label>
+                        Profile ID:
+                        <input type="text" name="profileId" value={profileId} onChange={this.handleChange} />
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        Metadata:
+                        <input type="text" name="metadata" value={metadata} onChange={this.handleChange} />
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        Platform ID:
+                        <input type="text" name="platformId" value={platformId} onChange={this.handleChange} />
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        Platform Type:
+                        <input type="text" name="platformType" value={platformType} onChange={this.handleChange} />
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        Position QC:
+                        <input
+                            type="text"
+                            value={this.state.positionQC}
+                            onChange={this.handlePositionQCChange}
+                            onBlur={this.handleGenericBlur.bind(this, 'positionQCTouched')}
+                            onFocus={this.handleGenericFocus.bind(this, 'positionQCTouched')}
+                            className={positionQCValid ? '' : 'invalid'}
+                        />
+                        {!positionQCValid && !positionQCTouched && <span className="validation-message">Invalid position QC value. Position QC should be a comma-separated list of integers from -1 to 9.</span>}
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        Profile Source:
+                        <input
+                            type="text"
+                            name="profileSource"
+                            value={this.state.profileSource}
+                            onChange={this.handleProfileSourceChange}
+                            onBlur={this.handleGenericBlur.bind(this, 'profileSourceTouched')}
+                            onFocus={this.handleGenericFocus.bind(this, 'profileSourceTouched')}
+                            className={profileSourceValid ? '' : 'invalid'}
+                        />
+                        {!profileSourceValid && !profileSourceTouched && <span className="validation-message">Invalid profile source. A valid profile source is a list of the tokens argo_core, argo_bgc, and / or argo_deep, each possibly negated with a ~. For example, argo_core,~argo_deep filters for argo core profiles that are not also argo deep profiles.</span>}
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        Compression:
+                        <div>
+                            <label>
+                                <input
+                                    type="radio"
+                                    value="none"
+                                    checked={compression === null}
+                                    onChange={this.handleCompressionChange}
+                                />
+                                None
+                            </label>
+                            <label>
+                                <input
+                                    type="radio"
+                                    value="minimal"
+                                    checked={compression === 'minimal'}
+                                    onChange={this.handleCompressionChange}
+                                />
+                                Minimal
+                            </label>
+                        </div>
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        Most Recent:
+                        <input
+                            type="text"
+                            value={this.state.mostRecent}
+                            onChange={this.handleMostRecentChange}
+                            onBlur={this.handleGenericBlur.bind(this, 'mostRecentTouched')}
+                            onFocus={this.handleGenericFocus.bind(this, 'mostRecentTouched')}
+                            className={mostRecentValid ? '' : 'invalid'}
+                        />
+                        {!mostRecentValid && !mostRecentTouched && <span className="validation-message">Invalid most recent value. Most recent should be an integer, corresponding to the maximum number of profiles you want returned. Setting it to 7 means you'll get the 7 most chronologically recent profiles that match your other filter parameters. </span>}
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        Batch Metadata:
+                        <input type="text" name="batchMetadata" value={batchMetadata} onChange={this.handleChange} />
+                    </label>
+                </div>
             </div>
         </form>
         <a href={url}>{url}</a>
