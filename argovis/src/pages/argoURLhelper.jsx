@@ -1,6 +1,8 @@
 import React from 'react';
 import Datetime from 'react-datetime';
 import 'react-datetime/css/react-datetime.css';
+import Tooltip from 'react-bootstrap/Tooltip';
+import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 
 class ArgoURLhelper extends React.Component {
   constructor(props) {
@@ -219,12 +221,6 @@ isLocationValid = () => {
   }
 
   handlePositionQCChange = (event) => {
-    this.setState({
-      positionQC: event.target.value,
-    });
-  }
-
-  handlePositionQCChange = (event) => {
     const positionQC = event.target.value;
     const positionQCArray = positionQC.split(',').map(Number);
     const positionQCValid = positionQCArray.every(num => Number.isInteger(num) && num >= -1 && num <= 9);
@@ -347,6 +343,16 @@ isLocationValid = () => {
                 <div className={locationValid ? '' : 'invalid'}>
                     <div>
                         <label>
+                            <OverlayTrigger
+                                placement="right"
+                                overlay={
+                                    <Tooltip id="polygon-tooltip" className="wide-tooltip">
+                                        To limit your search results to an arbitrary polygon, enter the vertex coordinates of the polygon in the format: [[lon0,lat0],[lon1,lat1],...,[lonN,latN],[lon0,lat0]]. The first and last coordinates must be the same. Try drawing a polygon at <a href='https://argovis.colorado.edu' target="_blank" rel="noreferrer">argovis.colorado.edu</a> and copying it from the resulting URL if you need a visual aide.
+                                    </Tooltip>
+                                }
+                            >
+                            <i className="fa fa-question-circle" aria-hidden="true"></i>
+                            </OverlayTrigger>
                             Polygon:
                             <input
                                 type="text"
