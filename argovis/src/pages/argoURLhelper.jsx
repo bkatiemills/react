@@ -27,7 +27,7 @@ class ArgoURLhelper extends React.Component {
       temp_startDate: '',
       temp_endDate: '',
       datesValid: true, polygonValid: true, boxValid: true, centerValid: true, radiusValid: true, profileSourceValid: true, mostRecentValid: true, dataValid: true, pressureRangeValid: true,
-      polygonTouched: false,
+      polygonTouched: false, boxTouched: false, centerTouched: false, radiusTouched: false, profileSourceTouched: false, mostRecentTouched: false, dataTouched: false, pressureRangeTouched: false,
     };
   }
 
@@ -49,7 +49,7 @@ class ArgoURLhelper extends React.Component {
   }
 
   isValidPolygon = (polygon) => {
-    if(polygon.length == 0) return true;
+    if(polygon.length === 0) return true;
 
     try {
       polygon = JSON.parse(polygon);
@@ -71,7 +71,7 @@ class ArgoURLhelper extends React.Component {
   }
 
   isValidBox = (box) => {
-    if(box.length == 0) return true;
+    if(box.length === 0) return true;
 
     try {
       box = JSON.parse(box);
@@ -94,7 +94,7 @@ class ArgoURLhelper extends React.Component {
   }
 
   isValidCoordinatePair = (pair) => {
-    if(pair.length == 0) return true;
+    if(pair.length === 0) return true;
 
     try {
       pair = JSON.parse(pair);
@@ -109,7 +109,7 @@ class ArgoURLhelper extends React.Component {
   }
 
   isValidProfileSource = (value) => {
-    if(value.length == 0) return true;
+    if(value.length === 0) return true;
 
     const tokens = value.split(',').map(token => token.trim());
     const validTokens = ['argo_core', 'argo_bgc', 'argo_deep'];
@@ -122,13 +122,13 @@ class ArgoURLhelper extends React.Component {
   }
 
   isValidMostRecent = (value) => {
-    if(value.length == 0) return true;
+    if(value.length === 0) return true;
     const intValue = parseInt(value, 10);
     return !isNaN(value) && Number(value) === intValue && intValue > 0;
   }
 
   isValidData = (value) => {
-    if(value.length == 0) return true;
+    if(value.length === 0) return true;
 
     const pattern = "^((~)?((bbp470)|(bbp532)|(bbp700)|(bbp700_2)|(bisulfide)|(cdom)|(chla)|(cndc)|(cndx)|(cp660)|(down_irradiance380)|(down_irradiance412)|(down_irradiance442)|(down_irradiance443)|(down_irradiance490)|(down_irradiance555)|(down_irradiance670)|(downwelling_par)|(doxy)|(doxy2)|(doxy3)|(molar_doxy)|(nitrate)|(ph_in_situ_total)|(pressure)|(salinity)|(salinity_sfile)|(temperature)|(temperature_sfile)|(turbidity)|(up_radiance412)|(up_radiance443)|(up_radiance490)|(up_radiance555){1})((_std)|(_med){1})?(_argoqc)?|all|except-data-values|[0-9]+)$";
     const regex = new RegExp(pattern);
@@ -138,7 +138,7 @@ class ArgoURLhelper extends React.Component {
   }
 
   isValidPressureRange = (value) => {
-    if(value.length == 0) return true;
+    if(value.length === 0) return true;
 
     const tokens = value.split(',').map(token => parseFloat(token.trim()));
     
@@ -269,7 +269,7 @@ class ArgoURLhelper extends React.Component {
       temp_startDate,
       temp_endDate,
       datesValid, polygonValid, boxValid, centerValid, radiusValid, profileSourceValid, mostRecentValid, dataValid, pressureRangeValid,
-      polygonTouched,
+      polygonTouched, boxTouched, centerTouched, radiusTouched, profileSourceTouched, mostRecentTouched, dataTouched, pressureRangeTouched,
     } = this.state;
 
     // Create an array of parameters
@@ -351,9 +351,11 @@ class ArgoURLhelper extends React.Component {
                         type="text"
                         value={this.state.box}
                         onChange={this.handleBoxChange}
+                        onBlur={this.handleGenericBlur.bind(this, 'boxTouched')}
+                        onFocus={this.handleGenericFocus.bind(this, 'boxTouched')}
                         className={boxValid ? '' : 'invalid'}
                     />
-                    {!boxValid && <span className="validation-message">Invalid box. A valid box is descrbed by its southwest corner followed by its northeast corner, set as longitude,latitude, for example: [[0,0],[10,10]].</span>}
+                    {!boxValid && !boxTouched && <span className="validation-message">Invalid box. A valid box is descrbed by its southwest corner followed by its northeast corner, set as longitude,latitude, for example: [[0,0],[10,10]].</span>}
                 </label>
             </div>
             <div>
@@ -363,9 +365,11 @@ class ArgoURLhelper extends React.Component {
                         type="text"
                         value={this.state.center}
                         onChange={this.handleCenterChange}
+                        onBlur={this.handleGenericBlur.bind(this, 'centerTouched')}
+                        onFocus={this.handleGenericFocus.bind(this, 'centerTouched')}
                         className={centerValid ? '' : 'invalid'}
                     />
-                    {!centerValid && <span className="validation-message">Invalid center. A valid center is descrbed by a longitude, latitude pair, for example: [0,0].</span>}
+                    {!centerValid && !centerTouched && <span className="validation-message">Invalid center. A valid center is descrbed by a longitude, latitude pair, for example: [0,0].</span>}
                 </label>
                 <label>
                     Radius:
@@ -373,9 +377,11 @@ class ArgoURLhelper extends React.Component {
                         type="text"
                         value={this.state.radius}
                         onChange={this.handleRadiusChange}
+                        onBlur={this.handleGenericBlur.bind(this, 'radiusTouched')}
+                        onFocus={this.handleGenericFocus.bind(this, 'radiusTouched')}
                         className={radiusValid ? '' : 'invalid'}
                     />
-                    {!radiusValid && <span className="validation-message">Invalid radius. A valid radius is descrbed by a single number, in kilometers.</span>}
+                    {!radiusValid && !radiusTouched && <span className="validation-message">Invalid radius. A valid radius is descrbed by a single number, in kilometers.</span>}
                 </label>
             </div>
             <div>
@@ -418,9 +424,11 @@ class ArgoURLhelper extends React.Component {
                         name="profileSource"
                         value={this.state.profileSource}
                         onChange={this.handleProfileSourceChange}
+                        onBlur={this.handleGenericBlur.bind(this, 'profileSourceTouched')}
+                        onFocus={this.handleGenericFocus.bind(this, 'profileSourceTouched')}
                         className={profileSourceValid ? '' : 'invalid'}
                     />
-                    {!profileSourceValid && <span className="validation-message">Invalid profile source. A valid profile source is a list of the tokens argo_core, argo_bgc, and / or argo_deep, each possibly negated with a ~. For example, argo_core,~argo_deep filters for argo core profiles that are not also argo deep profiles.</span>}
+                    {!profileSourceValid && !profileSourceTouched && <span className="validation-message">Invalid profile source. A valid profile source is a list of the tokens argo_core, argo_bgc, and / or argo_deep, each possibly negated with a ~. For example, argo_core,~argo_deep filters for argo core profiles that are not also argo deep profiles.</span>}
                 </label>
             </div>
             <div>
@@ -455,9 +463,11 @@ class ArgoURLhelper extends React.Component {
                         type="text"
                         value={this.state.mostRecent}
                         onChange={this.handleMostRecentChange}
+                        onBlur={this.handleGenericBlur.bind(this, 'mostRecentTouched')}
+                        onFocus={this.handleGenericFocus.bind(this, 'mostRecentTouched')}
                         className={mostRecentValid ? '' : 'invalid'}
                     />
-                    {!mostRecentValid && <span className="validation-message">Invalid most recent value. Most recent should be an integer, corresponding to the maximum number of profiles you want returned. Setting it to 7 means you'll get the 7 most chronologically recent profiles that match your other filter parameters. </span>}
+                    {!mostRecentValid && !mostRecentTouched && <span className="validation-message">Invalid most recent value. Most recent should be an integer, corresponding to the maximum number of profiles you want returned. Setting it to 7 means you'll get the 7 most chronologically recent profiles that match your other filter parameters. </span>}
                 </label>
             </div>
             <div>
@@ -468,9 +478,11 @@ class ArgoURLhelper extends React.Component {
                         name="data"
                         value={this.state.data}
                         onChange={this.handleDataChange}
+                        onBlur={this.handleGenericBlur.bind(this, 'dataTouched')}
+                        onFocus={this.handleGenericFocus.bind(this, 'dataTouched')}
                         className={dataValid ? '' : 'invalid'}
                     />
-                    {!dataValid && <span className="validation-message">Invalid data string. data should be a comma separated list of the measurements you want profiles for; you may also negate a parameter with ~ to get profiles that do not include this measurement. Furthermore, you can add 'all' to the list to get every measurement avaialble in the profile, or 'except-data-values' to perform the same filtering, but then suppress the actual data values (typically for mapping applications). See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=data' target="_blank" rel="noreferrer">this vocabulary</a> for a list of Argo data variables.</span>}
+                    {!dataValid && !dataTouched && <span className="validation-message">Invalid data string. data should be a comma separated list of the measurements you want profiles for; you may also negate a parameter with ~ to get profiles that do not include this measurement. Furthermore, you can add 'all' to the list to get every measurement avaialble in the profile, or 'except-data-values' to perform the same filtering, but then suppress the actual data values (typically for mapping applications). See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=data' target="_blank" rel="noreferrer">this vocabulary</a> for a list of Argo data variables.</span>}
                 </label>
             </div>
             <div>
@@ -481,9 +493,11 @@ class ArgoURLhelper extends React.Component {
                         name="pressureRange"
                         value={this.state.pressureRange}
                         onChange={this.handlePressureRangeChange}
+                        onBlur={this.handleGenericBlur.bind(this, 'pressureRangeTouched')}
+                        onFocus={this.handleGenericFocus.bind(this, 'pressureRangeTouched')}
                         className={pressureRangeValid ? '' : 'invalid'}
                     />
-                    {!pressureRangeValid && <span className="validation-message">Invalid pressure range. Should be two comma separated numbers representing dbar below surface; so, 0,10 would filter for levels at the surface down to 10 dbar.</span>}
+                    {!pressureRangeValid && !pressureRangeTouched && <span className="validation-message">Invalid pressure range. Should be two comma separated numbers representing dbar below surface; so, 0,10 would filter for levels at the surface down to 10 dbar.</span>}
                 </label>
             </div>
             <div>
