@@ -149,3 +149,10 @@ nav.navbar {
 .fa-question-circle {
   padding-right: 0.25em;
 }
+
+.form-section {
+  border: 1px solid lightgrey;
+  border-radius: 5px;
+  padding: 1em;
+  margin-bottom: 1em;
+}

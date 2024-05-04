@@ -91,6 +91,17 @@ class ArgoURLhelper extends React.Component {
     }
   }
 
+  isValidCenter = (value) => {
+    if(value.length === 0) return true;
+
+    const tokens = value.split(',').map(token => parseFloat(token.trim()));
+    
+    if (tokens.length !== 2) return false;
+    
+    const [first, second] = tokens;
+    
+    return !isNaN(first) && !isNaN(second);
+  }
   isValidNumber = (value) => {
     return !isNaN(value);
   }
@@ -207,7 +218,7 @@ isLocationValid = () => {
 
   handleCenterChange = (event) => {
     let center = event.target.value;
-    const isValid = this.isValidCoordinatePair(center);
+    const isValid = this.isValidCenter(center);
     
     this.setState({
       center,
@@ -295,8 +306,8 @@ isLocationValid = () => {
       temp_startDate && `startDate=${temp_startDate.format('YYYY-MM-DDTHH:mm:ss')+'Z'}`,
       temp_endDate && `endDate=${temp_endDate.format('YYYY-MM-DDTHH:mm:ss')+'Z'}`,
       polygon && `polygon=${polygon}`,
-      box && `box=${encodeURIComponent(box)}`,
-      center && `center=${encodeURIComponent(center)}`,
+      box && `box=${box}`,
+      center && `center=${center}`,
       radius && `radius=${encodeURIComponent(radius)}`,
       metadata && `metadata=${encodeURIComponent(metadata)}`,
       platformId && `platform=${encodeURIComponent(platformId)}`,
@@ -316,56 +327,63 @@ isLocationValid = () => {
     const url = `https://argovis-api.colorado.edu/argo?${queryString}`;
 
     return (
-    <div>
+    <div style={{'marginLeft':'15%', 'marginRight':'15%', 'marginTop':'1em'}}>
+        <p><i>Fill out the fields below to construct your API call.</i></p>
+        <h3><a href={url} target="_blank" rel="noreferrer">{url}</a></h3>
         <form>
-            <div>
-                <h2>Temporospatial Filters</h2>
-                <div id='time_filters' className={datesValid ? '' : 'invalid'}>
-                    <label class="form-label">
-                        <OverlayTrigger
-                            placement="right"
-                            overlay={
-                                <Tooltip id="startDate-tooltip" className="wide-tooltip">
-                                    The earliest timestamp to search for, GMT+0, boundary-inclusive.
-                                </Tooltip>
-                            }
-                            trigger="click"
-                        >
-                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                        </OverlayTrigger>
-                        Start Date:
-                        <Datetime
-                            dateFormat="YYYY-MM-DD"
-                            timeFormat="HH:mm:ss"
-                            value={this.state.temp_startDate}
-                            onChange={date => this.handleDateChange('startDate', date)}
-                            onBlur={() => this.handleDateBlur('startDate')}
-                        />
-                    </label>
-                    <label class="form-label">
-                        <OverlayTrigger
-                            placement="right"
-                            overlay={
-                                <Tooltip id="endDate-tooltip" className="wide-tooltip">
-                                    The latest timestamp to search for, GMT+0, boundary-exclusive.
-                                </Tooltip>
-                            }
-                            trigger="click"
-                        >
-                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                        </OverlayTrigger>
-                        End Date:
-                        <Datetime
-                            dateFormat="YYYY-MM-DD"
-                            timeFormat="HH:mm:ss"
-                            value={this.state.temp_endDate}
-                            onChange={date => this.handleDateChange('endDate', date)}
-                            onBlur={() => this.handleDateBlur('endDate')}
-                        />
-                    </label>
+            <div class='row form-section'>
+                <h4>Temporospatial Filters</h4>
+                <div id='time_filters' className={datesValid ? 'row' : 'row invalid'}>
+                    <div class='col-4'>
+                        <label class="form-label">
+                            <OverlayTrigger
+                                placement="right"
+                                overlay={
+                                    <Tooltip id="startDate-tooltip" className="wide-tooltip">
+                                        The earliest timestamp to search for, GMT+0, boundary-inclusive.
+                                    </Tooltip>
+                                }
+                                trigger="click"
+                            >
+                                <i className="fa fa-question-circle" aria-hidden="true"></i>
+                            </OverlayTrigger>
+                            Start Date:
+                            <Datetime
+                                dateFormat="YYYY-MM-DD"
+                                timeFormat="HH:mm:ss"
+                                value={this.state.temp_startDate}
+                                onChange={date => this.handleDateChange('startDate', date)}
+                                onBlur={() => this.handleDateBlur('startDate')}
+                            />
+                        </label>
+                    </div>
+                    <div class='col-4'>
+                        <label class="form-label">
+                            <OverlayTrigger
+                                placement="right"
+                                overlay={
+                                    <Tooltip id="endDate-tooltip" className="wide-tooltip">
+                                        The latest timestamp to search for, GMT+0, boundary-exclusive.
+                                    </Tooltip>
+                                }
+                                trigger="click"
+                            >
+                                <i className="fa fa-question-circle" aria-hidden="true"></i>
+                            </OverlayTrigger>
+                            End Date:
+                            <Datetime
+                                dateFormat="YYYY-MM-DD"
+                                timeFormat="HH:mm:ss"
+                                value={this.state.temp_endDate}
+                                onChange={date => this.handleDateChange('endDate', date)}
+                                onBlur={() => this.handleDateBlur('endDate')}
+                            />
+                        </label>
+                    </div>
                     {!datesValid && <p className="validation-message">Invalid dates. Start date must be before end date, if both are defined.</p>}
                 </div>
                 <div id='space_filters' className={locationValid ? 'row' : 'row invalid'}>
+                    <p><i>Fill in only one of polygon, box, or center and radius.</i></p>
                     <div class='col-4'>
                         <label class="form-label">
                             <OverlayTrigger
@@ -422,7 +440,7 @@ isLocationValid = () => {
                                 placement="right"
                                 overlay={
                                     <Tooltip id="center-tooltip" className="wide-tooltip">
-                                        Use with radius to search for profiles near this centerpoint, written as [longitude,latitude].
+                                        Use with radius to search for profiles near this centerpoint, written as longitude,latitude.
                                     </Tooltip>
                                 }
                                 trigger="click"
@@ -461,15 +479,15 @@ isLocationValid = () => {
                                 className={radiusValid ? 'form-control' : 'form-control invalid'}
                             />
                         </label>
-                        {!centerValid && !centerTouched && <p className="validation-message">Invalid center. A valid center is descrbed by a longitude, latitude pair, for example: [0,0].</p>}
+                        {!centerValid && !centerTouched && <p className="validation-message">Invalid center. A valid center is descrbed by a longitude, latitude pair, for example: 0,0.</p>}
                         {!radiusValid && !radiusTouched && <p className="validation-message">Invalid radius. A valid radius is descrbed by a single number, in kilometers.</p>}
                     </div>
                     {!locationValid && <span className="validation-message">Invalid location. Please only specify one of polygon, box, or center plus radius.</span>}
                 </div>
             </div>
-            <div>
-                <h2>Data Filters</h2>
-                <div>
+            <div class='row form-section'>
+                <h4>Data Filters</h4>
+                <div class='col-4'>
                     <label class="form-label">
                         <OverlayTrigger
                             placement="right"
@@ -495,7 +513,7 @@ isLocationValid = () => {
                     </label>
                     {!dataValid && !dataTouched && <p className="validation-message">Invalid data string. data should be a comma separated list of the measurements you want profiles for; you may also negate a parameter with ~ to get profiles that do not include this measurement. Furthermore, you can add 'all' to the list to get every measurement avaialble in the profile, or 'except-data-values' to perform the same filtering, but then suppress the actual data values (typically for mapping applications). See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=data' target="_blank" rel="noreferrer">this vocabulary</a> for a list of Argo data variables.</p>}
                 </div>
-                <div>
+                <div class='col-4'>
                     <label class="form-label">
                         <OverlayTrigger
                             placement="right"
@@ -522,9 +540,9 @@ isLocationValid = () => {
                     {!pressureRangeValid && !pressureRangeTouched && <p className="validation-message">Invalid pressure range. Should be two comma separated numbers representing dbar below surface; so, 0,10 would filter for levels at the surface down to 10 dbar.</p>}
                 </div>
             </div>
-            <div>
-                <h2>Other Filters</h2>
-                <div>
+            <div class='row form-section'>
+                <h4>Other Filters</h4>
+                <div class='col-4'>
                     <label class="form-label">
                         <OverlayTrigger
                             placement="right"
@@ -540,25 +558,6 @@ isLocationValid = () => {
                         Profile ID:
                         <input type="text" name="profileId" value={profileId} onChange={this.handleChange} className="form-control" />
                     </label>
-                </div>
-                <div>
-                    <label class="form-label">
-                        <OverlayTrigger
-                            placement="right"
-                            overlay={
-                                <Tooltip id="metadata-tooltip" className="wide-tooltip">
-                                    Use this to search for all profiles that share a specific metadata ID. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=metadata' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=metadata</a> for a list of metadata IDs.
-                                </Tooltip>
-                            }
-                            trigger="click"
-                        >
-                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                        </OverlayTrigger>
-                        Metadata:
-                        <input type="text" name="metadata" value={metadata} onChange={this.handleChange} className="form-control" />
-                    </label>
-                </div>
-                <div>
                     <label class="form-label">
                         <OverlayTrigger
                             placement="right"
@@ -574,8 +573,6 @@ isLocationValid = () => {
                         Platform ID:
                         <input type="text" name="platformId" value={platformId} onChange={this.handleChange} className="form-control" />
                     </label>
-                </div>
-                <div>
                     <label class="form-label">
                         <OverlayTrigger
                             placement="right"
@@ -592,7 +589,40 @@ isLocationValid = () => {
                         <input type="text" name="platformType" value={platformType} onChange={this.handleChange} className="form-control"/>
                     </label>
                 </div>
-                <div>
+                <div class='col-4'>
+                    <label class="form-label">
+                        <OverlayTrigger
+                            placement="right"
+                            overlay={
+                                <Tooltip id="metadata-tooltip" className="wide-tooltip">
+                                    Use this to search for all profiles that share a specific metadata ID. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=metadata' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=metadata</a> for a list of metadata IDs.
+                                </Tooltip>
+                            }
+                            trigger="click"
+                        >
+                            <i className="fa fa-question-circle" aria-hidden="true"></i>
+                        </OverlayTrigger>
+                        Metadata:
+                        <input type="text" name="metadata" value={metadata} onChange={this.handleChange} className="form-control" />
+                    </label>
+
+                    <label class="form-label">
+                        <OverlayTrigger
+                            placement="right"
+                            overlay={
+                                <Tooltip id="batchmeta-tooltip" className="wide-tooltip">
+                                    Return all the metadata documents that correspond to the data documents matching this search (instead of returning the data documents themsleves).
+                                </Tooltip>
+                            }
+                            trigger="click"
+                        >
+                            <i className="fa fa-question-circle" aria-hidden="true"></i>
+                        </OverlayTrigger>
+                        Batch Metadata:
+                        <input type="text" name="batchMetadata" value={batchMetadata} onChange={this.handleChange} className="form-control"/>
+                    </label>
+                </div>
+                <div class='col-4'>
                     <label class="form-label">
                         <OverlayTrigger
                             placement="right"
@@ -616,8 +646,7 @@ isLocationValid = () => {
                         />
                     </label>
                     {!positionQCValid && !positionQCTouched && <p className="validation-message">Invalid position QC value. Position QC should be a comma-separated list of integers from -1 to 9.</p>}
-                </div>
-                <div>
+                   
                     <label class="form-label">
                         <OverlayTrigger
                             placement="right"
@@ -642,8 +671,7 @@ isLocationValid = () => {
                         />
                     </label>
                     {!profileSourceValid && !profileSourceTouched && <p className="validation-message">Invalid profile source. A valid profile source is a list of the tokens argo_core, argo_bgc, and / or argo_deep, each possibly negated with a ~. For example, argo_core,~argo_deep filters for argo core profiles that are not also argo deep profiles.</p>}
-                </div>
-                <div>
+
                     <label class="form-label">
                         <OverlayTrigger
                             placement="right"
@@ -663,8 +691,7 @@ isLocationValid = () => {
                             onChange={this.handleCompressionChange}
                         />
                     </label>
-                </div>
-                <div>
+
                     <label class="form-label">
                         <OverlayTrigger
                             placement="right"
@@ -689,26 +716,8 @@ isLocationValid = () => {
                     </label>
                     {!mostRecentValid && !mostRecentTouched && <p className="validation-message">Invalid most recent value. Most recent should be an integer, corresponding to the maximum number of profiles you want returned. Setting it to 7 means you'll get the 7 most chronologically recent profiles that match your other filter parameters. </p>}
                 </div>
-                <div>
-                    <label class="form-label">
-                        <OverlayTrigger
-                            placement="right"
-                            overlay={
-                                <Tooltip id="batchmeta-tooltip" className="wide-tooltip">
-                                    Return all the metadata documents that correspond to the data documents matching this search (instead of returning the data documents themsleves).
-                                </Tooltip>
-                            }
-                            trigger="click"
-                        >
-                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                        </OverlayTrigger>
-                        Batch Metadata:
-                        <input type="text" name="batchMetadata" value={batchMetadata} onChange={this.handleChange} className="form-control"/>
-                    </label>
-                </div>
             </div>
         </form>
-        <a href={url}>{url}</a>
     </div>
     );
   }
