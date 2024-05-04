@@ -145,3 +145,7 @@ nav.navbar {
 .wide-tooltip .tooltip-inner {
   max-width: 50%;
 }
+
+.fa-question-circle {
+  padding-right: 0.25em;
+}

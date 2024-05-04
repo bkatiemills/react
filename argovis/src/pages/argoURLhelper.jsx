@@ -153,11 +153,16 @@ class ArgoURLhelper extends React.Component {
 
 isLocationValid = () => {
     const { polygon, box, center, radius } = this.state;
-    const centerAndRadiusDefined = center != null && center !== '' && radius != null && radius !== '';
+    const centerDefined = center != null && center !== '';
+    const radiusDefined = radius != null && radius !== '';
+    const centerAndRadiusDefined = centerDefined && radiusDefined;
     const polygonDefined = polygon != null && polygon !== '';
     const boxDefined = box != null && box !== '';
 
-    return (centerAndRadiusDefined ? 1 : 0) + (polygonDefined ? 1 : 0) + (boxDefined ? 1 : 0) <= 1;
+    return (polygonDefined && !boxDefined && !centerDefined && !radiusDefined ||
+            boxDefined && !polygonDefined && !centerDefined && !radiusDefined ||
+            centerAndRadiusDefined && !polygonDefined && !boxDefined ||
+            !polygonDefined && !boxDefined && !centerAndRadiusDefined);
 }
 
   handleDateBlur = (name) => {
@@ -315,8 +320,8 @@ isLocationValid = () => {
         <form>
             <div>
                 <h2>Temporospatial Filters</h2>
-                <div className={datesValid ? '' : 'invalid'}>
-                    <label>
+                <div id='time_filters' className={datesValid ? '' : 'invalid'}>
+                    <label class="form-label">
                         <OverlayTrigger
                             placement="right"
                             overlay={
@@ -337,7 +342,7 @@ isLocationValid = () => {
                             onBlur={() => this.handleDateBlur('startDate')}
                         />
                     </label>
-                    <label>
+                    <label class="form-label">
                         <OverlayTrigger
                             placement="right"
                             overlay={
@@ -358,11 +363,11 @@ isLocationValid = () => {
                             onBlur={() => this.handleDateBlur('endDate')}
                         />
                     </label>
-                    {!datesValid && <span className="validation-message">Invalid dates. Start date must be before end date, if both are defined.</span>}
+                    {!datesValid && <p className="validation-message">Invalid dates. Start date must be before end date, if both are defined.</p>}
                 </div>
-                <div className={locationValid ? '' : 'invalid'}>
-                    <div>
-                        <label>
+                <div id='space_filters' className={locationValid ? 'row' : 'row invalid'}>
+                    <div class='col-4'>
+                        <label class="form-label">
                             <OverlayTrigger
                                 placement="right"
                                 overlay={
@@ -381,13 +386,13 @@ isLocationValid = () => {
                                 onChange={this.handlePolygonChange}
                                 onBlur={this.handleGenericBlur.bind(this, 'polygonTouched')}
                                 onFocus={this.handleGenericFocus.bind(this, 'polygonTouched')}
-                                className={polygonValid ? '' : 'invalid'}
+                                className={polygonValid ? 'form-control' : 'form-control invalid'}
                             />
-                            {!polygonValid && !polygonTouched && <span className="validation-message">Invalid polygon. A valid polygon is an array of longitude, longitude pairs, for example: [[0,0],[0,1],[1,1],[1,0],[0,0]]. Notice the first and last vertexes match, per the geoJSON spec.</span>}
                         </label>
+                        {!polygonValid && !polygonTouched && <p className="validation-message">Invalid polygon. A valid polygon is an array of longitude, longitude pairs, for example: [[0,0],[0,1],[1,1],[1,0],[0,0]]. Notice the first and last vertexes match, per the geoJSON spec.</p>}
                     </div>
-                    <div>
-                        <label>
+                    <div class='col-4'>
+                        <label class="form-label">
                             <OverlayTrigger
                                 placement="right"
                                 overlay={
@@ -406,13 +411,13 @@ isLocationValid = () => {
                                 onChange={this.handleBoxChange}
                                 onBlur={this.handleGenericBlur.bind(this, 'boxTouched')}
                                 onFocus={this.handleGenericFocus.bind(this, 'boxTouched')}
-                                className={boxValid ? '' : 'invalid'}
+                                className={boxValid ? 'form-control' : 'form-control invalid'}
                             />
-                            {!boxValid && !boxTouched && <span className="validation-message">Invalid box. A valid box is descrbed by its southwest corner followed by its northeast corner, set as longitude,latitude, for example: [[0,0],[10,10]].</span>}
                         </label>
+                        {!boxValid && !boxTouched && <p className="validation-message">Invalid box. A valid box is descrbed by its southwest corner followed by its northeast corner, set as longitude,latitude, for example: [[0,0],[10,10]].</p>}
                     </div>
-                    <div>
-                        <label>
+                    <div class='col-4'>
+                        <label class="form-label">
                             <OverlayTrigger
                                 placement="right"
                                 overlay={
@@ -431,11 +436,10 @@ isLocationValid = () => {
                                 onChange={this.handleCenterChange}
                                 onBlur={this.handleGenericBlur.bind(this, 'centerTouched')}
                                 onFocus={this.handleGenericFocus.bind(this, 'centerTouched')}
-                                className={centerValid ? '' : 'invalid'}
+                                className={centerValid ? 'form-control' : 'form-control invalid'}
                             />
-                            {!centerValid && !centerTouched && <span className="validation-message">Invalid center. A valid center is descrbed by a longitude, latitude pair, for example: [0,0].</span>}
                         </label>
-                        <label>
+                        <label class="form-label">
                             <OverlayTrigger
                                 placement="right"
                                 overlay={
@@ -454,10 +458,11 @@ isLocationValid = () => {
                                 onChange={this.handleRadiusChange}
                                 onBlur={this.handleGenericBlur.bind(this, 'radiusTouched')}
                                 onFocus={this.handleGenericFocus.bind(this, 'radiusTouched')}
-                                className={radiusValid ? '' : 'invalid'}
+                                className={radiusValid ? 'form-control' : 'form-control invalid'}
                             />
-                            {!radiusValid && !radiusTouched && <span className="validation-message">Invalid radius. A valid radius is descrbed by a single number, in kilometers.</span>}
                         </label>
+                        {!centerValid && !centerTouched && <p className="validation-message">Invalid center. A valid center is descrbed by a longitude, latitude pair, for example: [0,0].</p>}
+                        {!radiusValid && !radiusTouched && <p className="validation-message">Invalid radius. A valid radius is descrbed by a single number, in kilometers.</p>}
                     </div>
                     {!locationValid && <span className="validation-message">Invalid location. Please only specify one of polygon, box, or center plus radius.</span>}
                 </div>
@@ -465,7 +470,7 @@ isLocationValid = () => {
             <div>
                 <h2>Data Filters</h2>
                 <div>
-                    <label>
+                    <label class="form-label">
                         <OverlayTrigger
                             placement="right"
                             overlay={
@@ -485,13 +490,13 @@ isLocationValid = () => {
                             onChange={this.handleDataChange}
                             onBlur={this.handleGenericBlur.bind(this, 'dataTouched')}
                             onFocus={this.handleGenericFocus.bind(this, 'dataTouched')}
-                            className={dataValid ? '' : 'invalid'}
+                            className={dataValid ? 'form-control' : 'form-control invalid'}
                         />
-                        {!dataValid && !dataTouched && <span className="validation-message">Invalid data string. data should be a comma separated list of the measurements you want profiles for; you may also negate a parameter with ~ to get profiles that do not include this measurement. Furthermore, you can add 'all' to the list to get every measurement avaialble in the profile, or 'except-data-values' to perform the same filtering, but then suppress the actual data values (typically for mapping applications). See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=data' target="_blank" rel="noreferrer">this vocabulary</a> for a list of Argo data variables.</span>}
                     </label>
+                    {!dataValid && !dataTouched && <p className="validation-message">Invalid data string. data should be a comma separated list of the measurements you want profiles for; you may also negate a parameter with ~ to get profiles that do not include this measurement. Furthermore, you can add 'all' to the list to get every measurement avaialble in the profile, or 'except-data-values' to perform the same filtering, but then suppress the actual data values (typically for mapping applications). See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=data' target="_blank" rel="noreferrer">this vocabulary</a> for a list of Argo data variables.</p>}
                 </div>
                 <div>
-                    <label>
+                    <label class="form-label">
                         <OverlayTrigger
                             placement="right"
                             overlay={
@@ -511,16 +516,16 @@ isLocationValid = () => {
                             onChange={this.handlePressureRangeChange}
                             onBlur={this.handleGenericBlur.bind(this, 'pressureRangeTouched')}
                             onFocus={this.handleGenericFocus.bind(this, 'pressureRangeTouched')}
-                            className={pressureRangeValid ? '' : 'invalid'}
+                            className={pressureRangeValid ? 'form-control' : 'form-control invalid'}
                         />
-                        {!pressureRangeValid && !pressureRangeTouched && <span className="validation-message">Invalid pressure range. Should be two comma separated numbers representing dbar below surface; so, 0,10 would filter for levels at the surface down to 10 dbar.</span>}
                     </label>
+                    {!pressureRangeValid && !pressureRangeTouched && <p className="validation-message">Invalid pressure range. Should be two comma separated numbers representing dbar below surface; so, 0,10 would filter for levels at the surface down to 10 dbar.</p>}
                 </div>
             </div>
             <div>
                 <h2>Other Filters</h2>
                 <div>
-                    <label>
+                    <label class="form-label">
                         <OverlayTrigger
                             placement="right"
                             overlay={
@@ -533,11 +538,11 @@ isLocationValid = () => {
                             <i className="fa fa-question-circle" aria-hidden="true"></i>
                         </OverlayTrigger>
                         Profile ID:
-                        <input type="text" name="profileId" value={profileId} onChange={this.handleChange} />
+                        <input type="text" name="profileId" value={profileId} onChange={this.handleChange} className="form-control" />
                     </label>
                 </div>
                 <div>
-                    <label>
+                    <label class="form-label">
                         <OverlayTrigger
                             placement="right"
                             overlay={
@@ -550,11 +555,11 @@ isLocationValid = () => {
                             <i className="fa fa-question-circle" aria-hidden="true"></i>
                         </OverlayTrigger>
                         Metadata:
-                        <input type="text" name="metadata" value={metadata} onChange={this.handleChange} />
+                        <input type="text" name="metadata" value={metadata} onChange={this.handleChange} className="form-control" />
                     </label>
                 </div>
                 <div>
-                    <label>
+                    <label class="form-label">
                         <OverlayTrigger
                             placement="right"
                             overlay={
@@ -567,11 +572,11 @@ isLocationValid = () => {
                             <i className="fa fa-question-circle" aria-hidden="true"></i>
                         </OverlayTrigger>
                         Platform ID:
-                        <input type="text" name="platformId" value={platformId} onChange={this.handleChange} />
+                        <input type="text" name="platformId" value={platformId} onChange={this.handleChange} className="form-control" />
                     </label>
                 </div>
                 <div>
-                    <label>
+                    <label class="form-label">
                         <OverlayTrigger
                             placement="right"
                             overlay={
@@ -584,11 +589,11 @@ isLocationValid = () => {
                             <i className="fa fa-question-circle" aria-hidden="true"></i>
                         </OverlayTrigger>
                         Platform Type:
-                        <input type="text" name="platformType" value={platformType} onChange={this.handleChange} />
+                        <input type="text" name="platformType" value={platformType} onChange={this.handleChange} className="form-control"/>
                     </label>
                 </div>
                 <div>
-                    <label>
+                    <label class="form-label">
                         <OverlayTrigger
                             placement="right"
                             overlay={
@@ -607,13 +612,13 @@ isLocationValid = () => {
                             onChange={this.handlePositionQCChange}
                             onBlur={this.handleGenericBlur.bind(this, 'positionQCTouched')}
                             onFocus={this.handleGenericFocus.bind(this, 'positionQCTouched')}
-                            className={positionQCValid ? '' : 'invalid'}
+                            className={positionQCValid ? 'form-control' : 'form-control invalid'}
                         />
-                        {!positionQCValid && !positionQCTouched && <span className="validation-message">Invalid position QC value. Position QC should be a comma-separated list of integers from -1 to 9.</span>}
                     </label>
+                    {!positionQCValid && !positionQCTouched && <p className="validation-message">Invalid position QC value. Position QC should be a comma-separated list of integers from -1 to 9.</p>}
                 </div>
                 <div>
-                    <label>
+                    <label class="form-label">
                         <OverlayTrigger
                             placement="right"
                             overlay={
@@ -633,13 +638,13 @@ isLocationValid = () => {
                             onChange={this.handleProfileSourceChange}
                             onBlur={this.handleGenericBlur.bind(this, 'profileSourceTouched')}
                             onFocus={this.handleGenericFocus.bind(this, 'profileSourceTouched')}
-                            className={profileSourceValid ? '' : 'invalid'}
+                            className={profileSourceValid ? 'form-control' : 'form-control invalid'}
                         />
-                        {!profileSourceValid && !profileSourceTouched && <span className="validation-message">Invalid profile source. A valid profile source is a list of the tokens argo_core, argo_bgc, and / or argo_deep, each possibly negated with a ~. For example, argo_core,~argo_deep filters for argo core profiles that are not also argo deep profiles.</span>}
                     </label>
+                    {!profileSourceValid && !profileSourceTouched && <p className="validation-message">Invalid profile source. A valid profile source is a list of the tokens argo_core, argo_bgc, and / or argo_deep, each possibly negated with a ~. For example, argo_core,~argo_deep filters for argo core profiles that are not also argo deep profiles.</p>}
                 </div>
                 <div>
-                    <label>
+                    <label class="form-label">
                         <OverlayTrigger
                             placement="right"
                             overlay={
@@ -660,7 +665,7 @@ isLocationValid = () => {
                     </label>
                 </div>
                 <div>
-                    <label>
+                    <label class="form-label">
                         <OverlayTrigger
                             placement="right"
                             overlay={
@@ -679,13 +684,13 @@ isLocationValid = () => {
                             onChange={this.handleMostRecentChange}
                             onBlur={this.handleGenericBlur.bind(this, 'mostRecentTouched')}
                             onFocus={this.handleGenericFocus.bind(this, 'mostRecentTouched')}
-                            className={mostRecentValid ? '' : 'invalid'}
+                            className={mostRecentValid ? 'form-control' : 'form-control invalid'}
                         />
-                        {!mostRecentValid && !mostRecentTouched && <span className="validation-message">Invalid most recent value. Most recent should be an integer, corresponding to the maximum number of profiles you want returned. Setting it to 7 means you'll get the 7 most chronologically recent profiles that match your other filter parameters. </span>}
                     </label>
+                    {!mostRecentValid && !mostRecentTouched && <p className="validation-message">Invalid most recent value. Most recent should be an integer, corresponding to the maximum number of profiles you want returned. Setting it to 7 means you'll get the 7 most chronologically recent profiles that match your other filter parameters. </p>}
                 </div>
                 <div>
-                    <label>
+                    <label class="form-label">
                         <OverlayTrigger
                             placement="right"
                             overlay={
@@ -698,7 +703,7 @@ isLocationValid = () => {
                             <i className="fa fa-question-circle" aria-hidden="true"></i>
                         </OverlayTrigger>
                         Batch Metadata:
-                        <input type="text" name="batchMetadata" value={batchMetadata} onChange={this.handleChange} />
+                        <input type="text" name="batchMetadata" value={batchMetadata} onChange={this.handleChange} className="form-control"/>
                     </label>
                 </div>
             </div>
