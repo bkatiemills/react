@@ -238,9 +238,7 @@ isLocationValid = () => {
   }
 
   handleCompressionChange = (event) => {
-    this.setState({
-      compression: event.target.value === 'none' ? null : 'minimal',
-    });
+    this.setState({ compression: event.target.checked ? 'minimal':null });
   }
 
   handleMostRecentChange = (event) => {
@@ -319,6 +317,17 @@ isLocationValid = () => {
                 <h2>Temporospatial Filters</h2>
                 <div className={datesValid ? '' : 'invalid'}>
                     <label>
+                        <OverlayTrigger
+                            placement="right"
+                            overlay={
+                                <Tooltip id="startDate-tooltip" className="wide-tooltip">
+                                    The earliest timestamp to search for, GMT+0, boundary-inclusive.
+                                </Tooltip>
+                            }
+                            trigger="click"
+                        >
+                            <i className="fa fa-question-circle" aria-hidden="true"></i>
+                        </OverlayTrigger>
                         Start Date:
                         <Datetime
                             dateFormat="YYYY-MM-DD"
@@ -329,6 +338,17 @@ isLocationValid = () => {
                         />
                     </label>
                     <label>
+                        <OverlayTrigger
+                            placement="right"
+                            overlay={
+                                <Tooltip id="endDate-tooltip" className="wide-tooltip">
+                                    The latest timestamp to search for, GMT+0, boundary-exclusive.
+                                </Tooltip>
+                            }
+                            trigger="click"
+                        >
+                            <i className="fa fa-question-circle" aria-hidden="true"></i>
+                        </OverlayTrigger>
                         End Date:
                         <Datetime
                             dateFormat="YYYY-MM-DD"
@@ -350,8 +370,9 @@ isLocationValid = () => {
                                         To limit your search results to an arbitrary polygon, enter the vertex coordinates of the polygon in the format: [[lon0,lat0],[lon1,lat1],...,[lonN,latN],[lon0,lat0]]. The first and last coordinates must be the same. Try drawing a polygon at <a href='https://argovis.colorado.edu' target="_blank" rel="noreferrer">argovis.colorado.edu</a> and copying it from the resulting URL if you need a visual aide.
                                     </Tooltip>
                                 }
+                                trigger="click"
                             >
-                            <i className="fa fa-question-circle" aria-hidden="true"></i>
+                                <i className="fa fa-question-circle" aria-hidden="true"></i>
                             </OverlayTrigger>
                             Polygon:
                             <input
@@ -367,6 +388,17 @@ isLocationValid = () => {
                     </div>
                     <div>
                         <label>
+                            <OverlayTrigger
+                                placement="right"
+                                overlay={
+                                    <Tooltip id="box-tooltip" className="wide-tooltip">
+                                        A box region to seach in, written as [[southwest lon,southwest lat],[northeast lon,northeast lat]].
+                                    </Tooltip>
+                                }
+                                trigger="click"
+                            >
+                                <i className="fa fa-question-circle" aria-hidden="true"></i>
+                            </OverlayTrigger>
                             Box:
                             <input
                                 type="text"
@@ -381,6 +413,17 @@ isLocationValid = () => {
                     </div>
                     <div>
                         <label>
+                            <OverlayTrigger
+                                placement="right"
+                                overlay={
+                                    <Tooltip id="center-tooltip" className="wide-tooltip">
+                                        Use with radius to search for profiles near this centerpoint, written as [longitude,latitude].
+                                    </Tooltip>
+                                }
+                                trigger="click"
+                            >
+                                <i className="fa fa-question-circle" aria-hidden="true"></i>
+                            </OverlayTrigger>
                             Center:
                             <input
                                 type="text"
@@ -393,6 +436,17 @@ isLocationValid = () => {
                             {!centerValid && !centerTouched && <span className="validation-message">Invalid center. A valid center is descrbed by a longitude, latitude pair, for example: [0,0].</span>}
                         </label>
                         <label>
+                            <OverlayTrigger
+                                placement="right"
+                                overlay={
+                                    <Tooltip id="radius-tooltip" className="wide-tooltip">
+                                        Use with center to search for profiles within this many kilometers of the centerpoint.
+                                    </Tooltip>
+                                }
+                                trigger="click"
+                            >
+                                <i className="fa fa-question-circle" aria-hidden="true"></i>
+                            </OverlayTrigger>
                             Radius:
                             <input
                                 type="text"
@@ -412,6 +466,17 @@ isLocationValid = () => {
                 <h2>Data Filters</h2>
                 <div>
                     <label>
+                        <OverlayTrigger
+                            placement="right"
+                            overlay={
+                                <Tooltip id="data-tooltip" className="wide-tooltip">
+                                    List the data variables you want to search for, for example temperature,doxy; you will get back only profiles that have these measurements, and only these measurements plus pressure. <br/>You can also enforce QC requirements: temperature,1 will return only levels that have temperature QC of 1, for example. <br/>Furthermore, you can also negate variables: temperature,~doxy will return the temperature measurements from profiles that do not include a doxy measurement. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=data' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=data</a> for a list of Argo data variables. <br/>Finally, you can use 'all' to get every measurement avaialble in the profile, or 'except-data-values' to perform the same filtering, but then suppress the actual data values (typically for mapping applications).
+                                </Tooltip>
+                            }
+                            trigger="click"
+                        >
+                            <i className="fa fa-question-circle" aria-hidden="true"></i>
+                        </OverlayTrigger>
                         Data:
                         <input
                             type="text"
@@ -427,6 +492,17 @@ isLocationValid = () => {
                 </div>
                 <div>
                     <label>
+                        <OverlayTrigger
+                            placement="right"
+                            overlay={
+                                <Tooltip id="presrange-tooltip" className="wide-tooltip">
+                                    List the pressure range you want to search for, for example 0,10; you'll only download levels in this pressure range in the profiles matching the rest of your search. <br/>Note that the pressure range is in dbar below the surface, so 0,10 would filter for levels at the surface down to 10 dbar.
+                                </Tooltip>
+                            }
+                            trigger="click"
+                        >
+                            <i className="fa fa-question-circle" aria-hidden="true"></i>
+                        </OverlayTrigger>
                         Pressure Range:
                         <input
                             type="text"
@@ -445,30 +521,85 @@ isLocationValid = () => {
                 <h2>Other Filters</h2>
                 <div>
                     <label>
+                        <OverlayTrigger
+                            placement="right"
+                            overlay={
+                                <Tooltip id="id-tooltip" className="wide-tooltip">
+                                    Use this to specify a single profile by ID.
+                                </Tooltip>
+                            }
+                            trigger="click"
+                        >
+                            <i className="fa fa-question-circle" aria-hidden="true"></i>
+                        </OverlayTrigger>
                         Profile ID:
                         <input type="text" name="profileId" value={profileId} onChange={this.handleChange} />
                     </label>
                 </div>
                 <div>
                     <label>
+                        <OverlayTrigger
+                            placement="right"
+                            overlay={
+                                <Tooltip id="metadata-tooltip" className="wide-tooltip">
+                                    Use this to search for all profiles that share a specific metadata ID. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=metadata' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=metadata</a> for a list of metadata IDs.
+                                </Tooltip>
+                            }
+                            trigger="click"
+                        >
+                            <i className="fa fa-question-circle" aria-hidden="true"></i>
+                        </OverlayTrigger>
                         Metadata:
                         <input type="text" name="metadata" value={metadata} onChange={this.handleChange} />
                     </label>
                 </div>
                 <div>
                     <label>
+                        <OverlayTrigger
+                            placement="right"
+                            overlay={
+                                <Tooltip id="platform-tooltip" className="wide-tooltip">
+                                    Use this to search for all profiles from a given platform. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform</a> for a list of platform IDs.
+                                </Tooltip>
+                            }
+                            trigger="click"
+                        >
+                            <i className="fa fa-question-circle" aria-hidden="true"></i>
+                        </OverlayTrigger>
                         Platform ID:
                         <input type="text" name="platformId" value={platformId} onChange={this.handleChange} />
                     </label>
                 </div>
                 <div>
                     <label>
+                        <OverlayTrigger
+                            placement="right"
+                            overlay={
+                                <Tooltip id="platformtype-tooltip" className="wide-tooltip">
+                                    Use this to restrict results to profiles from a given platform type. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform_type' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform_type</a> for a list of platform types.
+                                </Tooltip>
+                            }
+                            trigger="click"
+                        >
+                            <i className="fa fa-question-circle" aria-hidden="true"></i>
+                        </OverlayTrigger>
                         Platform Type:
                         <input type="text" name="platformType" value={platformType} onChange={this.handleChange} />
                     </label>
                 </div>
                 <div>
                     <label>
+                        <OverlayTrigger
+                            placement="right"
+                            overlay={
+                                <Tooltip id="positionqc-tooltip" className="wide-tooltip">
+                                    Use this to filter profiles for any of a list of position QC flags, for example 1,2,8,9. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=position_qc' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=position_qc</a> for a list of position QC flags.
+                                </Tooltip>
+                            }
+                            trigger="click"
+                        >
+                            <i className="fa fa-question-circle" aria-hidden="true"></i>
+                        </OverlayTrigger>
                         Position QC:
                         <input
                             type="text"
@@ -483,6 +614,17 @@ isLocationValid = () => {
                 </div>
                 <div>
                     <label>
+                        <OverlayTrigger
+                            placement="right"
+                            overlay={
+                                <Tooltip id="source-tooltip" className="wide-tooltip">
+                                    Use this to filter profiles by their source, any of argo_core, argo_bgc, argo_deep, possibly negated with a ~. For example, argo_core,~argo_deep filters for argo core profiles that are not also argo deep profiles.
+                                </Tooltip>
+                            }
+                            trigger="click"
+                        >
+                            <i className="fa fa-question-circle" aria-hidden="true"></i>
+                        </OverlayTrigger>
                         Profile Source:
                         <input
                             type="text"
@@ -498,31 +640,38 @@ isLocationValid = () => {
                 </div>
                 <div>
                     <label>
+                        <OverlayTrigger
+                            placement="right"
+                            overlay={
+                                <Tooltip id="compression-tooltip" className="wide-tooltip">
+                                    Check this box to get back only minimal data for each matching profile, like longitude, latitude, timestamp and profile ID for each. Good for making maps.
+                                </Tooltip>
+                            }
+                            trigger="click"
+                        >
+                            <i className="fa fa-question-circle" aria-hidden="true"></i>
+                        </OverlayTrigger>
                         Compression:
-                        <div>
-                            <label>
-                                <input
-                                    type="radio"
-                                    value="none"
-                                    checked={compression === null}
-                                    onChange={this.handleCompressionChange}
-                                />
-                                None
-                            </label>
-                            <label>
-                                <input
-                                    type="radio"
-                                    value="minimal"
-                                    checked={compression === 'minimal'}
-                                    onChange={this.handleCompressionChange}
-                                />
-                                Minimal
-                            </label>
-                        </div>
+                        <input
+                            type="checkbox"
+                            checked={this.state.compression}
+                            onChange={this.handleCompressionChange}
+                        />
                     </label>
                 </div>
                 <div>
                     <label>
+                        <OverlayTrigger
+                            placement="right"
+                            overlay={
+                                <Tooltip id="mostrecent-tooltip" className="wide-tooltip">
+                                    Use this to get the most recent profiles that match your other filter parameters. For example, setting this to 7 means you'll get the 7 most chronologically recent profiles that match your other filter parameters.
+                                </Tooltip>
+                            }
+                            trigger="click"
+                        >
+                            <i className="fa fa-question-circle" aria-hidden="true"></i>
+                        </OverlayTrigger>
                         Most Recent:
                         <input
                             type="text"
@@ -537,6 +686,17 @@ isLocationValid = () => {
                 </div>
                 <div>
                     <label>
+                        <OverlayTrigger
+                            placement="right"
+                            overlay={
+                                <Tooltip id="batchmeta-tooltip" className="wide-tooltip">
+                                    Return all the metadata documents that correspond to the data documents matching this search (instead of returning the data documents themsleves).
+                                </Tooltip>
+                            }
+                            trigger="click"
+                        >
+                            <i className="fa fa-question-circle" aria-hidden="true"></i>
+                        </OverlayTrigger>
                         Batch Metadata:
                         <input type="text" name="batchMetadata" value={batchMetadata} onChange={this.handleChange} />
                     </label>
