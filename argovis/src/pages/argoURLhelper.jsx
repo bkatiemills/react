@@ -22,7 +22,7 @@ class ArgoURLhelper extends React.Component {
       profileSource: '',
       compression: '',
       mostRecent: '',
-      data: '',
+      data: 'all',
       pressureRange: '',
       batchMetadata: '',
 
@@ -236,6 +236,10 @@ isLocationValid = () => {
     });
   }
 
+  handleBatchMetadataChange = (event) => {
+    this.setState({ batchMetadata: event.target.checked });
+  }
+
   handlePositionQCChange = (event) => {
     const positionQC = event.target.value;
     const positionQCArray = positionQC.split(',').map(Number);
@@ -318,7 +322,7 @@ isLocationValid = () => {
       mostRecent && `mostrecent=${encodeURIComponent(mostRecent)}`,
       data && `data=${data}`,
       pressureRange && `presRange=${pressureRange}`,
-      batchMetadata && `batchmeta=${encodeURIComponent(batchMetadata)}`,
+      batchMetadata && `batchmeta=true`,
     ].filter(Boolean); // Remove any undefined values
 
     // Join the parameters with '&' to form the query string
@@ -328,11 +332,17 @@ isLocationValid = () => {
 
     return (
     <div style={{'marginLeft':'15%', 'marginRight':'15%', 'marginTop':'1em'}}>
-        <p><i>Fill out the fields below to construct your API call.</i></p>
+        <ul>
+            <li>Fill out the fields of interest below to construct an API call that filters for Argo data most relevant to you.</li>
+            <li>No specific field is mandatory, but please at least constrain the temporospatial extent of your query; if you get an HTTP error 413, you need to request a smaller temporospatial region.</li>
+            <li>When you're done, click the link below to fetch your data.</li>
+            <li>Once you get the hang of the URL patterns, you can make these requests directly in your programming language of choice. Don't forget to register for and use <a href='https://argovis-keygen.colorado.edu/' target="_blank" rel="noreferrer">an API token</a> in order to receive your own private resource allocation.</li>
+        </ul>
         <h3><a href={url} target="_blank" rel="noreferrer">{url}</a></h3>
         <form>
             <div class='row form-section'>
                 <h4>Temporospatial Filters</h4>
+                <p><i>Restrict your search to a specific time and place.</i></p>
                 <div id='time_filters' className={datesValid ? 'row' : 'row invalid'}>
                     <div class='col-4'>
                         <label class="form-label">
@@ -383,7 +393,7 @@ isLocationValid = () => {
                     {!datesValid && <p className="validation-message">Invalid dates. Start date must be before end date, if both are defined.</p>}
                 </div>
                 <div id='space_filters' className={locationValid ? 'row' : 'row invalid'}>
-                    <p><i>Fill in only one of polygon, box, or center and radius.</i></p>
+                    <p><i>Fill in at most one of polygon, box, or center and radius.</i></p>
                     <div class='col-4'>
                         <label class="form-label">
                             <OverlayTrigger
@@ -484,16 +494,38 @@ isLocationValid = () => {
                     </div>
                     {!locationValid && <span className="validation-message">Invalid location. Please only specify one of polygon, box, or center plus radius.</span>}
                 </div>
+                <div>
+                    <label class="form-label">
+                        <OverlayTrigger
+                            placement="right"
+                            overlay={
+                                <Tooltip id="compression-tooltip" className="wide-tooltip">
+                                    Check this box to get back only minimal data for each matching profile: [profile ID, longitude, latitude, timestamp, argo source, metadata ID]. Good for making maps.
+                                </Tooltip>
+                            }
+                            trigger="click"
+                        >
+                            <i className="fa fa-question-circle" aria-hidden="true"></i>
+                        </OverlayTrigger>
+                        Compression:
+                        <input
+                            type="checkbox"
+                            checked={this.state.compression}
+                            onChange={this.handleCompressionChange}
+                        />
+                    </label>
+                </div>
             </div>
             <div class='row form-section'>
                 <h4>Data Filters</h4>
+                <p><i>Request per-level data, and filter for specific measurements, QC, and pressure levels.</i></p>
                 <div class='col-4'>
                     <label class="form-label">
                         <OverlayTrigger
                             placement="right"
                             overlay={
                                 <Tooltip id="data-tooltip" className="wide-tooltip">
-                                    List the data variables you want to search for, for example temperature,doxy; you will get back only profiles that have these measurements, and only these measurements plus pressure. <br/>You can also enforce QC requirements: temperature,1 will return only levels that have temperature QC of 1, for example. <br/>Furthermore, you can also negate variables: temperature,~doxy will return the temperature measurements from profiles that do not include a doxy measurement. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=data' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=data</a> for a list of Argo data variables. <br/>Finally, you can use 'all' to get every measurement avaialble in the profile, or 'except-data-values' to perform the same filtering, but then suppress the actual data values (typically for mapping applications).
+                                    List the data variables you want to search for, for example temperature,doxy; you will get back only profiles that have these measurements, and only these measurements plus pressure. Use 'all' to get back every available measurement. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=data' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=data</a> for a list of Argo data variables. <br/>You can also enforce QC requirements: temperature,1 will return only levels that have temperature QC of 1, for example. You can also request the explicit QC levels be returned by suffixing _argoqc to a varaible name, like temperature_argoqc. <br/>Furthermore, you can also negate variables: temperature,~doxy will return the temperature measurements from profiles that do not include a doxy measurement. <br/>Finally, you can use 'except-data-values' to perform the same filtering, but then suppress the actual data values (typically for mapping applications).
                                 </Tooltip>
                             }
                             trigger="click"
@@ -541,14 +573,15 @@ isLocationValid = () => {
                 </div>
             </div>
             <div class='row form-section'>
-                <h4>Other Filters</h4>
+                <h4>Argo-Specific Filters</h4>
+                <p><i>Filter results using Argo-specific parameters, like platforms, individual profiles, and mission.</i></p>
                 <div class='col-4'>
                     <label class="form-label">
                         <OverlayTrigger
                             placement="right"
                             overlay={
                                 <Tooltip id="id-tooltip" className="wide-tooltip">
-                                    Use this to specify a single profile by ID.
+                                    Use this to specify a single profile by ID. Profile IDs are constructed as &lt;platform_number&gt;_&lt;cycle_number&gt;.
                                 </Tooltip>
                             }
                             trigger="click"
@@ -558,6 +591,8 @@ isLocationValid = () => {
                         Profile ID:
                         <input type="text" name="profileId" value={profileId} onChange={this.handleChange} className="form-control" />
                     </label>
+                </div>
+                <div class='col-4'>
                     <label class="form-label">
                         <OverlayTrigger
                             placement="right"
@@ -594,6 +629,85 @@ isLocationValid = () => {
                         <OverlayTrigger
                             placement="right"
                             overlay={
+                                <Tooltip id="positionqc-tooltip" className="wide-tooltip">
+                                    Use this to filter profiles for any of a list of position QC flags, for example 1,2,8,9. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=position_qc' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=position_qc</a> for a list of position QC flags. See <a href='https://archimer.ifremer.fr/doc/00228/33951/' target="_blank" rel="noreferrer">https://archimer.ifremer.fr/doc/00228/33951/</a> for documentation from Argo on the meaning of these flags.
+                                </Tooltip>
+                            }
+                            trigger="click"
+                        >
+                            <i className="fa fa-question-circle" aria-hidden="true"></i>
+                        </OverlayTrigger>
+                        Position QC:
+                        <input
+                            type="text"
+                            value={this.state.positionQC}
+                            onChange={this.handlePositionQCChange}
+                            onBlur={this.handleGenericBlur.bind(this, 'positionQCTouched')}
+                            onFocus={this.handleGenericFocus.bind(this, 'positionQCTouched')}
+                            className={positionQCValid ? 'form-control' : 'form-control invalid'}
+                        />
+                    </label>
+                    {!positionQCValid && !positionQCTouched && <p className="validation-message">Invalid position QC value. Position QC should be a comma-separated list of integers from -1 to 9.</p>}
+                   
+                    <label class="form-label">
+                        <OverlayTrigger
+                            placement="right"
+                            overlay={
+                                <Tooltip id="source-tooltip" className="wide-tooltip">
+                                    Use this to filter profiles by their Argo mission, any of argo_core, argo_bgc, argo_deep, possibly negated with a ~. For example, argo_core,~argo_deep filters for argo core profiles that are not also argo deep profiles.
+                                </Tooltip>
+                            }
+                            trigger="click"
+                        >
+                            <i className="fa fa-question-circle" aria-hidden="true"></i>
+                        </OverlayTrigger>
+                        Profile Source:
+                        <input
+                            type="text"
+                            name="profileSource"
+                            value={this.state.profileSource}
+                            onChange={this.handleProfileSourceChange}
+                            onBlur={this.handleGenericBlur.bind(this, 'profileSourceTouched')}
+                            onFocus={this.handleGenericFocus.bind(this, 'profileSourceTouched')}
+                            className={profileSourceValid ? 'form-control' : 'form-control invalid'}
+                        />
+                    </label>
+                    {!profileSourceValid && !profileSourceTouched && <p className="validation-message">Invalid profile source. A valid profile source is a list of the tokens argo_core, argo_bgc, and / or argo_deep, each possibly negated with a ~. For example, argo_core,~argo_deep filters for argo core profiles that are not also argo deep profiles.</p>}
+                </div>
+            </div>
+            <div class='row form-section'>
+                <h4>Other Filters</h4>
+                <p><i>Some advanced options for manipulating how data of interest are returned or represented.</i></p>
+                <div class='col-4'>
+                    <label class="form-label">
+                        <OverlayTrigger
+                            placement="right"
+                            overlay={
+                                <Tooltip id="mostrecent-tooltip" className="wide-tooltip">
+                                    Use this to get the most recent profiles that match your other filter parameters. For example, setting this to 7 means you'll get the 7 most chronologically recent profiles that match your other filter parameters.
+                                </Tooltip>
+                            }
+                            trigger="click"
+                        >
+                            <i className="fa fa-question-circle" aria-hidden="true"></i>
+                        </OverlayTrigger>
+                        Most Recent:
+                        <input
+                            type="text"
+                            value={this.state.mostRecent}
+                            onChange={this.handleMostRecentChange}
+                            onBlur={this.handleGenericBlur.bind(this, 'mostRecentTouched')}
+                            onFocus={this.handleGenericFocus.bind(this, 'mostRecentTouched')}
+                            className={mostRecentValid ? 'form-control' : 'form-control invalid'}
+                        />
+                    </label>
+                    {!mostRecentValid && !mostRecentTouched && <p className="validation-message">Invalid most recent value. Most recent should be an integer, corresponding to the maximum number of profiles you want returned. Setting it to 7 means you'll get the 7 most chronologically recent profiles that match your other filter parameters. </p>}
+                </div>
+                <div class='col-4'>
+                    <label class="form-label">
+                        <OverlayTrigger
+                            placement="right"
+                            overlay={
                                 <Tooltip id="metadata-tooltip" className="wide-tooltip">
                                     Use this to search for all profiles that share a specific metadata ID. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=metadata' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=metadata</a> for a list of metadata IDs.
                                 </Tooltip>
@@ -619,103 +733,13 @@ isLocationValid = () => {
                             <i className="fa fa-question-circle" aria-hidden="true"></i>
                         </OverlayTrigger>
                         Batch Metadata:
-                        <input type="text" name="batchMetadata" value={batchMetadata} onChange={this.handleChange} className="form-control"/>
-                    </label>
-                </div>
-                <div class='col-4'>
-                    <label class="form-label">
-                        <OverlayTrigger
-                            placement="right"
-                            overlay={
-                                <Tooltip id="positionqc-tooltip" className="wide-tooltip">
-                                    Use this to filter profiles for any of a list of position QC flags, for example 1,2,8,9. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=position_qc' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=position_qc</a> for a list of position QC flags.
-                                </Tooltip>
-                            }
-                            trigger="click"
-                        >
-                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                        </OverlayTrigger>
-                        Position QC:
-                        <input
-                            type="text"
-                            value={this.state.positionQC}
-                            onChange={this.handlePositionQCChange}
-                            onBlur={this.handleGenericBlur.bind(this, 'positionQCTouched')}
-                            onFocus={this.handleGenericFocus.bind(this, 'positionQCTouched')}
-                            className={positionQCValid ? 'form-control' : 'form-control invalid'}
-                        />
-                    </label>
-                    {!positionQCValid && !positionQCTouched && <p className="validation-message">Invalid position QC value. Position QC should be a comma-separated list of integers from -1 to 9.</p>}
-                   
-                    <label class="form-label">
-                        <OverlayTrigger
-                            placement="right"
-                            overlay={
-                                <Tooltip id="source-tooltip" className="wide-tooltip">
-                                    Use this to filter profiles by their source, any of argo_core, argo_bgc, argo_deep, possibly negated with a ~. For example, argo_core,~argo_deep filters for argo core profiles that are not also argo deep profiles.
-                                </Tooltip>
-                            }
-                            trigger="click"
-                        >
-                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                        </OverlayTrigger>
-                        Profile Source:
-                        <input
-                            type="text"
-                            name="profileSource"
-                            value={this.state.profileSource}
-                            onChange={this.handleProfileSourceChange}
-                            onBlur={this.handleGenericBlur.bind(this, 'profileSourceTouched')}
-                            onFocus={this.handleGenericFocus.bind(this, 'profileSourceTouched')}
-                            className={profileSourceValid ? 'form-control' : 'form-control invalid'}
-                        />
-                    </label>
-                    {!profileSourceValid && !profileSourceTouched && <p className="validation-message">Invalid profile source. A valid profile source is a list of the tokens argo_core, argo_bgc, and / or argo_deep, each possibly negated with a ~. For example, argo_core,~argo_deep filters for argo core profiles that are not also argo deep profiles.</p>}
-
-                    <label class="form-label">
-                        <OverlayTrigger
-                            placement="right"
-                            overlay={
-                                <Tooltip id="compression-tooltip" className="wide-tooltip">
-                                    Check this box to get back only minimal data for each matching profile, like longitude, latitude, timestamp and profile ID for each. Good for making maps.
-                                </Tooltip>
-                            }
-                            trigger="click"
-                        >
-                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                        </OverlayTrigger>
-                        Compression:
                         <input
                             type="checkbox"
-                            checked={this.state.compression}
-                            onChange={this.handleCompressionChange}
+                            checked={this.state.batchMetadata}
+                            onChange={this.handleBatchMetadataChange}
                         />
-                    </label>
-
-                    <label class="form-label">
-                        <OverlayTrigger
-                            placement="right"
-                            overlay={
-                                <Tooltip id="mostrecent-tooltip" className="wide-tooltip">
-                                    Use this to get the most recent profiles that match your other filter parameters. For example, setting this to 7 means you'll get the 7 most chronologically recent profiles that match your other filter parameters.
-                                </Tooltip>
-                            }
-                            trigger="click"
-                        >
-                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                        </OverlayTrigger>
-                        Most Recent:
-                        <input
-                            type="text"
-                            value={this.state.mostRecent}
-                            onChange={this.handleMostRecentChange}
-                            onBlur={this.handleGenericBlur.bind(this, 'mostRecentTouched')}
-                            onFocus={this.handleGenericFocus.bind(this, 'mostRecentTouched')}
-                            className={mostRecentValid ? 'form-control' : 'form-control invalid'}
-                        />
-                    </label>
-                    {!mostRecentValid && !mostRecentTouched && <p className="validation-message">Invalid most recent value. Most recent should be an integer, corresponding to the maximum number of profiles you want returned. Setting it to 7 means you'll get the 7 most chronologically recent profiles that match your other filter parameters. </p>}
-                </div>
+                    </label>  
+                </div>    
             </div>
         </form>
     </div>
