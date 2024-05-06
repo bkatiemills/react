@@ -11,7 +11,7 @@ let helpers = {}
 helpers.insertPointsInPolygon = function(coordinates) {
     let insertedPoints = [];
 
-    	if(coordinates.length == 0){
+    	if(coordinates.length === 0){
     		return []
     	}
 

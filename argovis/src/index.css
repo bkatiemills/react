@@ -137,3 +137,22 @@ nav.navbar {
     padding: 3em;
   }
 }
+
+.invalid {
+  border: 1px solid red;
+}
+
+.wide-tooltip .tooltip-inner {
+  max-width: 50%;
+}
+
+.fa-question-circle {
+  padding-right: 0.25em;
+}
+
+.form-section {
+  border: 1px solid lightgrey;
+  border-radius: 5px;
+  padding: 1em;
+  margin-bottom: 1em;
+}

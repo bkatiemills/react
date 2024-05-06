@@ -15,6 +15,8 @@ import DrifterPlots from "./pages/drifterPlots"
 import ShipPlots from "./pages/shipPlots"
 import APIintro from "./pages/api_intro"
 import Hackathon from "./pages/hackathon2024"
+import ArgoURLhelper from "./pages/argoURLhelper"
+
 
 export default function App() {
   useEffect(() => {    
@@ -44,6 +46,7 @@ export default function App() {
           <Route path="plots/ships" element={<ShipPlots />} />
           <Route path="apiintro" element={<APIintro />} />
           <Route path="hackathon" element={<Hackathon />} />
+          <Route path="argourlhelper" element={<ArgoURLhelper />} />
         </Route>
       </Routes>
     </BrowserRouter>
