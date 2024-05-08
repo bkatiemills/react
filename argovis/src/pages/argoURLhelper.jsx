@@ -170,10 +170,10 @@ isLocationValid = () => {
     const polygonDefined = polygon != null && polygon !== '';
     const boxDefined = box != null && box !== '';
 
-    return (polygonDefined && !boxDefined && !centerDefined && !radiusDefined ||
-            boxDefined && !polygonDefined && !centerDefined && !radiusDefined ||
-            centerAndRadiusDefined && !polygonDefined && !boxDefined ||
-            !polygonDefined && !boxDefined && !centerAndRadiusDefined);
+    return ((polygonDefined && !boxDefined && !centerDefined && !radiusDefined) ||
+            (boxDefined && !polygonDefined && !centerDefined && !radiusDefined) ||
+            (centerAndRadiusDefined && !polygonDefined && !boxDefined) ||
+            (!polygonDefined && !boxDefined && !centerAndRadiusDefined));
 }
 
   handleDateBlur = (name) => {
@@ -293,7 +293,7 @@ isLocationValid = () => {
 
   render() {
     const {
-      profileId, startDate, endDate, polygon, box, center, radius, metadata,
+      profileId, polygon, box, center, radius, metadata,
       platformId, platformType, positionQC, profileSource, compression, mostRecent,
       data, pressureRange, batchMetadata,
       temp_startDate,

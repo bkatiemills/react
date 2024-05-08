@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from 'react'
 import Layout from "./pages/layout";
 import ArgoAbout from "./pages/about"
+import Citations from "./pages/citations"
 import ArgovisExplore from "./pages/explore"
 import Grids from "./pages/grids"
 import ArgoExplore from "./pages/argo"
@@ -34,6 +35,7 @@ export default function App() {
       <Routes>
           <Route path="/" element={<Layout />}>
           <Route path="about" element={<ArgoAbout />} />
+          <Route path="citations" element={<Citations />} />
           <Route index element={<ArgovisExplore />} />
           <Route path="argo" element={<ArgoExplore />} />
           <Route path="tc" element={<TCExplore />} />
