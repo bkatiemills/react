@@ -116,6 +116,9 @@ class ArgoAbout extends React.Component {
 							</div>
 						</div>
 
+						<h3>How to cite</h3>
+						<p>See the <a href='/citations'>Citations page</a> for instructions on how to cite Argovis and its upstream datasets.</p>
+
 						<h3>Acknowledgements</h3>
 						<p>Argovis is hosted on a server of the Department of Atmospheric and Oceanic Sciences (ATOC) at the 
 						University of Colorado Boulder. <b>Currently, Argovis is funded by the NSF Earthcube program (<a href='https://www.nsf.gov/awardsearch/showAward?AWD_ID=2026954&HistoricalAwards=false'>Award #2026954</a>) and by the NSF Physical Oceanography, GEO Cyberinfrastructure, Polar Cyberinfrastructure, Software Institutes programs (<a href='https://www.nsf.gov/awardsearch/showAward?AWD_ID=2311919&HistoricalAwards=false'>Award #2311919</a>).</b></p>
