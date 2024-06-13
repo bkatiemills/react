@@ -1,0 +1,1 @@
+0 0 * * * /react/argovis/generate_argo_sitemap.sh
