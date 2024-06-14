@@ -15,4 +15,4 @@ sitemap="<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 </urlset>"
 
 # Write the sitemap to a file
-echo "$sitemap" > /react/argovis/public/argo_sitemap.xml
+echo "$sitemap" > /react/argovis/build/argo_sitemap.xml
