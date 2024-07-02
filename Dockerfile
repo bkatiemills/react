@@ -1,4 +1,4 @@
-FROM node:18.9 as base
+FROM node:22.2.0 as base
 
 RUN apt-get update -y; apt-get install -y nano cron
 
