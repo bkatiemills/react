@@ -1,6 +1,6 @@
 FROM node:22.2.0 as base
 
-RUN apt-get update -y; apt-get install -y nano cron
+RUN apt-get update -y; apt-get install -y nano cron ; apt-get upgrade -y
 
 WORKDIR /react
 RUN npm install react react-dom create-react-app
