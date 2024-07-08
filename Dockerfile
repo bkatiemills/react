@@ -29,6 +29,7 @@ RUN crontab crontab
 FROM base as prod
 RUN npm run build
 RUN npm install -g serve
+RUN cd /react && npm uninstall create-react-app
 CMD service cron start ; serve -s build
 
 FROM base as dev
