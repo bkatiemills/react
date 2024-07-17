@@ -68,7 +68,7 @@ class APIintro extends React.Component {
 							</ul>
 						</ul>
 
-						<h4>Using Swagger and the Argovis API to download data</h4>
+						<h4>Using documentation and the Argovis API to download data</h4>
 						
 						<h5>Using Swagger docs</h5>
 						<p>Argovis' API documentation is found at <a href='https://argovis-api.colorado.edu/docs/' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/docs/</a>. These docs are split into several categories; what follows applies to all categories not marked experimental; the experimental categories are under development and may change or be removed at any time.</p>
@@ -79,6 +79,12 @@ class APIintro extends React.Component {
 							<li>The vocabulary route, like <pre style={{'display':'inline'}}>/argo/vocabulary</pre>. These routes provide lists of possible options for search parameters used in the corresponding data and metadata routes.</li>
 						</ul>
 						<p>Click on any of the routes, like <pre style={{'display':'inline'}}>/argo</pre> - a list of possible query string parameters are presented, with a short explanation of what they mean.</p>
+						
+						<h5>Using Argovis request builders</h5>
+						<p>Besides Swagger, Argovis provides API request builders for some of its routes, linked under APIs above. For example, see the <a href='/argourlhelper'>Argo request builder</a>. These pages provide the same information as Swagger, but are meant to be a little simpler to use.</p>
+
+						<h5>Requesting data</h5>
+						
 						<p> Let's try it out by making our first request for Argo data, for profiles found within 100 km of a point in the South Atlantic in May 2011:</p>
 						<p><a href='https://argovis-api.colorado.edu/argo?startDate=2011-05-01T00:00:00Z&endDate=2011-06-01T00:00:00Z&center=-22.5,0&radius=100' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo?startDate=2011-05-01T00:00:00Z&endDate=2011-06-01T00:00:00Z&center=-22.5,0&radius=100</a></p>
 						<p>The return JSON are data documents for Argo, matching the specification at <a href='https://argovis.colorado.edu/docs/documentation/_build/html/database/schema.html' target="_blank" rel="noreferrer">https://argovis.colorado.edu/docs/documentation/_build/html/database/schema.html</a>.  It contains the <pre style={{'display':'inline'}}>timestamp</pre> and <pre style={{'display':'inline'}}>geolocation</pre> properties that place this profile geospatially, and other parameters that typically change from point to point.</p>
