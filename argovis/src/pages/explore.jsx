@@ -75,7 +75,7 @@ class ArgovisExplore extends React.Component {
 
       this.statusReporting = React.createRef()
       this.apiPrefix = 'https://argovis-api.colorado.edu/'
-      this.drifterApiPrefix = 'https://argovisbeta01.colorado.edu/dapi/'
+      this.drifterApiPrefix = 'https://argovis-drifters.colorado.edu/'
       this.vocab = {}
       this.wocelineLookup = {}
       this.wocegroupLookup = {}
