@@ -9,7 +9,7 @@ class DrifterPlots extends React.Component {
 		document.title = 'Argovis - drifter plots'
 		super(props);
 
-		helpers.initPlottingPage.bind(this)(['wmo', 'platform', 'startDate', 'endDate', 'polygon'], 'https://argovisbeta01.colorado.edu/dapi/')
+		helpers.initPlottingPage.bind(this)(['wmo', 'platform', 'startDate', 'endDate', 'polygon'], 'https://argovis-drifters.colorado.edu/')
 
 		if(this.state.wmo){
 			this.state.title = 'Drifter WMO ' + this.state.wmo

@@ -48,7 +48,7 @@ class DriftersExplore extends React.Component {
         this.platformRef = React.createRef()
 		this.statusReporting = React.createRef()
 		this.reautofocus = null
-        this.apiPrefix = 'https://argovisbeta01.colorado.edu/dapi/'
+        this.apiPrefix = 'https://argovis-drifters.colorado.edu/'
         this.vocab = {}
         this.lookupLabel = {}
         this.dataset = 'drifter'

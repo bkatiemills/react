@@ -41,7 +41,7 @@ class ArgovisNav extends React.Component {
 					        <div className="dropdown-divider"></div>
 					        <h6 className="dropdown-header">Swagger docs</h6>
 					        <Dropdown.Item className="dropdown-item" href="https://argovis-api.colorado.edu/docs/">Core API</Dropdown.Item>
-					        <Dropdown.Item className="dropdown-item" href="http://100.26.32.238:8080/docs/">Global Drifter Program API</Dropdown.Item>
+					        <Dropdown.Item className="dropdown-item" href="https://argovis-drifters.colorado.edu/docs/">Global Drifter Program API</Dropdown.Item>
 						    </DropdownButton>
 					</li>
 			        <li className="nav-item">
