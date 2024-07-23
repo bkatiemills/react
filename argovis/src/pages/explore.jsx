@@ -408,7 +408,7 @@ class ArgovisExplore extends React.Component {
 
     // misc helpers
     findDataset(url){
-    	let u = url.slice(this.apiPrefix.length)
+    	let u = url.split('/').pop();
     	u = u.slice(0,u.search('[?].'))
     	return u
     }
