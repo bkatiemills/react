@@ -1,3 +1,9 @@
+/*
+todo
+ - add a legend to the map
+ - double check that centering the cells on the coordinates is correct
+*/
+
 import React from 'react';
 import { MapContainer, TileLayer, Polygon, FeatureGroup, Popup, Rectangle} from 'react-leaflet'
 import { EditControl } from "react-leaflet-draw";
@@ -17,9 +23,9 @@ class Forecast extends React.Component {
 		this.state = {
 			observingEntity: false,
 			apiKey: localStorage.getItem('apiKey') ? localStorage.getItem('apiKey') : 'guest',
-			originLon: q.has('originLon') ? q.get('originLon') : 0,
-			originLat: q.has('originLat') ? q.get('originLat') : 0,
-			forecastTime: q.has('forecastTime') ? q.get('forecastTime') : 90,
+			originLon: q.has('originLon') ? parseFloat(q.get('originLon')) : -68,
+			originLat: q.has('originLat') ? parseFloat(q.get('originLat')) : 36,
+			forecastTime: q.has('forecastTime') ? parseFloat(q.get('forecastTime')) : 1800,
 			refreshData: false,
 			centerlon: q.has('centerlon') ? parseFloat(q.get('centerlon')) : -70,
 			mapkey: Math.random(),
@@ -57,6 +63,7 @@ class Forecast extends React.Component {
 							)
 	    } else {
 	    	helpers.manageStatus.bind(this)('error', 'No data found for this search.')
+			this.setState({...state, grid: [], refreshData: false})
 	    }
 	    this.formRef.current.removeAttribute('disabled')
     }
@@ -70,14 +77,16 @@ class Forecast extends React.Component {
 				let p = state.data[0].map(point => {return point.data[0][0]})
 				let min =  Math.min(...p)
 				let max = Math.max(...p)
-				let points = state.data[0].map(point => {return(
+				let points = state.data[0].map(point => {
+					let origin = point.geolocation_forecast.coordinates[0] === point.geolocation.coordinates[0] && point.geolocation_forecast.coordinates[1] === point.geolocation.coordinates[1]
+					return(
 					<Rectangle 
 						key={Math.random()} 
 						bounds={[[point.geolocation_forecast.coordinates[1]-1, helpers.mutateLongitude(point.geolocation_forecast.coordinates[0], parseFloat(state.centerlon))-1],[point.geolocation_forecast.coordinates[1]+1, helpers.mutateLongitude(point.geolocation_forecast.coordinates[0], parseFloat(state.centerlon))+1]]} 
 						pathOptions={{ 
-							fillOpacity: (point.data[0][0] - min) / (max-min), 
+							fillOpacity: origin ? 1 : (point.data[0][0] - min) / (max-min), 
 							weight: 0, 
-							color: 'red'//this.chooseColor(point.data[0][0], state) 
+							color: origin ? 'black' : 'red'
 						}}>
       				{this.genTooltip(point)}
     			</Rectangle>
@@ -122,17 +131,13 @@ class Forecast extends React.Component {
     	// given an array <point> corresponding to a single point returned by an API data route with compression=minimal,
     	// return the jsx for an appropriate tooltip for this point.
 
-    	// let regionLink = helpers.genRegionLink(state.polygon, state.startDate, state.endDate, state.centerlon, 'tc')
-
-    	// return(
-		//     <Popup>
-		//       ID: {point[0]} <br />
-		//       Long / Lat: {helpers.mungePrecision(point[1])} / {helpers.mungePrecision(point[2])} <br />
-		//       Date: {point[3]} <br />
-		//       <a target="_blank" rel="noreferrer" href={'/plots/tc?showAll=true&tcMeta='+point[0].split('_')[0]+'&centerlon='+this.state.centerlon}>Cyclone Page</a>
-		//       {regionLink}
-		//     </Popup>
-    	// )
+    	return(
+		    <Popup>
+				Longitude: {point.geolocation_forecast.coordinates[0]}<br/>
+				Latitude: {point.geolocation_forecast.coordinates[1]}<br/>
+				Forecast probability: {point.data[0][0]}<br/>
+		    </Popup>
+    	)
     }
 
     dateRangeMultiplyer(s){
@@ -164,7 +169,7 @@ class Forecast extends React.Component {
 						  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
 										</div>
 									</div>
-									<h6>Float origin</h6>
+									<h6>Float origin (black cell)</h6>
 									<div className="form-floating mb-3">
 										<input 
 											type="number" 
@@ -172,15 +177,23 @@ class Forecast extends React.Component {
 											id="originLon" 
 											value={this.state.originLon} 
 											onChange={e => {
-												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
-												this.setState({originLon:e.target.value})}
+													helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
+													this.setState({
+														originLon:e.target.value,
+														refreshData: false
+													})
+												}
 											} 
 											onBlur={e => {
-												this.setState({originLon: e.target.value, mapkey: Math.random(), refreshData: true})
+												let value = Math.round(e.target.value / 2) * 2;
+												value = helpers.tidylon(value)
+												this.setState({originLon: value, mapkey: Math.random(), refreshData: true})
 											}}
 											onKeyPress={e => {
 												if(e.key==='Enter'){
-													this.setState({originLon: e.target.value, mapkey: Math.random(), refreshData: true})
+													let value = Math.round(e.target.value / 2) * 2;
+													value = helpers.tidylon(value)
+													this.setState({originLon: value, mapkey: Math.random(), refreshData: true})
 												}
 											}}
 										/>
@@ -193,15 +206,21 @@ class Forecast extends React.Component {
 											id="originLat" 
 											value={this.state.originLat} 
 											onChange={e => {
-												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
-												this.setState({originLat:e.target.value})}
+													helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
+													this.setState({
+														originLat:e.target.value,
+														refreshData: false
+													})
+												}
 											} 
 											onBlur={e => {
-												this.setState({originLat: e.target.value, mapkey: Math.random(), refreshData: true})
+												let value = Math.round(e.target.value / 2) * 2;
+												this.setState({originLat: value, mapkey: Math.random(), refreshData: true})
 											}}
 											onKeyPress={e => {
 												if(e.key==='Enter'){
-													this.setState({originLat: e.target.value, mapkey: Math.random(), refreshData: true})
+													let value = Math.round(e.target.value / 2) * 2;
+													this.setState({originLat: value, mapkey: Math.random(), refreshData: true})
 												}
 											}}
 										/>
@@ -257,21 +276,25 @@ class Forecast extends React.Component {
 							<FeatureGroup ref={this.fgRef}>
 								<EditControl
 								position='topleft'
-								onCreated={p => helpers.onPolyCreate.bind(this)(p)}
-								onDeleted={p => helpers.onPolyDelete.bind(this)([],p)}
-								onDrawStop={p => helpers.onDrawStop.bind(this)(p)}
-								onDrawStart={p => helpers.onDrawStart.bind(this)(p)}
+								onCreated={p => {
+									const { lat, lng } = p.layer.getLatLng();  // Get the coordinates of the marker
+									let latitude = Math.round(lat / 2) * 2;
+									let longitude = Math.round(lng / 2) * 2;
+									longitude = helpers.tidylon(longitude)
+									this.setState({
+										originLat: latitude,
+										originLon: longitude,
+										mapkey: Math.random(),
+										refreshData: true
+									});
+								}}
 								draw={{
 									rectangle: false,
 									circle: false,
 									polyline: false,
 									circlemarker: false,
-									marker: false,
-									polygon: this.state.observingEntity ? false: {
-										shapeOptions: {
-											fillOpacity: 0
-										}
-									}
+									marker: true,
+									polygon: false
 								}}
 								edit={{
 									edit: false

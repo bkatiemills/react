@@ -359,15 +359,22 @@ helpers.tidypoly = function(polygon){
 	let tidypoly = [] // make sure longitudes are on [-180,180]
 	for(let i=0; i<polygon.length; i++){
 		let point = [polygon[i][0], polygon[i][1]]
-		if(point[0] < -180){
-			point[0] += 360
-		} else if(point[0] > 180){
-			point[0] -= 360
-		}
+		point[0] = helpers.tidylon(point[0])
 		tidypoly.push(point)
 	}
 
 	return tidypoly
+}
+
+helpers.tidylon = function(lon){
+    // given a longitude, return it on [-180,180]
+    while(lon < -180){
+        lon += 360;
+    }
+    while(lon > 180){
+        lon -= 360;
+    }
+    return lon;
 }
 
 helpers.circlefy = function(points, state){
@@ -393,7 +400,7 @@ helpers.setQueryString = function(){
 
 	let qparams = this.customQueryParams
 	for(let i=0; i<qparams.length; i++){
-		if(this.state[qparams[i]]){
+		if(this.state.hasOwnProperty(qparams[i])){
 			queryManagement.searchParams.set(qparams[i], Array.isArray(this.state[qparams[i]]) ? JSON.stringify(this.state[qparams[i]]) : this.state[qparams[i]] )
 		} else{
 			queryManagement.searchParams.delete(qparams[i])
