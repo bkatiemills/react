@@ -222,7 +222,7 @@ helpers.componentDidUpdate = function(){
 		if(!refetch){
 			helpers.manageStatus.bind(this)('ready')
 			if(s.points.length>0){
-				helpers.refreshMap.bind(this)(s)
+				this.refreshMap.bind(this)(s)
 			}
 		} else {
 			//promise all across a `fetch` for all new URLs, and update CircleMarkers for all new fetches
@@ -244,14 +244,15 @@ helpers.componentDidUpdate = function(){
 						timestamps = timestamps.map(x => { let d = new Date(x); return d.getTime()})
 						let start = new Date(Math.min(...timestamps))
 						let end = new Date(Math.max(...timestamps))
-	   				s.startDate = start.toISOString().slice(0,10)
-	   				s.endDate = end.toISOString().slice(0,10)
-	   				s.polygon = []
-	   				s.observingEntity = true
+						s.startDate = start.toISOString().slice(0,10)
+						s.endDate = end.toISOString().slice(0,10)
+						s.polygon = []
+						s.observingEntity = true
 					}
+					s.data = data
 					s.points = helpers.circlefy.bind(this)(newPoints, s)
 					helpers.manageStatus.bind(this)('rendering')
-					helpers.refreshMap.bind(this)(s)
+					this.refreshMap.bind(this)(s)
 				})
 			})
 		}
@@ -295,6 +296,7 @@ helpers.manageStatus = function(newStatus, messageArg){
 }
 
 helpers.refreshMap = function(state){
+	//generic map refresh logic
 	helpers.manageStatus.bind(this)('rendering')
 
 	if(JSON.stringify(state.polygon) === '[]'){
@@ -303,23 +305,23 @@ helpers.refreshMap = function(state){
 
 	this.setState({...state, refreshData: false}, () => {
 
-			//state.points might be a flat list or an object; determine if there's any data to plot
-		  let nPoints = 0
-		  if(this.state.points.hasOwnProperty('length')){
-		  	nPoints = this.state.points.length
-		  } else {
-		  	for(let k in this.state.points){
-		  		nPoints += this.state.points[k].length
-		  	}
-		  }
-			if(nPoints > 0){
-				helpers.manageStatus.bind(this)('ready')
-			} else {
-				helpers.manageStatus.bind(this)('error', 'No data found for this search.')
-			}
-			this.formRef.current.removeAttribute('disabled')
-			helpers.setQueryString.bind(this)()
-		})
+		//state.points might be a flat list or an object; determine if there's any data to plot
+		let nPoints = 0
+		if(this.state.points.hasOwnProperty('length')){
+		nPoints = this.state.points.length
+		} else {
+		for(let k in this.state.points){
+			nPoints += this.state.points[k].length
+		}
+		}
+		if(nPoints > 0){
+			helpers.manageStatus.bind(this)('ready')
+		} else {
+			helpers.manageStatus.bind(this)('error', 'No data found for this search.')
+		}
+		this.formRef.current.removeAttribute('disabled')
+		helpers.setQueryString.bind(this)()
+	})
 }
 
 helpers.generateTemporoSpatialURL = function(prefix, route, state){
@@ -448,7 +450,7 @@ helpers.setDate = function(date, v, maxdays, noop, noup){
     	return [start, end]
     } else {
 	    this.setState(s)
-	  }
+	}
 }
 
 helpers.setToken = function(key, v, message, persist){
