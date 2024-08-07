@@ -13,8 +13,7 @@ class Forecast extends React.Component {
 
 		let q = new URLSearchParams(window.location.search) // parse out query string
 
-		this.spectrum = ['#000000', '#440154', '#482777', '#3f4a8a', '#31678e', '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825', '#FFFFFF'].reverse()
-		
+		this.spectrum = ['#ffffff', '#ffd9d1','#fdc8be','#fba69a','#f88377','#f55f53','#f44c41','#e51f17','#ca110b','#a60d08','#820906']
 
 		// default state, pulling in query string specifications
 		this.state = {
@@ -98,7 +97,7 @@ class Forecast extends React.Component {
 			let p = points.map(point => {return point.data[0][0]})
 			let min =  Math.floor(Math.log10(Math.min(...p)))
 			let max = Math.ceil(Math.log10(Math.max(...p)))
-			let scale = chroma.scale(['#FFFFFF', '#440154', '#482777', '#3f4a8a', '#31678e', '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825', '#000000'].reverse()).domain([min,max])
+			let scale = chroma.scale(this.spectrum).domain([min,max])
 			let originfound = false
 			let pts = points.map(point => {
 				let origin = point.geolocation_forecast.coordinates[0] === point.geolocation.coordinates[0] && point.geolocation_forecast.coordinates[1] === point.geolocation.coordinates[1]
@@ -111,7 +110,7 @@ class Forecast extends React.Component {
 						pathOptions={{ 
 							fillOpacity: 1,
 							weight: 0, 
-							color: origin ? 'red' : this.colorscale(Math.log10(point.data[0][0]), scale)
+							color: origin ? 'black' : this.colorscale(Math.log10(point.data[0][0]), scale)
 						}}
 
 						>
@@ -234,7 +233,7 @@ class Forecast extends React.Component {
 						  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
 										</div>
 									</div>
-									<h6>Float origin (red cell)</h6>
+									<h6>Float origin (black cell)</h6>
 									<div className="form-floating mb-3">
 										<input 
 											type="number" 
