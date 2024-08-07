@@ -249,7 +249,7 @@ helpers.componentDidUpdate = function(){
 						s.polygon = []
 						s.observingEntity = true
 					}
-					s.data = data // might not need this
+					s.data = data
 					s.points = this.mapmarkers.bind(this)(newPoints, s)
 					helpers.manageStatus.bind(this)('rendering')
 					this.refreshMap.bind(this)(s)
