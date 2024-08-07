@@ -17,6 +17,7 @@ import ShipPlots from "./pages/shipPlots"
 import APIintro from "./pages/api_intro"
 import Hackathon from "./pages/hackathon2024"
 import ArgoURLhelper from "./pages/argoURLhelper"
+import Forecast from "./pages/forecast"
 
 export default function App() {
   useEffect(() => {    
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="drifters" element={<DriftersExplore />} />
           <Route path="ships" element={<ShipsExplore />} />
           <Route path="grids" element={<Grids />} />
+          <Route path="forecast" element={<Forecast />} />
           <Route path="plots/argo" element={<ArgoPlots />} />
           <Route path="plots/tc" element={<TCPlots />} />
           <Route path="plots/drifters" element={<DrifterPlots />} />

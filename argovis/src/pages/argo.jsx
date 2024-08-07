@@ -89,6 +89,10 @@ class ArgoExplore extends React.Component {
     	helpers.componentDidUpdate.bind(this)()
     }
 
+	refreshMap(state){
+		helpers.refreshMap.bind(this)(state)
+	}
+
     lookingForEntity(state){
     	// return true if any token, valid or not, is specified for any entity query string parameter
     	return Boolean(state.argoPlatform)
@@ -130,6 +134,10 @@ class ArgoExplore extends React.Component {
 	    	return url
 	    }
     }
+
+	mapmarkers(points, state){
+		return helpers.circlefy.bind(this)(points, state)
+	}
 
     chooseColor(point){
     	if(point[4].includes('argo_bgc')){

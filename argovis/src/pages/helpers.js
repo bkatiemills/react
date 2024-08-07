@@ -222,7 +222,7 @@ helpers.componentDidUpdate = function(){
 		if(!refetch){
 			helpers.manageStatus.bind(this)('ready')
 			if(s.points.length>0){
-				helpers.refreshMap.bind(this)(s)
+				this.refreshMap.bind(this)(s)
 			}
 		} else {
 			//promise all across a `fetch` for all new URLs, and update CircleMarkers for all new fetches
@@ -244,14 +244,15 @@ helpers.componentDidUpdate = function(){
 						timestamps = timestamps.map(x => { let d = new Date(x); return d.getTime()})
 						let start = new Date(Math.min(...timestamps))
 						let end = new Date(Math.max(...timestamps))
-	   				s.startDate = start.toISOString().slice(0,10)
-	   				s.endDate = end.toISOString().slice(0,10)
-	   				s.polygon = []
-	   				s.observingEntity = true
+						s.startDate = start.toISOString().slice(0,10)
+						s.endDate = end.toISOString().slice(0,10)
+						s.polygon = []
+						s.observingEntity = true
 					}
-					s.points = helpers.circlefy.bind(this)(newPoints, s)
+					s.data = data
+					s.points = this.mapmarkers.bind(this)(newPoints, s)
 					helpers.manageStatus.bind(this)('rendering')
-					helpers.refreshMap.bind(this)(s)
+					this.refreshMap.bind(this)(s)
 				})
 			})
 		}
@@ -295,6 +296,8 @@ helpers.manageStatus = function(newStatus, messageArg){
 }
 
 helpers.refreshMap = function(state){
+	// generic map refresh logic; expects state.points to be populated with whatever should
+	// be on the map this time around; triggers redraw with a setState and calls back some post-render logic
 	helpers.manageStatus.bind(this)('rendering')
 
 	if(JSON.stringify(state.polygon) === '[]'){
@@ -303,23 +306,23 @@ helpers.refreshMap = function(state){
 
 	this.setState({...state, refreshData: false}, () => {
 
-			//state.points might be a flat list or an object; determine if there's any data to plot
-		  let nPoints = 0
-		  if(this.state.points.hasOwnProperty('length')){
-		  	nPoints = this.state.points.length
-		  } else {
-		  	for(let k in this.state.points){
-		  		nPoints += this.state.points[k].length
-		  	}
-		  }
-			if(nPoints > 0){
-				helpers.manageStatus.bind(this)('ready')
-			} else {
-				helpers.manageStatus.bind(this)('error', 'No data found for this search.')
-			}
-			this.formRef.current.removeAttribute('disabled')
-			helpers.setQueryString.bind(this)()
-		})
+		//state.points might be a flat list or an object; determine if there's any data to plot
+		let nPoints = 0
+		if(this.state.points.hasOwnProperty('length')){
+		nPoints = this.state.points.length
+		} else {
+		for(let k in this.state.points){
+			nPoints += this.state.points[k].length
+		}
+		}
+		if(nPoints > 0){
+			helpers.manageStatus.bind(this)('ready')
+		} else {
+			helpers.manageStatus.bind(this)('error', 'No data found for this search.')
+		}
+		this.formRef.current.removeAttribute('disabled')
+		helpers.setQueryString.bind(this)()
+	})
 }
 
 helpers.generateTemporoSpatialURL = function(prefix, route, state){
@@ -357,15 +360,22 @@ helpers.tidypoly = function(polygon){
 	let tidypoly = [] // make sure longitudes are on [-180,180]
 	for(let i=0; i<polygon.length; i++){
 		let point = [polygon[i][0], polygon[i][1]]
-		if(point[0] < -180){
-			point[0] += 360
-		} else if(point[0] > 180){
-			point[0] -= 360
-		}
+		point[0] = helpers.tidylon(point[0])
 		tidypoly.push(point)
 	}
 
 	return tidypoly
+}
+
+helpers.tidylon = function(lon){
+    // given a longitude, return it on [-180,180]
+    while(lon < -180){
+        lon += 360;
+    }
+    while(lon > 180){
+        lon -= 360;
+    }
+    return lon;
 }
 
 helpers.circlefy = function(points, state){
@@ -391,7 +401,7 @@ helpers.setQueryString = function(){
 
 	let qparams = this.customQueryParams
 	for(let i=0; i<qparams.length; i++){
-		if(this.state[qparams[i]]){
+		if(this.state.hasOwnProperty(qparams[i])){
 			queryManagement.searchParams.set(qparams[i], Array.isArray(this.state[qparams[i]]) ? JSON.stringify(this.state[qparams[i]]) : this.state[qparams[i]] )
 		} else{
 			queryManagement.searchParams.delete(qparams[i])
@@ -448,7 +458,7 @@ helpers.setDate = function(date, v, maxdays, noop, noup){
     	return [start, end]
     } else {
 	    this.setState(s)
-	  }
+	}
 }
 
 helpers.setToken = function(key, v, message, persist){

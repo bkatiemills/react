@@ -32,7 +32,7 @@ class Grids extends React.Component {
       	lattice: q.get('lattice'),
       	refreshData: true,
       	apiKey: localStorage.getItem('apiKey') ? localStorage.getItem('apiKey') : 'guest',
-      	subgrid: q.has('subgrid') ? q.get('subgrid') : false,
+      	subgrid: q.has('subgrid') ? q.get('subgrid') === 'true' : false,
       	scale: chroma.scale(['#440154', '#482777', '#3f4a8a', '#31678e', '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825']),
       	centerlon: -70
       }
@@ -440,7 +440,7 @@ class Grids extends React.Component {
 						    />
 						    <Polygon key={Math.random()} positions={this.state.interpolated_polygon.map(x => [x[1],x[0]])} fillOpacity={0}></Polygon>
 						  </FeatureGroup>
-              {this.state.grid}
+              				{this.state.grid}
 						</MapContainer>
 					</div>
 				</div>

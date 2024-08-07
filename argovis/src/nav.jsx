@@ -27,6 +27,7 @@ class ArgovisNav extends React.Component {
 					        <Dropdown.Item className="dropdown-item" href="/grids?lattice=rg09&grid=rg09_temperature">RG Temperature</Dropdown.Item>
 					        <Dropdown.Item className="dropdown-item" href="/grids?lattice=rg09&grid=rg09_salinity">RG Salinity</Dropdown.Item>
 					        <Dropdown.Item className="dropdown-item" href="/grids?lattice=kg21&grid=kg21_ohc15to300">KG Ocean heat content</Dropdown.Item>
+							<Dropdown.Item className="dropdown-item" href="/forecast">ARGONE float location forecasts</Dropdown.Item>
 						    </DropdownButton>
 						  </li>
 			      	<li className="nav-item">

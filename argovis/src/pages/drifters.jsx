@@ -73,6 +73,10 @@ class DriftersExplore extends React.Component {
     	helpers.componentDidUpdate.bind(this)()
     }
 
+	refreshMap(state){
+		helpers.refreshMap.bind(this)(state)
+	}
+
     lookingForEntity(state){
     	// return true if any token, valid or not, is specified for any entity query string parameter
     	return Boolean(state.wmo || state.platform)
@@ -87,6 +91,10 @@ class DriftersExplore extends React.Component {
     		return [helpers.generateTemporoSpatialURL.bind(this)(this.apiPrefix, 'drifters', state)]
     	}
     }	
+
+	mapmarkers(points, state){
+		return helpers.circlefy.bind(this)(points, state)
+	}
 
     chooseColor(point){
     	return 'black'
