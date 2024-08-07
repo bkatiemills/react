@@ -4,6 +4,8 @@ import { EditControl } from "react-leaflet-draw";
 import '../index.css';
 import helpers from'./helpers'
 import chroma from "chroma-js";
+import Tooltip from 'react-bootstrap/Tooltip';
+import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 
 class Forecast extends React.Component {
 
@@ -126,7 +128,7 @@ class Forecast extends React.Component {
 						pathOptions={{ 
 							fillOpacity: 1,
 							weight: 0, 
-							color: 'red'
+							color: 'black'
 						}}
 
 						>
@@ -224,7 +226,20 @@ class Forecast extends React.Component {
 						<fieldset ref={this.formRef}>
 							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
 							<div className='mapSearchInputs scrollit' style={{'height':'90vh'}}>
-								<h5>Explore ARGONE Forecasts</h5>
+								<h5>
+									Explore ARGONE Forecasts
+									<OverlayTrigger
+										placement="right"
+										overlay={
+											<Tooltip id="compression-tooltip" className="wide-tooltip">
+												ARGONE provides probability distribution functions for the location of Argo floats after drifting for a number of days. Choose a new float origin location by clicking on the pencil icon in the top left of the map, and then clicking your new location; or by adjusting the form below.
+											</Tooltip>
+										}
+										trigger="click"
+									>
+										<i style={{'float':'right'}} className="fa fa-question-circle" aria-hidden="true"></i>
+                                    </OverlayTrigger>
+								</h5>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">
 										<input type="password" className="form-control" id="apiKey" value={this.state.apiKey} placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
@@ -347,7 +362,7 @@ class Forecast extends React.Component {
 								  <rect x="10%" width="80%" height="15px" fill="url(#grad)" stroke="black" />
 								  {this.generateScaleTics(this.state.colormax-this.state.colormin+1)}
 								  {this.generateScaleLabels(this.state.colormin, this.state.colormax)}
-								  <text x="50%" y="3.5em" textAnchor="middle" fill="black">PDF weights</text>
+								  <text x="50%" y="3.5em" textAnchor="middle" fill="black">Probability density function</text>
 								</svg>
 
 							</div>

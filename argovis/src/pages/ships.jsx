@@ -4,6 +4,8 @@ import { EditControl } from "react-leaflet-draw";
 import Autosuggest from 'react-autosuggest';
 import '../index.css';
 import helpers from'./helpers'
+import Tooltip from 'react-bootstrap/Tooltip';
+import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 
 class ShipsExplore extends React.Component {
 
@@ -211,7 +213,20 @@ class ShipsExplore extends React.Component {
 						<fieldset ref={this.formRef}>
 							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
 							<div className='mapSearchInputs scrollit' style={{'height':'90vh'}}>
-								<h5>Explore Ship-Based Profiles</h5>
+								<h5>
+									Explore Ship-Based Profiles
+									<OverlayTrigger
+										placement="right"
+										overlay={
+											<Tooltip id="compression-tooltip" className="wide-tooltip">
+												Ship based profiles are CTD and bottle-based oceanic profiles collected by ships. Narrow down your search using the form below, or specify a geographic region by first clicking on the pentagon button in the top left of the map, then choosing the vertexes of your region of interest. Click on points that appear to see links to more information.
+											</Tooltip>
+										}
+										trigger="click"
+									>
+										<i style={{'float':'right'}} className="fa fa-question-circle" aria-hidden="true"></i>
+                                    </OverlayTrigger>	
+								</h5>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">
 										<input type="password" className="form-control" id="apiKey" value={this.state.apiKey} placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
