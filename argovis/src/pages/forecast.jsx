@@ -227,18 +227,18 @@ class Forecast extends React.Component {
 							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
 							<div className='mapSearchInputs scrollit' style={{'height':'90vh'}}>
 								<h5>
-									Explore ARGONE Forecasts
 									<OverlayTrigger
 										placement="right"
 										overlay={
 											<Tooltip id="compression-tooltip" className="wide-tooltip">
-												ARGONE provides probability distribution functions for the location of Argo floats after drifting for a number of days. Choose a new float origin location by clicking on the pencil icon in the top left of the map, and then clicking your new location; or by adjusting the form below.
+												ARGONE provides probability distribution functions for the location of Argo floats after drifting for a number of days. Choose a new float origin location by clicking on the marker icon in the top left of the map, and then clicking your new location; or by adjusting the form below.
 											</Tooltip>
 										}
 										trigger="click"
 									>
-										<i style={{'float':'right'}} className="fa fa-question-circle" aria-hidden="true"></i>
+										<i  style={{'float':'right'}} className="fa fa-question-circle" aria-hidden="true"></i>
                                     </OverlayTrigger>
+									Explore ARGONE Forecasts
 								</h5>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">

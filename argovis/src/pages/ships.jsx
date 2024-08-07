@@ -214,7 +214,6 @@ class ShipsExplore extends React.Component {
 							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
 							<div className='mapSearchInputs scrollit' style={{'height':'90vh'}}>
 								<h5>
-									Explore Ship-Based Profiles
 									<OverlayTrigger
 										placement="right"
 										overlay={
@@ -225,7 +224,8 @@ class ShipsExplore extends React.Component {
 										trigger="click"
 									>
 										<i style={{'float':'right'}} className="fa fa-question-circle" aria-hidden="true"></i>
-                                    </OverlayTrigger>	
+                                    </OverlayTrigger>
+									Explore Ship-Based Profiles
 								</h5>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">
