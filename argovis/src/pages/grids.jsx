@@ -4,6 +4,8 @@ import { EditControl } from "react-leaflet-draw";
 import '../index.css';
 import chroma from "chroma-js";
 import helpers from'./helpers'
+import Tooltip from 'react-bootstrap/Tooltip';
+import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 
 class Grids extends React.Component {
     constructor(props) {
@@ -328,7 +330,20 @@ class Grids extends React.Component {
 						<fieldset disabled ref={this.formRef}>
 							<span ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
 							<div className='mapSearchInputs scrollit' style={{'height':'90vh'}}>
-								<h5>{this.title + ' search control'}</h5>
+								<h5>
+									{'Explore ' + this.title}
+									<OverlayTrigger
+										placement="right"
+										overlay={
+											<Tooltip id="compression-tooltip" className="wide-tooltip">
+												Gridded products interpolate in-situ measurements or simulate data to regular grids. Narrow down your search using the form below, or specify a geographic region by first clicking on the pentagon button in the top left of the map, then choosing the vertexes of your region of interest. Click on regions that appear to see links to more information.
+											</Tooltip>
+										}
+										trigger="click"
+									>
+										<i style={{'float':'right'}} className="fa fa-question-circle" aria-hidden="true"></i>
+                                    </OverlayTrigger>		
+								</h5>
 								<small><a target="_blank" rel="noreferrer" href={this.reflink}>Original Data Reference</a></small>
 								<div className="form-floating mb-3" style={{'marginTop': '0.5em'}}>
 									<input type="password" className="form-control" id="apiKey" value={this.state.apiKey} placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
