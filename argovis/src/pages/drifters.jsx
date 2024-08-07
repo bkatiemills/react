@@ -92,6 +92,10 @@ class DriftersExplore extends React.Component {
     	}
     }	
 
+	mapmarkers(points, state){
+		return helpers.circlefy.bind(this)(points, state)
+	}
+
     chooseColor(point){
     	return 'black'
     }

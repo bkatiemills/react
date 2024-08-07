@@ -135,6 +135,10 @@ class ArgoExplore extends React.Component {
 	    }
     }
 
+	mapmarkers(points, state){
+		return helpers.circlefy.bind(this)(points, state)
+	}
+
     chooseColor(point){
     	if(point[4].includes('argo_bgc')){
     		return 'green'

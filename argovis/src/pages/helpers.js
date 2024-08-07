@@ -249,8 +249,8 @@ helpers.componentDidUpdate = function(){
 						s.polygon = []
 						s.observingEntity = true
 					}
-					s.data = data
-					s.points = helpers.circlefy.bind(this)(newPoints, s)
+					s.data = data // might not need this
+					s.points = this.mapmarkers.bind(this)(newPoints, s)
 					helpers.manageStatus.bind(this)('rendering')
 					this.refreshMap.bind(this)(s)
 				})
@@ -296,7 +296,8 @@ helpers.manageStatus = function(newStatus, messageArg){
 }
 
 helpers.refreshMap = function(state){
-	//generic map refresh logic
+	// generic map refresh logic; expects state.points to be populated with whatever should
+	// be on the map this time around; triggers redraw with a setState and calls back some post-render logic
 	helpers.manageStatus.bind(this)('rendering')
 
 	if(JSON.stringify(state.polygon) === '[]'){

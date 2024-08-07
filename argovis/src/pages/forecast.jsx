@@ -1,15 +1,9 @@
-/*
-todo
- - add a legend to the map
- - double check that centering the cells on the coordinates is correct
-*/
-
 import React from 'react';
-import { MapContainer, TileLayer, Polygon, FeatureGroup, Popup, Rectangle} from 'react-leaflet'
+import { MapContainer, TileLayer, FeatureGroup, Popup, Rectangle} from 'react-leaflet'
 import { EditControl } from "react-leaflet-draw";
-import Autosuggest from 'react-autosuggest';
 import '../index.css';
 import helpers from'./helpers'
+import chroma from "chroma-js";
 
 class Forecast extends React.Component {
 
@@ -18,6 +12,9 @@ class Forecast extends React.Component {
 		super(props);
 
 		let q = new URLSearchParams(window.location.search) // parse out query string
+
+		this.spectrum = ['#000000', '#440154', '#482777', '#3f4a8a', '#31678e', '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825', '#FFFFFF'].reverse()
+		
 
 		// default state, pulling in query string specifications
 		this.state = {
@@ -29,10 +26,12 @@ class Forecast extends React.Component {
 			refreshData: false,
 			centerlon: q.has('centerlon') ? parseFloat(q.get('centerlon')) : -70,
 			mapkey: Math.random(),
-			points: [],
 			urls: [],
-			grid: [],
+			points: [],
 			data: [],
+			scale: chroma.scale(this.spectrum).domain([0,1]),
+			colormin: 0,
+			colormax: 1,
 		}
 
         // some other useful class variables
@@ -52,11 +51,22 @@ class Forecast extends React.Component {
 		this.setState({refreshData:true})
 	}
 
+    componentDidUpdate(prevProps, prevState, snapshot){
+    	helpers.componentDidUpdate.bind(this)()
+		helpers.setQueryString.bind(this)()
+    }
+
     refreshMap(state){
     	// redraw the map and render the dom
     	if(state.points.length > 0){
+			let p = state.data[0].map(point => {return point.data[0][0]})
+			let min =  Math.floor(Math.log10(Math.min(...p)))
+			let max = Math.ceil(Math.log10(Math.max(...p)))
+			let scale = chroma.scale(this.spectrum).domain([min,max])
 				this.setState(	{...state, 
-									grid: this.gridRasterfy(state),
+									scale: scale,
+									colormin: min,
+									colormax: max,
 									refreshData: false
 								},
 								() => {helpers.manageStatus.bind(this)('ready')} 
@@ -68,32 +78,70 @@ class Forecast extends React.Component {
 	    this.formRef.current.removeAttribute('disabled')
     }
 
-    gridRasterfy(state){
-    	// expects a list from a data endpoint
-			if(state.data.hasOwnProperty('code') || state.data[0].hasOwnProperty('code')){
-				return null
-			}
-			else {
-				let p = state.data[0].map(point => {return point.data[0][0]})
-				let min =  Math.min(...p)
-				let max = Math.max(...p)
-				let points = state.data[0].map(point => {
-					let origin = point.geolocation_forecast.coordinates[0] === point.geolocation.coordinates[0] && point.geolocation_forecast.coordinates[1] === point.geolocation.coordinates[1]
-					return(
-					<Rectangle 
+    colorscale(val, scale){
+    	if(val === null){
+    		return 'black'
+    	}
+
+    	return scale(val).hex()
+    }
+
+	mapmarkers(points, state){
+		if(JSON.stringify(points) === '[]'){
+			return []
+		}
+	
+		if(points.hasOwnProperty('code') || points[0].hasOwnProperty('code')){
+			return null
+		}
+		else {
+			let p = points.map(point => {return point.data[0][0]})
+			let min =  Math.floor(Math.log10(Math.min(...p)))
+			let max = Math.ceil(Math.log10(Math.max(...p)))
+			let scale = chroma.scale(['#FFFFFF', '#440154', '#482777', '#3f4a8a', '#31678e', '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825', '#000000'].reverse()).domain([min,max])
+			let originfound = false
+			let pts = points.map(point => {
+				let origin = point.geolocation_forecast.coordinates[0] === point.geolocation.coordinates[0] && point.geolocation_forecast.coordinates[1] === point.geolocation.coordinates[1]
+				if(origin){
+					originfound = true
+				}				
+				let cell = <Rectangle 
 						key={Math.random()} 
 						bounds={[[point.geolocation_forecast.coordinates[1]-1, helpers.mutateLongitude(point.geolocation_forecast.coordinates[0], parseFloat(state.centerlon))-1],[point.geolocation_forecast.coordinates[1]+1, helpers.mutateLongitude(point.geolocation_forecast.coordinates[0], parseFloat(state.centerlon))+1]]} 
 						pathOptions={{ 
-							fillOpacity: origin ? 1 : (point.data[0][0] - min) / (max-min), 
+							fillOpacity: 1,
 							weight: 0, 
-							color: origin ? 'black' : 'red'
-						}}>
+							color: origin ? 'red' : this.colorscale(Math.log10(point.data[0][0]), scale)
+						}}
+
+						>
       				{this.genTooltip(point)}
     			</Rectangle>
-				)})
-				return points
+				return cell
+			})
+			if(!originfound){
+				pts.push(
+					<Rectangle 
+						key={Math.random()} 
+						bounds={[[points[0].geolocation.coordinates[1]-1, helpers.mutateLongitude(points[0].geolocation.coordinates[0], parseFloat(state.centerlon))-1],[points[0].geolocation.coordinates[1]+1, helpers.mutateLongitude(points[0].geolocation.coordinates[0], parseFloat(state.centerlon))+1]]} 
+						pathOptions={{ 
+							fillOpacity: 1,
+							weight: 0, 
+							color: 'red'
+						}}
+
+						>
+						<Popup>
+							Longitude: {points[0].geolocation.coordinates[0]}<br/>
+							Latitude: {points[0].geolocation.coordinates[1]}<br/>
+							Forecast probability: 0<br/>
+						</Popup>
+					</Rectangle>
+				)
 			}
-    }
+			return pts
+		}
+	}
 
     changeForecast(target){
 		let s = this.state
@@ -109,11 +157,6 @@ class Forecast extends React.Component {
 		)})
 	}
 
-    componentDidUpdate(prevProps, prevState, snapshot){
-    	helpers.componentDidUpdate.bind(this)()
-		helpers.setQueryString.bind(this)()
-    }
-
     lookingForEntity(state){
     	// return true if any token, valid or not, is specified for any entity query string parameter
     	return false
@@ -122,10 +165,6 @@ class Forecast extends React.Component {
     generateURLs(state){
 		return [this.apiPrefix + 'argone?forecastOrigin=' + state.originLon + ',' + state.originLat + '&data=' + state.forecastTime]
     }	
-
-    chooseColor(point){
-    	return 'red'
-    }
 
     genTooltip(point, state){
     	// given an array <point> corresponding to a single point returned by an API data route with compression=minimal,
@@ -150,6 +189,32 @@ class Forecast extends React.Component {
     	return s
     }
 
+	generateScaleTics(tics){
+		// generate a list of tics for the color scale
+		let scale = []
+		for(let i=0; i<tics; i++){
+			let x = 10 + i/(tics-1)*80
+			if (i === tics-1) {
+				x -= 0.5
+			}
+			scale.push(<rect key={i} x={x + '%'} y="15" height="5px" width="0.5%" fill="black"/>)
+		}
+		return scale
+	}
+
+	generateScaleLabels(min, max){
+		let text = Array.from({length: max+1 - min}, (_, i) => min + i)
+		return text.map((x, i) => {
+			let pos = 10 + i/(max-min)*80
+			if(i === max-min){
+				pos -= 0.5
+			}
+			return(
+				<text key={i} x={pos + '%'} y="40" fontSize="1em" textAnchor="middle">10<tspan dy="-10">{x}</tspan></text>
+			)
+		})	
+	}
+
 	render(){
 		console.log(this.state)
 		return(
@@ -169,7 +234,7 @@ class Forecast extends React.Component {
 						  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
 										</div>
 									</div>
-									<h6>Float origin (black cell)</h6>
+									<h6>Float origin (red cell)</h6>
 									<div className="form-floating mb-3">
 										<input 
 											type="number" 
@@ -227,8 +292,9 @@ class Forecast extends React.Component {
 										<label htmlFor="originLat">Latitude</label>
 									</div>
 
-									<small className="form-text text-muted">Forecast length (days)</small>
+									<h6>Forecast length (days)</h6>
 									<select 
+										id="forecastTime"
 										className="form-select" 
 										value={this.state.forecastTime} 
 										onChange={(v) => this.changeForecast(v)}
@@ -262,13 +328,36 @@ class Forecast extends React.Component {
 										aria-describedby="basic-addon1"/>
 									<label htmlFor="depth">Center longitude on [-180,180]</label>
 								</div>
+
+								<svg style={{'width':'100%', 'height':'4em', 'marginTop': '1em'}} version="1.1" xmlns="http://www.w3.org/2000/svg">
+								  <defs>
+								    <linearGradient id="grad" x1="0" x2="1" y1="0" y2="0">
+								      <stop offset="0%" stopColor={this.state.scale(this.state.colormin)} />
+								      <stop offset="10%" stopColor={this.state.scale(this.state.colormin + 0.1*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="20%" stopColor={this.state.scale(this.state.colormin + 0.2*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="30%" stopColor={this.state.scale(this.state.colormin + 0.3*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="40%" stopColor={this.state.scale(this.state.colormin + 0.4*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="50%" stopColor={this.state.scale(this.state.colormin + 0.5*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="60%" stopColor={this.state.scale(this.state.colormin + 0.6*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="70%" stopColor={this.state.scale(this.state.colormin + 0.7*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="80%" stopColor={this.state.scale(this.state.colormin + 0.8*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="90%" stopColor={this.state.scale(this.state.colormin + 0.9*(this.state.colormax-this.state.colormin))} />
+								      <stop offset="100%" stopColor={this.state.scale(this.state.colormax)} />
+								    </linearGradient>
+								  </defs>
+								  <rect x="10%" width="80%" height="15px" fill="url(#grad)" stroke="black" />
+								  {this.generateScaleTics(this.state.colormax-this.state.colormin+1)}
+								  {this.generateScaleLabels(this.state.colormin, this.state.colormax)}
+								  <text x="50%" y="3.5em" textAnchor="middle" fill="black">PDF weights</text>
+								</svg>
+
 							</div>
 						</fieldset>
 					</div>
 
 					{/*leaflet map*/}
 					<div className='col-lg-9'>
-						<MapContainer key={this.state.mapkey} center={[25, parseFloat(this.state.centerlon)]} maxBounds={[[-90,this.state.centerlon-180],[90,this.state.centerlon+180]]} zoomSnap={0.01} zoomDelta={1} zoom={2.05} minZoom={2.05} scrollWheelZoom={true}>
+						<MapContainer key={this.state.mapkey} center={[25, parseFloat(this.state.centerlon)]} maxBounds={[[-90,this.state.centerlon-180],[90,this.state.centerlon+180]]} zoomSnap={0.01} zoomDelta={1} zoom={2.05} minZoom={2.05} scrollWheelZoom={true} >
 							<TileLayer
 							attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 							url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -301,7 +390,7 @@ class Forecast extends React.Component {
 								}}
 								/>
 							</FeatureGroup>
-							{this.state.grid}
+							{this.state.points}
 						</MapContainer>
 					</div>
 				</div>

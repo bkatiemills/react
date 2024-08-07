@@ -98,7 +98,7 @@ class ShipsExplore extends React.Component {
 	refreshMap(state){
 		helpers.refreshMap.bind(this)(state)
 	}
-	
+
     lookingForEntity(state){
     	// return true if any token, valid or not, is specified for any entity query string parameter
     	return Boolean(state.woceline || state.cruise)
@@ -146,6 +146,10 @@ class ShipsExplore extends React.Component {
 	    	}
 	    }
     }
+
+	mapmarkers(points, state){
+		return helpers.circlefy.bind(this)(points, state)
+	}
 
     chooseColor(point){
     	if(point[4].includes('cchdo_woce')){
