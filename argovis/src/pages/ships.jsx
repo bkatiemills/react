@@ -36,7 +36,7 @@ class ShipsExplore extends React.Component {
 			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [],
 			interpolated_polygon: q.has('polygon') ? helpers.insertPointsInPolygon(JSON.parse(q.get('polygon'))) : [],
 			urls: [],
-			depthRequired: q.has('depthRequired') ? q.get('depthRequired') : 0,
+			depthRequired: q.has('depthRequired') ? parseFloat(q.get('depthRequired')) : 0,
 			centerlon: q.has('centerlon') ? parseFloat(q.get('centerlon')) : -160,
 			mapkey: Math.random()
 		}
