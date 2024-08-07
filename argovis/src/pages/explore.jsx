@@ -3,6 +3,8 @@ import { MapContainer, TileLayer, Popup, Polygon, FeatureGroup} from 'react-leaf
 import { EditControl } from "react-leaflet-draw";
 import '../index.css';
 import helpers from'./helpers'
+import Tooltip from 'react-bootstrap/Tooltip';
+import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 
 class ArgovisExplore extends React.Component {
 		// top level element for the Argovis landing page
@@ -464,7 +466,20 @@ class ArgovisExplore extends React.Component {
 						<fieldset ref={this.formRef}>
 							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
 							<div className='mapSearchInputs scrollit' style={{'height':'90vh'}}>
-									<h5>Colocate datasets</h5>
+									<h5>
+									<OverlayTrigger
+										placement="right"
+										overlay={
+											<Tooltip id="compression-tooltip" className="wide-tooltip">
+												Use this map to colocate Argo probes, ship based profiles, Global Drifter Program estimates, and tropical cyclones. Adjust your search terms using the form below, or specify a geographic region by first clicking on the pentagon button in the top left of the map, then choosing the vertexes of your region of interest. Click on points that appear to see links to more information. 
+											</Tooltip>
+										}
+										trigger="click"
+									>
+										<i  style={{'float':'right'}} className="fa fa-question-circle" aria-hidden="true"></i>
+                                    </OverlayTrigger>
+										Colocate datasets
+									</h5>
 									<div className='verticalGroup'>
 										<div className="form-floating mb-3">
 											<input type="password" className="form-control" id="apiKey" placeholder="" value={this.state.apiKey} onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>

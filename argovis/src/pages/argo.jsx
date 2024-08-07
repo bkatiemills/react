@@ -201,7 +201,6 @@ class ArgoExplore extends React.Component {
 							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
 							<div className='mapSearchInputs scrollit' style={{'height':'90vh'}}> 
 								<h5>
-									Explore Argo Profiles
 									<OverlayTrigger
 										placement="right"
 										overlay={
@@ -212,7 +211,8 @@ class ArgoExplore extends React.Component {
 										trigger="click"
 									>
 										<i style={{'float':'right'}} className="fa fa-question-circle" aria-hidden="true"></i>
-                                    </OverlayTrigger>	
+                                    </OverlayTrigger>
+									Explore Argo Profiles	
 								</h5>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">

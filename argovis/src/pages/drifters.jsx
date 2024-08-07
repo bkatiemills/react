@@ -141,7 +141,6 @@ class DriftersExplore extends React.Component {
 							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
 							<div className='mapSearchInputs scrollit' style={{'height':'90vh'}}>
 								<h5>
-									Explore Global Drifter Program
 									<OverlayTrigger
 										placement="right"
 										overlay={
@@ -152,7 +151,8 @@ class DriftersExplore extends React.Component {
 										trigger="click"
 									>
 										<i style={{'float':'right'}} className="fa fa-question-circle" aria-hidden="true"></i>
-                                    </OverlayTrigger>		
+                                    </OverlayTrigger>
+									Explore Global Drifter Program	
 								</h5>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">

@@ -136,7 +136,6 @@ class TCExplore extends React.Component {
 							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
 							<div className='mapSearchInputs scrollit' style={{'height':'90vh'}}>
 								<h5>
-									Explore Tropical Cyclones
 									<OverlayTrigger
 										placement="right"
 										overlay={
@@ -147,7 +146,8 @@ class TCExplore extends React.Component {
 										trigger="click"
 									>
 										<i style={{'float':'right'}} className="fa fa-question-circle" aria-hidden="true"></i>
-                                    </OverlayTrigger>	
+                                    </OverlayTrigger>
+									Explore Tropical Cyclones	
 								</h5>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">

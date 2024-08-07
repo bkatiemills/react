@@ -331,7 +331,6 @@ class Grids extends React.Component {
 							<span ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
 							<div className='mapSearchInputs scrollit' style={{'height':'90vh'}}>
 								<h5>
-									{'Explore ' + this.title}
 									<OverlayTrigger
 										placement="right"
 										overlay={
@@ -342,7 +341,8 @@ class Grids extends React.Component {
 										trigger="click"
 									>
 										<i style={{'float':'right'}} className="fa fa-question-circle" aria-hidden="true"></i>
-                                    </OverlayTrigger>		
+                                    </OverlayTrigger>
+									{'Explore ' + this.title}		
 								</h5>
 								<small><a target="_blank" rel="noreferrer" href={this.reflink}>Original Data Reference</a></small>
 								<div className="form-floating mb-3" style={{'marginTop': '0.5em'}}>
