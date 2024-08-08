@@ -205,7 +205,7 @@ class ArgoExplore extends React.Component {
 										placement="right"
 										overlay={
 											<Tooltip id="compression-tooltip" className="wide-tooltip">
-												The Argo array is a collection of autonomous profiling floats measuring physical and biogeochmeical properties across Earth's oceans. Narrow down your search using the form below, or specify a geographic region by first clicking on the pentagon button in the top left of the map, then choosing the vertexes of your region of interest. Click on points that appear to see links to more information.
+												The Argo array is a collection of autonomous profiling floats measuring physical and biogeochmeical properties across the ocean. Narrow down your search using the form below, or specify a geographic region by first clicking on the pentagon button in the top left of the map, then choosing the vertexes of your region of interest. Click on points that appear to see links to more information.
 											</Tooltip>
 										}
 										trigger="click"

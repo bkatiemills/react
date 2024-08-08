@@ -145,7 +145,7 @@ class DriftersExplore extends React.Component {
 										placement="right"
 										overlay={
 											<Tooltip id="compression-tooltip" className="wide-tooltip">
-												The Global Drifter Program deploys floating surface probes across Earth's oceans to collect hourly in-situ estimates of surface parameters. Narrow down your search using the form below, or specify a geographic region by first clicking on the pentagon button in the top left of the map, then choosing the vertexes of your region of interest. Click on points that appear to see links to more information.
+												The Global Drifter Program deploys floating surface probes across the ocean to collect hourly in-situ estimates of surface parameters. Narrow down your search using the form below, or specify a geographic region by first clicking on the pentagon button in the top left of the map, then choosing the vertexes of your region of interest. Click on points that appear to see links to more information.
 											</Tooltip>
 										}
 										trigger="click"
