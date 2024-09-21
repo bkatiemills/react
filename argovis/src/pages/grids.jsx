@@ -98,8 +98,8 @@ class Grids extends React.Component {
 					helpers.manageStatus.bind(this)('downloading')
 				}
 	    	//kick off request for new data, redraw the map when complete
-	    	let url    = this.apiPrefix + 'grids/' + s.lattice+'?data='+s.selectedGrid+'&startDate='+s.timestep+'T00:00:00Z&endDate='+s.timestep+'T00:00:01Z&presRange='+(this.rawLevels[s.levelindex]-0.1)+','+(this.rawLevels[s.levelindex]+0.1)
-	    	let suburl = this.apiPrefix + 'grids/' + s.lattice+'?data='+s.selectedGrid+'&startDate='+s.subtimestep+'T00:00:00Z&endDate='+s.subtimestep+'T00:00:01Z&presRange='+(this.rawLevels[s.sublevelindex]-0.1)+','+(this.rawLevels[s.sublevelindex]+0.1)
+	    	let url    = this.apiPrefix + 'grids/' + s.lattice+'?data='+s.selectedGrid+'&startDate='+s.timestep+'T00:00:00Z&endDate='+s.timestep+'T00:00:01Z&verticalRange='+(this.rawLevels[s.levelindex]-0.1)+','+(this.rawLevels[s.levelindex]+0.1)
+	    	let suburl = this.apiPrefix + 'grids/' + s.lattice+'?data='+s.selectedGrid+'&startDate='+s.subtimestep+'T00:00:00Z&endDate='+s.subtimestep+'T00:00:01Z&verticalRange='+(this.rawLevels[s.sublevelindex]-0.1)+','+(this.rawLevels[s.sublevelindex]+0.1)
 	    	if(s.polygon.length > 0){
 	    		url += '&polygon='+JSON.stringify(helpers.tidypoly(s.polygon))
 	    		suburl += '&polygon='+JSON.stringify(helpers.tidypoly(s.polygon))

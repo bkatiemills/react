@@ -16,7 +16,7 @@ describe("your test suite", () => {
     }
 
     test("Check temporospatial URL", () => {
-        expect(helpers.generateTemporoSpatialURL.bind(null)('https://example.com/', 'argo',mockstate)).toBe("https://example.com/argo?compression=minimal&presRange=100,20000&startDate=2023-01-01T00:00:00Z&endDate=2023-01-03T00:00:00Z&polygon=[[0,0],[0,1],[1,1],[1,0],[0,0]]");
+        expect(helpers.generateTemporoSpatialURL.bind(null)('https://example.com/', 'argo',mockstate)).toBe("https://example.com/argo?compression=minimal&verticalRange=100,20000&startDate=2023-01-01T00:00:00Z&endDate=2023-01-03T00:00:00Z&polygon=[[0,0],[0,1],[1,1],[1,0],[0,0]]");
     });
 
     // argo
@@ -32,19 +32,19 @@ describe("your test suite", () => {
     test("Check Argo map URL for all sources", () => {
         const argo = new ArgoExplore()
         argo.apiPrefix = 'https://example.com/'
-        expect(argo.generateURLs(argo_mockstate)).toStrictEqual(["https://example.com/argo?compression=minimal&presRange=100,20000&startDate=2023-01-01T00:00:00Z&endDate=2023-01-03T00:00:00Z&polygon=[[0,0],[0,1],[1,1],[1,0],[0,0]]&source=argo_core"])
+        expect(argo.generateURLs(argo_mockstate)).toStrictEqual(["https://example.com/argo?compression=minimal&verticalRange=100,20000&startDate=2023-01-01T00:00:00Z&endDate=2023-01-03T00:00:00Z&polygon=[[0,0],[0,1],[1,1],[1,0],[0,0]]&source=argo_core"])
     });
 
     test("Check Argo map URL for BGC only", () => {
         const argo = new ArgoExplore()
         argo.apiPrefix = 'https://example.com/'
-        expect(argo.generateURLs({...argo_mockstate, 'argocore': false, 'argodeep': false})).toStrictEqual(["https://example.com/argo?compression=minimal&presRange=100,20000&startDate=2023-01-01T00:00:00Z&endDate=2023-01-03T00:00:00Z&polygon=[[0,0],[0,1],[1,1],[1,0],[0,0]]&source=argo_bgc"])
+        expect(argo.generateURLs({...argo_mockstate, 'argocore': false, 'argodeep': false})).toStrictEqual(["https://example.com/argo?compression=minimal&verticalRange=100,20000&startDate=2023-01-01T00:00:00Z&endDate=2023-01-03T00:00:00Z&polygon=[[0,0],[0,1],[1,1],[1,0],[0,0]]&source=argo_bgc"])
     });
 
     test("Check Argo map URL for deep only", () => {
         const argo = new ArgoExplore()
         argo.apiPrefix = 'https://example.com/'
-        expect(argo.generateURLs({...argo_mockstate, 'argocore': false, 'argobgc': false})).toStrictEqual(["https://example.com/argo?compression=minimal&presRange=100,20000&startDate=2023-01-01T00:00:00Z&endDate=2023-01-03T00:00:00Z&polygon=[[0,0],[0,1],[1,1],[1,0],[0,0]]&source=argo_deep"])
+        expect(argo.generateURLs({...argo_mockstate, 'argocore': false, 'argobgc': false})).toStrictEqual(["https://example.com/argo?compression=minimal&verticalRange=100,20000&startDate=2023-01-01T00:00:00Z&endDate=2023-01-03T00:00:00Z&polygon=[[0,0],[0,1],[1,1],[1,0],[0,0]]&source=argo_deep"])
     });
 
     test("Check Argo map URL for platform request", () => {
@@ -76,7 +76,7 @@ describe("your test suite", () => {
     test("Check drifter URL for generic request", () => {
         const drifter = new DriftersExplore()
         drifter.apiPrefix = 'https://example.com/'
-        expect(drifter.generateURLs(drifter_mockstate)).toStrictEqual(["https://example.com/drifters?compression=minimal&presRange=100,20000&startDate=2023-01-01T00:00:00Z&endDate=2023-01-03T00:00:00Z&polygon=[[0,0],[0,1],[1,1],[1,0],[0,0]]"])
+        expect(drifter.generateURLs(drifter_mockstate)).toStrictEqual(["https://example.com/drifters?compression=minimal&verticalRange=100,20000&startDate=2023-01-01T00:00:00Z&endDate=2023-01-03T00:00:00Z&polygon=[[0,0],[0,1],[1,1],[1,0],[0,0]]"])
     });
 
     // ships
@@ -107,25 +107,25 @@ describe("your test suite", () => {
     test("Check ships map URL for all sources", () => {
         const ship = new ShipsExplore()
         ship.apiPrefix = 'https://example.com/'
-        expect(ship.generateURLs(ship_mockstate)).toStrictEqual(["https://example.com/cchdo?compression=minimal&presRange=100,20000&startDate=2023-01-01T00:00:00Z&endDate=2023-01-03T00:00:00Z&polygon=[[0,0],[0,1],[1,1],[1,0],[0,0]]"])
+        expect(ship.generateURLs(ship_mockstate)).toStrictEqual(["https://example.com/cchdo?compression=minimal&verticalRange=100,20000&startDate=2023-01-01T00:00:00Z&endDate=2023-01-03T00:00:00Z&polygon=[[0,0],[0,1],[1,1],[1,0],[0,0]]"])
     });
 
     test("Check ships map URL for woce only", () => {
         const ship = new ShipsExplore()
         ship.apiPrefix = 'https://example.com/'
-        expect(ship.generateURLs({...ship_mockstate, 'goship': false, 'other': false})).toStrictEqual(["https://example.com/cchdo?compression=minimal&presRange=100,20000&startDate=2023-01-01T00:00:00Z&endDate=2023-01-03T00:00:00Z&polygon=[[0,0],[0,1],[1,1],[1,0],[0,0]]&source=cchdo_woce"])
+        expect(ship.generateURLs({...ship_mockstate, 'goship': false, 'other': false})).toStrictEqual(["https://example.com/cchdo?compression=minimal&verticalRange=100,20000&startDate=2023-01-01T00:00:00Z&endDate=2023-01-03T00:00:00Z&polygon=[[0,0],[0,1],[1,1],[1,0],[0,0]]&source=cchdo_woce"])
     });
 
     test("Check ships map URL for goship only", () => {
         const ship = new ShipsExplore()
         ship.apiPrefix = 'https://example.com/'
-        expect(ship.generateURLs({...ship_mockstate, 'woce': false, 'other': false})).toStrictEqual(["https://example.com/cchdo?compression=minimal&presRange=100,20000&startDate=2023-01-01T00:00:00Z&endDate=2023-01-03T00:00:00Z&polygon=[[0,0],[0,1],[1,1],[1,0],[0,0]]&source=cchdo_go-ship"])
+        expect(ship.generateURLs({...ship_mockstate, 'woce': false, 'other': false})).toStrictEqual(["https://example.com/cchdo?compression=minimal&verticalRange=100,20000&startDate=2023-01-01T00:00:00Z&endDate=2023-01-03T00:00:00Z&polygon=[[0,0],[0,1],[1,1],[1,0],[0,0]]&source=cchdo_go-ship"])
     });
 
     test("Check ships map URL for others only", () => {
         const ship = new ShipsExplore()
         ship.apiPrefix = 'https://example.com/'
-        expect(ship.generateURLs({...ship_mockstate, 'goship': false, 'woce': false})).toStrictEqual(["https://example.com/cchdo?compression=minimal&presRange=100,20000&startDate=2023-01-01T00:00:00Z&endDate=2023-01-03T00:00:00Z&polygon=[[0,0],[0,1],[1,1],[1,0],[0,0]]&source=~cchdo_go-ship,~cchdo_woce"])
+        expect(ship.generateURLs({...ship_mockstate, 'goship': false, 'woce': false})).toStrictEqual(["https://example.com/cchdo?compression=minimal&verticalRange=100,20000&startDate=2023-01-01T00:00:00Z&endDate=2023-01-03T00:00:00Z&polygon=[[0,0],[0,1],[1,1],[1,0],[0,0]]&source=~cchdo_go-ship,~cchdo_woce"])
     });
 
     // tropical cyclones
@@ -145,7 +145,7 @@ describe("your test suite", () => {
     test("Check tc URL for generic request", () => {
         const tc = new TCExplore()
         tc.apiPrefix = 'https://example.com/'
-        expect(tc.generateURLs(tc_mockstate)).toStrictEqual(["https://example.com/tc?compression=minimal&presRange=100,20000&startDate=2023-01-01T00:00:00Z&endDate=2023-01-03T00:00:00Z&polygon=[[0,0],[0,1],[1,1],[1,0],[0,0]]"])
+        expect(tc.generateURLs(tc_mockstate)).toStrictEqual(["https://example.com/tc?compression=minimal&verticalRange=100,20000&startDate=2023-01-01T00:00:00Z&endDate=2023-01-03T00:00:00Z&polygon=[[0,0],[0,1],[1,1],[1,0],[0,0]]"])
     });
 
 

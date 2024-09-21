@@ -24,12 +24,12 @@ class ArgoURLhelper extends React.Component {
       compression: '',
       mostRecent: '',
       data: 'all',
-      pressureRange: '',
+      verticalRange: '',
       batchMetadata: '',
       temp_startDate: '',
       temp_endDate: '',
-      datesValid: true, polygonValid: true, boxValid: true, centerValid: true, radiusValid: true, positionQCValid: true, profileSourceValid: true, mostRecentValid: true, dataValid: true, pressureRangeValid: true,
-      polygonTouched: false, boxTouched: false, centerTouched: false, radiusTouched: false, positionQCTouched: false, profileSourceTouched: false, mostRecentTouched: false, dataTouched: false, pressureRangeTouched: false,
+      datesValid: true, polygonValid: true, boxValid: true, centerValid: true, radiusValid: true, positionQCValid: true, profileSourceValid: true, mostRecentValid: true, dataValid: true, verticalRangeValid: true,
+      polygonTouched: false, boxTouched: false, centerTouched: false, radiusTouched: false, positionQCTouched: false, profileSourceTouched: false, mostRecentTouched: false, dataTouched: false, verticalRangeTouched: false,
 
       // metadata request parameters
       meta_id: '',
@@ -157,7 +157,7 @@ class ArgoURLhelper extends React.Component {
     return tokens.every(token => regex.test(token));
   }
 
-  isValidPressureRange = (value) => {
+  isValidVerticalRange = (value) => {
     if(value.length === 0) return true;
 
     const tokens = value.split(',').map(token => parseFloat(token.trim()));
@@ -288,13 +288,13 @@ isLocationValid = () => {
     });
   }
 
-  handlePressureRangeChange = (event) => {
-    let pressureRange = event.target.value;
-    const isValid = this.isValidPressureRange(pressureRange);
+  handleVerticalRangeChange = (event) => {
+    let verticalRange = event.target.value;
+    const isValid = this.isValidVerticalRange(verticalRange);
     
     this.setState({
-      pressureRange,
-      pressureRangeValid: isValid,
+      verticalRange,
+      verticalRangeValid: isValid,
     });
   }
 
@@ -302,11 +302,11 @@ isLocationValid = () => {
     const {
       profileId, polygon, box, center, radius, metadata,
       platformId, platformType, positionQC, profileSource, compression, mostRecent,
-      data, pressureRange, batchMetadata,
+      data, verticalRange, batchMetadata,
       temp_startDate,
       temp_endDate,
-      datesValid, polygonValid, boxValid, centerValid, radiusValid, positionQCValid, profileSourceValid, mostRecentValid, dataValid, pressureRangeValid,
-      polygonTouched, boxTouched, centerTouched, radiusTouched, positionQCTouched, profileSourceTouched, mostRecentTouched, dataTouched, pressureRangeTouched,
+      datesValid, polygonValid, boxValid, centerValid, radiusValid, positionQCValid, profileSourceValid, mostRecentValid, dataValid, verticalRangeValid,
+      polygonTouched, boxTouched, centerTouched, radiusTouched, positionQCTouched, profileSourceTouched, mostRecentTouched, dataTouched, verticalRangeTouched,
       meta_id, meta_platform,
       vocab_parameter,
     } = this.state;
@@ -330,7 +330,7 @@ isLocationValid = () => {
       compression && `compression=${encodeURIComponent(compression)}`,
       mostRecent && `mostrecent=${encodeURIComponent(mostRecent)}`,
       data && `data=${data}`,
-      pressureRange && `presRange=${pressureRange}`,
+      verticalRange && `verticalRange=${verticalRange}`,
       batchMetadata && `batchmeta=true`,
     ].filter(Boolean); // Remove any undefined values
     // Join the parameters with '&' to form the query string
@@ -592,26 +592,26 @@ isLocationValid = () => {
                                         <OverlayTrigger
                                             placement="right"
                                             overlay={
-                                                <Tooltip id="presrange-tooltip" className="wide-tooltip">
-                                                    List the pressure range you want to search for, for example 0,10; you'll only download levels in this pressure range in the profiles matching the rest of your search. <br/>Note that the pressure range is in dbar below the surface, so 0,10 would filter for levels at the surface down to 10 dbar.
+                                                <Tooltip id="verticalrange-tooltip" className="wide-tooltip">
+                                                    List the vertical range you want to search for in dbar, for example 0,10; you'll only download levels in this pressure range in the profiles matching the rest of your search. <br/>Note that the vertical range is in dbar below the surface, so 0,10 would filter for levels at the surface down to 10 dbar.
                                                 </Tooltip>
                                             }
                                             trigger="click"
                                         >
                                             <i className="fa fa-question-circle" aria-hidden="true"></i>
                                         </OverlayTrigger>
-                                        Pressure Range:
+                                        Vertical Range:
                                         <input
                                             type="text"
-                                            name="pressureRange"
-                                            value={this.state.pressureRange}
-                                            onChange={this.handlePressureRangeChange}
-                                            onBlur={this.handleGenericBlur.bind(this, 'pressureRangeTouched')}
-                                            onFocus={this.handleGenericFocus.bind(this, 'pressureRangeTouched')}
-                                            className={pressureRangeValid ? 'form-control' : 'form-control invalid'}
+                                            name="verticalRange"
+                                            value={this.state.verticalRange}
+                                            onChange={this.handleVerticalRangeChange}
+                                            onBlur={this.handleGenericBlur.bind(this, 'verticalRangeTouched')}
+                                            onFocus={this.handleGenericFocus.bind(this, 'verticalRangeTouched')}
+                                            className={verticalRangeValid ? 'form-control' : 'form-control invalid'}
                                         />
                                     </label>
-                                    {!pressureRangeValid && !pressureRangeTouched && <p className="validation-message">Invalid pressure range. Should be two comma separated numbers representing dbar below surface; so, 0,10 would filter for levels at the surface down to 10 dbar.</p>}
+                                    {!verticalRangeValid && !verticalRangeTouched && <p className="validation-message">Invalid vertical range. Should be two comma separated numbers representing dbar below surface; so, 0,10 would filter for levels at the surface down to 10 dbar.</p>}
                                 </div>
                             </div>
                             <div className='row form-section'>

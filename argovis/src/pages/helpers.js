@@ -331,7 +331,7 @@ helpers.generateTemporoSpatialURL = function(prefix, route, state){
 	let url = prefix + route + '?compression=minimal'
 
 	if(state.depthRequired){
-		url += '&presRange=' + state.depthRequired + ',20000'
+		url += '&verticalRange=' + state.depthRequired + ',20000'
 	}
 
 	if(state.startDate !== ''){
