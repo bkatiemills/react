@@ -22,14 +22,13 @@ class ArgoURLhelper extends React.Component {
       positionQC: '',
       profileSource: '',
       compression: '',
-      mostRecent: '',
       data: 'all',
       verticalRange: '',
       batchMetadata: '',
       temp_startDate: '',
       temp_endDate: '',
-      datesValid: true, polygonValid: true, boxValid: true, centerValid: true, radiusValid: true, positionQCValid: true, profileSourceValid: true, mostRecentValid: true, dataValid: true, verticalRangeValid: true,
-      polygonTouched: false, boxTouched: false, centerTouched: false, radiusTouched: false, positionQCTouched: false, profileSourceTouched: false, mostRecentTouched: false, dataTouched: false, verticalRangeTouched: false,
+      datesValid: true, polygonValid: true, boxValid: true, centerValid: true, radiusValid: true, positionQCValid: true, profileSourceValid: true, dataValid: true, verticalRangeValid: true,
+      polygonTouched: false, boxTouched: false, centerTouched: false, radiusTouched: false, positionQCTouched: false, profileSourceTouched: false, dataTouched: false, verticalRangeTouched: false,
 
       // metadata request parameters
       meta_id: '',
@@ -139,12 +138,6 @@ class ArgoURLhelper extends React.Component {
       const actualToken = isNegated ? token.slice(1) : token;
       return validTokens.includes(actualToken);
     });
-  }
-
-  isValidMostRecent = (value) => {
-    if(value.length === 0) return true;
-    const intValue = parseInt(value, 10);
-    return !isNaN(value) && Number(value) === intValue && intValue > 0;
   }
 
   isValidData = (value) => {
@@ -268,16 +261,6 @@ isLocationValid = () => {
     this.setState({ compression: event.target.checked ? 'minimal':null });
   }
 
-  handleMostRecentChange = (event) => {
-    let mostRecent = event.target.value;
-    const isValid = this.isValidMostRecent(mostRecent);
-    
-    this.setState({
-      mostRecent,
-      mostRecentValid: isValid,
-    });
-  }
-
   handleDataChange = (event) => {
     let data = event.target.value;
     const isValid = this.isValidData(data);
@@ -301,12 +284,12 @@ isLocationValid = () => {
   render() {
     const {
       profileId, polygon, box, center, radius, metadata,
-      platformId, platformType, positionQC, profileSource, compression, mostRecent,
+      platformId, platformType, positionQC, profileSource, compression,
       data, verticalRange, batchMetadata,
       temp_startDate,
       temp_endDate,
-      datesValid, polygonValid, boxValid, centerValid, radiusValid, positionQCValid, profileSourceValid, mostRecentValid, dataValid, verticalRangeValid,
-      polygonTouched, boxTouched, centerTouched, radiusTouched, positionQCTouched, profileSourceTouched, mostRecentTouched, dataTouched, verticalRangeTouched,
+      datesValid, polygonValid, boxValid, centerValid, radiusValid, positionQCValid, profileSourceValid, dataValid, verticalRangeValid,
+      polygonTouched, boxTouched, centerTouched, radiusTouched, positionQCTouched, profileSourceTouched, dataTouched, verticalRangeTouched,
       meta_id, meta_platform,
       vocab_parameter,
     } = this.state;
@@ -328,7 +311,6 @@ isLocationValid = () => {
       positionQC && `positionqc=${positionQC}`,
       profileSource && `source=${profileSource}`,
       compression && `compression=${encodeURIComponent(compression)}`,
-      mostRecent && `mostrecent=${encodeURIComponent(mostRecent)}`,
       data && `data=${data}`,
       verticalRange && `verticalRange=${verticalRange}`,
       batchMetadata && `batchmeta=true`,
@@ -720,31 +702,6 @@ isLocationValid = () => {
                             <div className='row form-section'>
                                 <h4>Other filters</h4>
                                 <p><i>Some advanced options for manipulating how data of interest are returned or represented.</i></p>
-                                <div className='col-4'>
-                                    <label className="form-label">
-                                        <OverlayTrigger
-                                            placement="right"
-                                            overlay={
-                                                <Tooltip id="mostrecent-tooltip" className="wide-tooltip">
-                                                    Use this to get the most recent profiles that match your other filter parameters. For example, setting this to 7 means you'll get the 7 most chronologically recent profiles that match your other filter parameters.
-                                                </Tooltip>
-                                            }
-                                            trigger="click"
-                                        >
-                                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                                        </OverlayTrigger>
-                                        Most Recent:
-                                        <input
-                                            type="text"
-                                            value={this.state.mostRecent}
-                                            onChange={this.handleMostRecentChange}
-                                            onBlur={this.handleGenericBlur.bind(this, 'mostRecentTouched')}
-                                            onFocus={this.handleGenericFocus.bind(this, 'mostRecentTouched')}
-                                            className={mostRecentValid ? 'form-control' : 'form-control invalid'}
-                                        />
-                                    </label>
-                                    {!mostRecentValid && !mostRecentTouched && <p className="validation-message">Invalid most recent value. Most recent should be an integer, corresponding to the maximum number of profiles you want returned. Setting it to 7 means you'll get the 7 most chronologically recent profiles that match your other filter parameters. </p>}
-                                </div>
                                 <div className='col-4'>
                                     <label className="form-label">
                                         <OverlayTrigger
