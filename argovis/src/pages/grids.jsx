@@ -455,11 +455,14 @@ class Grids extends React.Component {
       	interpolated_polygon: q.has('polygon') ? helpers.insertPointsInPolygon(JSON.parse(q.get('polygon'))) : helpers.insertPointsInPolygon(this.defaultPolygon),
       	min: 0,
       	max: 1,
+		user_defined_min: false,
+		user_defined_max: false,
       	levelindex: q.has('levelindex') ? q.get('levelindex') : 0,
       	sublevelindex: q.has('sublevelindex') ? q.get('sublevelindex') : 0,
       	grid	: q.get('grid'),
       	lattice: q.get('lattice'),
       	refreshData: true,
+		remapData: false,
       	apiKey: localStorage.getItem('apiKey') ? localStorage.getItem('apiKey') : 'guest',
       	subgrid: q.has('subgrid') ? q.get('subgrid') === 'true' : false,
       	scale: chroma.scale(['#440154', '#482777', '#3f4a8a', '#31678e', '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825']),
@@ -569,7 +572,7 @@ class Grids extends React.Component {
 	    	}
     		if(this.statusReporting.current){
 					helpers.manageStatus.bind(this)('downloading')
-				}
+			}
 	    	//kick off request for new data, redraw the map when complete
 	    	let url    = this.apiPrefix + 'grids/' + s.lattice+'?data='+s.grid+'&startDate='+s.timestep+'T00:00:00Z&endDate='+s.timestep+'T00:00:01Z&verticalRange='+(this.rawLevels[s.levelindex]-0.1)+','+(this.rawLevels[s.levelindex]+0.1)
 			let suburl = this.apiPrefix + 'grids/' + s.lattice+'?data='+s.grid+'&startDate='+s.subtimestep+'T00:00:00Z&endDate='+s.subtimestep+'T00:00:01Z&verticalRange='+(this.rawLevels[s.sublevelindex]-0.1)+','+(this.rawLevels[s.sublevelindex]+0.1)
@@ -579,73 +582,86 @@ class Grids extends React.Component {
 	    	}
 
 	    	if(s.subgrid){
-					Promise.all([url,suburl].map(x => fetch(x, {headers:{'x-argokey': s.apiKey}}))).then(responses => {
-						Promise.all(responses.map(res => res.json())).then(data => {
-							// start by checking for error codes
-							for(let i=0; i<data.length; i++){
-								let bail = helpers.handleHTTPcodes.bind(this)(data[i].code)
-								if(bail){
-									return
-								}
+				Promise.all([url,suburl].map(x => fetch(x, {headers:{'x-argokey': s.apiKey}}))).then(responses => {
+					Promise.all(responses.map(res => res.json())).then(data => {
+						// start by checking for error codes
+						for(let i=0; i<data.length; i++){
+							let bail = helpers.handleHTTPcodes.bind(this)(data[i].code)
+							if(bail){
+								return
 							}
-							s.points = data[0]
-							s.subpoints = data[1]
-							// construct grid subtraction delta
-							/// start by turning grids into kv keyed by unique concatenation of lon/lat so we can easily subtract the correct pairs of points
-							let grid1 = {}
-							for(let i=0; i<data[0].length; i++){
-								grid1['' + data[0][i].geolocation.coordinates[0] + data[0][i].geolocation.coordinates[1]] = {
-									geolocation: data[0][i].geolocation,
-									data: data[0][i].data
-								}
+						}
+						s.points = data[0]
+						s.subpoints = data[1]
+						// construct grid subtraction delta
+						/// start by turning grids into kv keyed by unique concatenation of lon/lat so we can easily subtract the correct pairs of points
+						let grid1 = {}
+						for(let i=0; i<data[0].length; i++){
+							grid1['' + data[0][i].geolocation.coordinates[0] + data[0][i].geolocation.coordinates[1]] = {
+								geolocation: data[0][i].geolocation,
+								data: data[0][i].data
 							}
-							let grid2 = {}
-							for(let i=0; i<data[1].length; i++){
-								grid2['' + data[1][i].geolocation.coordinates[0] + data[1][i].geolocation.coordinates[1]] = {
-									geolocation: data[1][i].geolocation,
-									data: data[1][i].data
-								}
+						}
+						let grid2 = {}
+						for(let i=0; i<data[1].length; i++){
+							grid2['' + data[1][i].geolocation.coordinates[0] + data[1][i].geolocation.coordinates[1]] = {
+								geolocation: data[1][i].geolocation,
+								data: data[1][i].data
 							}
-							/// subrtract grids, produce a list of objects that is 'profile-like' where data are the delta values
-							s.data = []
-							for(let i=0; i<Object.keys(grid1).length; i++){
-								let key = Object.keys(grid1)[i]
-								if(Object.keys(grid2).includes(key)){
-									s.data.push({
-										geolocation: grid1[key].geolocation,
-										data: [[grid1[key].data[0][0] - grid2[key].data[0][0]]]
-									})
-								}
+						}
+						/// subrtract grids, produce a list of objects that is 'profile-like' where data are the delta values
+						s.data = []
+						for(let i=0; i<Object.keys(grid1).length; i++){
+							let key = Object.keys(grid1)[i]
+							if(Object.keys(grid2).includes(key)){
+								s.data.push({
+									geolocation: grid1[key].geolocation,
+									data: [[grid1[key].data[0][0] - grid2[key].data[0][0]]]
+								})
 							}
-							helpers.manageStatus.bind(this)('rendering')
-							let values = s.data.map(x=>x.data[0][0]).filter(x=>x!==null)
-							s = this.setScale(Math.min(...values), Math.max(...values), s)
-							helpers.setQueryString.bind(this)()
-							this.refreshMap(false, Math.min(...values), Math.max(...values), s)	
-						})
+						}
+						helpers.manageStatus.bind(this)('rendering')
+						let values = s.data.map(x=>x.data[0][0]).filter(x=>x!==null)
+						s = this.setScale(Math.min(...values), Math.max(...values), s)
+						helpers.setQueryString.bind(this)()
+						this.refreshMap(false, Math.min(...values), Math.max(...values), s)	
 					})
-				} else {
-					Promise.all([url].map(x => fetch(x, {headers:{'x-argokey': s.apiKey}}))).then(responses => {
-						Promise.all(responses.map(res => res.json())).then(data => {
-							// start by checking for error codes
-							for(let i=0; i<data.length; i++){
-								let bail = helpers.handleHTTPcodes.bind(this)(data[i].code)
-								if(bail){
-									return
-								}
+				})
+			} else {
+				Promise.all([url].map(x => fetch(x, {headers:{'x-argokey': s.apiKey}}))).then(responses => {
+					Promise.all(responses.map(res => res.json())).then(data => {
+						// start by checking for error codes
+						for(let i=0; i<data.length; i++){
+							let bail = helpers.handleHTTPcodes.bind(this)(data[i].code)
+							if(bail){
+								return
 							}
-							s.points = data[0]
-							s.data = data[0]
-							helpers.manageStatus.bind(this)('rendering')
-							let values = s.data.map(x=>x.data[0][0]).filter(x=>x!==null)
-							s = this.setScale(Math.min(...values), Math.max(...values), s)
-							helpers.setQueryString.bind(this)()
-							this.refreshMap(false, Math.min(...values), Math.max(...values), s)	
-						}) 
-					})
-				}
-
+						}
+						s.points = data[0]
+						s.data = data[0]
+						helpers.manageStatus.bind(this)('rendering')
+						let values = s.data.map(x=>x.data[0][0]).filter(x=>x!==null)
+						let min = this.state.user_defined_min ? this.state.min : Math.min(...values)
+						let max = this.state.user_defined_max ? this.state.max : Math.max(...values)
+						s = this.setScale(min, max, s)
+						helpers.setQueryString.bind(this)()
+						this.refreshMap(false, min, max, s)	
+					}) 
+				})
 			}
+		} else if(s.remapData){
+			if (s.subgrid){
+
+			} else {
+				let values = s.data.map(x=>x.data[0][0]).filter(x=>x!==null)
+				let min = this.state.user_defined_min ? this.state.min : Math.min(...values)
+				let max = this.state.user_defined_max ? this.state.max : Math.max(...values)
+
+				s = this.setScale(min, max, s)
+				helpers.setQueryString.bind(this)()
+				this.refreshMap(false, min, max, s)	
+			}
+		}
     }
 
     // input handlers
@@ -668,6 +684,8 @@ class Grids extends React.Component {
     	s[index] = target.target.value
 		s.title = this.chooseTitle(target.target.value)
     	s.refreshData = true
+		s.user_defined_min = false
+		s.user_defined_max = false
     	this.setState(s)
     }
 
@@ -687,14 +705,16 @@ class Grids extends React.Component {
     refreshMap(needNewData, min, max, state){
     	// redraw the map and render the dom
     	if(state.points.length > 0){
-				this.setState({...state, 
-												gridcells: this.gridRasterfy(state), 
-												min: min, 
-												max: max, 
-												refreshData: needNewData
-											}, () => {
-													helpers.manageStatus.bind(this)('ready')
-												})
+			this.setState({
+					...state, 
+					gridcells: this.gridRasterfy(state), 
+					min: this.state.user_defined_min ? this.state.min : min, 
+					max: this.state.user_defined_max ? this.state.max : max, 
+					refreshData: needNewData,
+					remapData: false
+				}, 
+				() => {helpers.manageStatus.bind(this)('ready')}
+			)
 	    } else {
 	    	helpers.manageStatus.bind(this)('error', 'No data found for this search.')
 	    }
@@ -741,6 +761,10 @@ class Grids extends React.Component {
     }
 
     unitTransform(unit, scale){
+		if (unit === '' || unit === '-'){
+			return unit
+		}
+
     	if(scale === 'k'){
     		return Math.round(unit)/1000
     	} else if(scale === 'M'){
@@ -886,6 +910,44 @@ class Grids extends React.Component {
 									</div>}
 								</div>
 
+								<div className='row'>
+	      							<div className='col-6' style={{'paddingRight': '0px'}}>
+										<div className="form-text">
+						  					<span>color min</span>
+										</div>
+										<input 
+											type="text" 
+											className="form-control minmax" 
+											placeholder="Auto" 
+											value={this.unitTransform(this.state.min, this.scales)}
+											onChange={e => {
+												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
+												this.setState({min:e.target.value})}
+											} 
+											onBlur={e => {this.setState({min: parseFloat(e.target.defaultValue), user_defined_min: e.target.defaultValue!=='', remapData: true})}}
+											onKeyPress={e => {if(e.key==='Enter'){this.setState({min: parseFloat(e.target.defaultValue), user_defined_min: e.target.defaultValue!=='', remapData: true})}}}
+											aria-label="xmin" 
+											aria-describedby="basic-addon1"/>
+									</div>
+									<div className='col-6' style={{'paddingRight': '0px'}}>
+										<div className="form-text">
+						  					<span>color max</span>
+										</div>
+										<input 
+											type="text"
+											className="form-control minmax" 
+											placeholder="Auto" 
+											value={this.unitTransform(this.state.max, this.scales)}
+											onChange={e => {
+												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
+												this.setState({max:e.target.value})}
+											} 
+											onBlur={e => {this.setState({max: parseFloat(e.target.defaultValue), user_defined_max: e.target.defaultValue!=='', remapData: true})}}
+											onKeyPress={e => {if(e.key==='Enter'){this.setState({max: parseFloat(e.target.defaultValue), user_defined_max: e.target.defaultValue!=='', remapData: true})}}}
+											aria-label="xmax" 
+											aria-describedby="basic-addon1"/>
+									</div>
+								</div>
 								
 								<svg style={{'width':'100%', 'height':'1em', 'marginTop': '1em'}} version="1.1" xmlns="http://www.w3.org/2000/svg">
 								  <defs>
