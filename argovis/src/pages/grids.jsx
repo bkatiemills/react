@@ -622,9 +622,11 @@ class Grids extends React.Component {
 						}
 						helpers.manageStatus.bind(this)('rendering')
 						let values = s.data.map(x=>x.data[0][0]).filter(x=>x!==null)
-						s = this.setScale(Math.min(...values), Math.max(...values), s)
+						let min = this.state.user_defined_min ? this.state.min : Math.min(...values)
+						let max = this.state.user_defined_max ? this.state.max : Math.max(...values)
+						s = this.setScale(min, max, s)
 						helpers.setQueryString.bind(this)()
-						this.refreshMap(false, Math.min(...values), Math.max(...values), s)	
+						this.refreshMap(false, min, max, s)	
 					})
 				})
 			} else {
@@ -650,17 +652,12 @@ class Grids extends React.Component {
 				})
 			}
 		} else if(s.remapData){
-			if (s.subgrid){
-
-			} else {
-				let values = s.data.map(x=>x.data[0][0]).filter(x=>x!==null)
-				let min = this.state.user_defined_min ? this.state.min : Math.min(...values)
-				let max = this.state.user_defined_max ? this.state.max : Math.max(...values)
-
-				s = this.setScale(min, max, s)
-				helpers.setQueryString.bind(this)()
-				this.refreshMap(false, min, max, s)	
-			}
+			let values = s.data.map(x=>x.data[0][0]).filter(x=>x!==null)
+			let min = this.state.user_defined_min ? this.state.min : Math.min(...values)
+			let max = this.state.user_defined_max ? this.state.max : Math.max(...values)
+			s = this.setScale(min, max, s)
+			helpers.setQueryString.bind(this)()
+			this.refreshMap(false, min, max, s)	
 		}
     }
 
@@ -669,6 +666,8 @@ class Grids extends React.Component {
     	let s = this.state
     	s[index] = parseInt(target.target.value)
     	s.refreshData = true
+		s.user_defined_min = false
+		s.user_defined_max = false
     	this.setState(s)
     }
 
@@ -676,6 +675,8 @@ class Grids extends React.Component {
     	let s = this.state
     	s[index] = target.target.value
     	s.refreshData = true
+		s.user_defined_min = false
+		s.user_defined_max = false
     	this.setState(s)
     }
 
@@ -821,7 +822,10 @@ class Grids extends React.Component {
 
 	toggleCoupling(s){
     	// if changing a toggle for this page needs to trigger a side effect on state, do so here.
-    	return s
+		s.user_defined_min = false
+		s.user_defined_max = false
+		
+		return s
   }
 
 	render(){
@@ -968,9 +972,9 @@ class Grids extends React.Component {
 								  <rect width="100%" height="1em" fill="url(#grad)" />
 								</svg>
 								<div style={{'width':'100%', 'textAlign': 'center'}}>
-									<span style={{'writingMode': 'vertical-rl', 'textOrientation': 'mixed', 'float': 'left', 'marginTop':'0.5em'}}>{this.unitTransform(this.state.min, this.scales)}</span>
+									<span style={{'writingMode': 'vertical-rl', 'textOrientation': 'mixed', 'float': 'left', 'marginTop':'0.5em'}}>{(this.state.subgrid && this.state.min>0) ? 0 : this.unitTransform(this.state.min, this.scales)}</span>
 									<span>{this.scales+this.state.units}</span>
-									<span style={{'writingMode': 'vertical-rl', 'textOrientation': 'mixed', 'float':'right', 'marginTop':'0.5em'}}>{this.unitTransform(this.state.max, this.scales)}</span>
+									<span style={{'writingMode': 'vertical-rl', 'textOrientation': 'mixed', 'float':'right', 'marginTop':'0.5em'}}>{(this.state.subgrid && this.state.max<0) ? 0: this.unitTransform(this.state.max, this.scales)}</span>
 								</div>
 							</div>
 						</fieldset>
