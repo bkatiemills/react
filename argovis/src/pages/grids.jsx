@@ -499,9 +499,9 @@ class Grids extends React.Component {
       }[this.state.lattice]
       this.state.title = this.chooseTitle(this.state.grid)
 	  this.variables = {
-		'rg09': this.constructDateOptions(['rg09_temperature', 'rg09_salinity']), // not used... yet.
-		'kg21': this.constructDateOptions(['kg21_ohc15to300']), // not used... yet.
-		'glodap': this.constructDateOptions(this.glodapDataInfo[0])
+		'rg09': this.constructVarOptions(['rg09_temperature', 'rg09_salinity'], x=>x), // not used... yet.
+		'kg21': this.constructVarOptions(['kg21_ohc15to300'], x=>x), // not used... yet.
+		'glodap': this.constructVarOptions(this.glodapDataInfo[0], this.glodapHumanName)
 	  }[this.state.lattice]
 
       this.fgRef = React.createRef()
@@ -545,7 +545,7 @@ class Grids extends React.Component {
 		} else if(grid === 'kg21_ohc15to300'){
 			return 'KG Ocean Heat Content'
 		} else {
-			return 'GLODAP ' + grid
+			return 'GLODAP ' + this.glodapHumanName(grid)
 		}
 	}
 
@@ -560,6 +560,45 @@ class Grids extends React.Component {
 			let i = this.glodapDataInfo[0].indexOf(grid)
 			return this.glodapDataInfo[2][i][0]
 		}
+	}
+
+	glodapHumanName(name){
+		let tokens = name.split('_')
+		let out = ''
+
+		let basenames = {
+			'Cant': 'Anthropogenic Carbon',
+			'NO3': 'Nitrate',
+			'OmegaA': 'Aragonite saturation state',
+			'OmegaC': 'Calcite saturation state',
+			'oxygen': 'Dissolved oxygen',
+			'pHts25p0': 'pH (STP)',
+			'pHtsinsitutp': 'pH (in situ)',
+			'PI_TCO2': 'Pre-industrial dissolved inorganic carbon',
+			'PO4': 'Phosphate',
+			'salinity': 'Salinity',
+			"silicate": 'Silicate',
+			'TAlk': 'Alkalinity',
+			'TCO2': 'Dissolved inorganic carbon',
+			'temperature': 'temperature'
+		}
+
+		out += basenames[tokens[0]]
+		if(tokens[1] === 'error'){
+			out += ' error'
+		} else if(tokens[1] === 'Input'){
+			if(tokens[2] === 'mean'){
+				out += ' bin av.'
+			} else if(tokens[2] === 'std'){
+				out += ' std. dev. of bin av.'
+			} else if(tokens[2] === 'N'){
+				out += ' N'
+			}
+		} else if(tokens[1] === 'relerr'){
+			out += ' relative error'
+		}
+
+		return out
 	}
 
     componentDidUpdate(prevProps, prevState, snapshot){
@@ -700,6 +739,12 @@ class Grids extends React.Component {
     constructDateOptions(dates){
     	return dates.map((x,i) => {return(
     			<option key={x+i} value={x}>{x}</option>
+    		)})
+    }
+
+    constructVarOptions(values, namemapper){
+    	return values.map((x,i) => {return(
+    			<option key={x+i} value={x}>{namemapper(x)}</option>
     		)})
     }
 
