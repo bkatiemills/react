@@ -455,6 +455,8 @@ class Grids extends React.Component {
       	interpolated_polygon: q.has('polygon') ? helpers.insertPointsInPolygon(JSON.parse(q.get('polygon'))) : helpers.insertPointsInPolygon(this.defaultPolygon),
       	min: 0,
       	max: 1,
+		display_min: 0,
+		display_max: 1,
 		user_defined_min: false,
 		user_defined_max: false,
       	levelindex: q.has('levelindex') ? q.get('levelindex') : 0,
@@ -574,27 +576,31 @@ class Grids extends React.Component {
 			'oxygen': 'Dissolved oxygen',
 			'pHts25p0': 'pH (STP)',
 			'pHtsinsitutp': 'pH (in situ)',
-			'PI_TCO2': 'Pre-industrial dissolved inorganic carbon',
+			'PI': 'Pre-industrial dissolved inorganic carbon',
 			'PO4': 'Phosphate',
 			'salinity': 'Salinity',
 			"silicate": 'Silicate',
 			'TAlk': 'Alkalinity',
 			'TCO2': 'Dissolved inorganic carbon',
-			'temperature': 'temperature'
+			'temperature': 'Temperature'
 		}
 
 		out += basenames[tokens[0]]
-		if(tokens[1] === 'error'){
+		let i = 1
+		if (tokens[i] === 'TCO2'){
+			i++
+		}
+		if(tokens[i] === 'error'){
 			out += ' error'
-		} else if(tokens[1] === 'Input'){
-			if(tokens[2] === 'mean'){
+		} else if(tokens[i] === 'Input'){
+			if(tokens[i+1] === 'mean'){
 				out += ' bin av.'
-			} else if(tokens[2] === 'std'){
+			} else if(tokens[i+1] === 'std'){
 				out += ' std. dev. of bin av.'
-			} else if(tokens[2] === 'N'){
+			} else if(tokens[i+1] === 'N'){
 				out += ' N'
 			}
-		} else if(tokens[1] === 'relerr'){
+		} else if(tokens[i] === 'relerr'){
 			out += ' relative error'
 		}
 
@@ -661,8 +667,14 @@ class Grids extends React.Component {
 						}
 						helpers.manageStatus.bind(this)('rendering')
 						let values = s.data.map(x=>x.data[0][0]).filter(x=>x!==null)
-						let min = this.state.user_defined_min ? this.state.min : Math.min(...values)
-						let max = this.state.user_defined_max ? this.state.max : Math.max(...values)
+						if(!s.user_defined_min){
+							s.display_min = this.unitTransform(Math.min(...values), this.scales)
+						}
+						if(!s.user_defined_max){
+							s.display_max = this.unitTransform(Math.max(...values), this.scales)
+						}
+						let min = this.state.user_defined_min ? this.inverseTransform(s.display_min, this.scales) : Math.min(...values)
+						let max = this.state.user_defined_max ? this.inverseTransform(s.display_max, this.scales) : Math.max(...values)
 						s = this.setScale(min, max, s)
 						helpers.setQueryString.bind(this)()
 						this.refreshMap(false, min, max, s)	
@@ -682,8 +694,14 @@ class Grids extends React.Component {
 						s.data = data[0]
 						helpers.manageStatus.bind(this)('rendering')
 						let values = s.data.map(x=>x.data[0][0]).filter(x=>x!==null)
-						let min = this.state.user_defined_min ? this.state.min : Math.min(...values)
-						let max = this.state.user_defined_max ? this.state.max : Math.max(...values)
+						if(!s.user_defined_min){
+							s.display_min = this.unitTransform(Math.min(...values), this.scales)
+						}
+						if(!s.user_defined_max){
+							s.display_max = this.unitTransform(Math.max(...values), this.scales)
+						}
+						let min = this.state.user_defined_min ? this.inverseTransform(s.display_min, this.scales) : Math.min(...values)
+						let max = this.state.user_defined_max ? this.inverseTransform(s.display_max, this.scales) : Math.max(...values)
 						s = this.setScale(min, max, s)
 						helpers.setQueryString.bind(this)()
 						this.refreshMap(false, min, max, s)	
@@ -692,8 +710,14 @@ class Grids extends React.Component {
 			}
 		} else if(s.remapData){
 			let values = s.data.map(x=>x.data[0][0]).filter(x=>x!==null)
-			let min = this.state.user_defined_min ? this.state.min : Math.min(...values)
-			let max = this.state.user_defined_max ? this.state.max : Math.max(...values)
+			if(!s.user_defined_min){
+				s.display_min = this.unitTransform(Math.min(...values), this.scales)
+			}
+			if(!s.user_defined_max){
+				s.display_max = this.unitTransform(Math.max(...values), this.scales)
+			}
+			let min = this.state.user_defined_min ? this.inverseTransform(s.display_min, this.scales) : Math.min(...values)
+			let max = this.state.user_defined_max ? this.inverseTransform(s.display_max, this.scales) : Math.max(...values)
 			s = this.setScale(min, max, s)
 			helpers.setQueryString.bind(this)()
 			this.refreshMap(false, min, max, s)	
@@ -822,6 +846,32 @@ class Grids extends React.Component {
     	}
     }
 
+	inverseTransform(unit, scale){
+		if (unit === '' || unit === '-'){
+			return unit
+		}
+
+		if(scale === 'k'){
+			return 1000*unit
+		} else if(scale === 'M'){
+			return 1000000*unit
+		} else if(scale === 'G'){
+			return 1000000000*unit
+		} else {
+			return unit
+		}
+	}
+
+
+	manageInput(number){
+		// if(number === '-' || number[number.length-1] === '.' || number === ''){
+		// 	return number
+		// } else {
+		// 	return Math.round(1000*number)/1000
+		// }
+		return number
+	}
+
     genTooltip(point){
     	// given an array <point> corresponding to a single point returned by an API data route with compression=minimal,
     	// return the jsx for an appropriate tooltip for this point.
@@ -937,7 +987,10 @@ class Grids extends React.Component {
 
 								<div className="form-check" style={{'marginTop': '1em'}}>
 									<input className="form-check-input" checked={this.state.subgrid} onChange={(v) => helpers.toggle.bind(this)(v, 'subgrid')} type="checkbox" id='subgrid'></input>
-									<label className="form-check-label" htmlFor='subgrid'>Subtract another level or date</label>
+									{this.state.lattice !== 'glodap' &&
+									<label className="form-check-label" htmlFor='subgrid'>Subtract another level or date</label>}
+									{this.state.lattice === 'glodap' &&
+									<label className="form-check-label" htmlFor='subgrid'>Subtract another level</label>}
 								</div>
 
 								<div style={{'display': this.state.subgrid ? 'block' : 'none'}}>
@@ -968,13 +1021,13 @@ class Grids extends React.Component {
 											type="text" 
 											className="form-control minmax" 
 											placeholder="Auto" 
-											value={this.unitTransform(this.state.min, this.scales)}
+											value={this.state.display_min}
 											onChange={e => {
 												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
-												this.setState({min:e.target.value})}
+												this.setState({display_min:e.target.value})}
 											} 
-											onBlur={e => {this.setState({min: parseFloat(e.target.defaultValue), user_defined_min: e.target.defaultValue!=='', remapData: true})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({min: parseFloat(e.target.defaultValue), user_defined_min: e.target.defaultValue!=='', remapData: true})}}}
+											onBlur={e => {this.setState({display_min: parseFloat(e.target.defaultValue), user_defined_min: e.target.defaultValue!=='', remapData: true})}}
+											onKeyPress={e => {if(e.key==='Enter'){this.setState({display_min: parseFloat(e.target.defaultValue), user_defined_min: e.target.defaultValue!=='', remapData: true})}}}
 											aria-label="xmin" 
 											aria-describedby="basic-addon1"/>
 									</div>
@@ -986,13 +1039,13 @@ class Grids extends React.Component {
 											type="text"
 											className="form-control minmax" 
 											placeholder="Auto" 
-											value={this.unitTransform(this.state.max, this.scales)}
+											value={this.state.display_max}
 											onChange={e => {
 												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
-												this.setState({max:e.target.value})}
+												this.setState({display_max:e.target.value})}
 											} 
-											onBlur={e => {this.setState({max: parseFloat(e.target.defaultValue), user_defined_max: e.target.defaultValue!=='', remapData: true})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({max: parseFloat(e.target.defaultValue), user_defined_max: e.target.defaultValue!=='', remapData: true})}}}
+											onBlur={e => {this.setState({display_max: parseFloat(e.target.defaultValue), user_defined_max: e.target.defaultValue!=='', remapData: true})}}
+											onKeyPress={e => {if(e.key==='Enter'){this.setState({display_max: parseFloat(e.target.defaultValue), user_defined_max: e.target.defaultValue!=='', remapData: true})}}}
 											aria-label="xmax" 
 											aria-describedby="basic-addon1"/>
 									</div>
@@ -1017,9 +1070,9 @@ class Grids extends React.Component {
 								  <rect width="100%" height="1em" fill="url(#grad)" />
 								</svg>
 								<div style={{'width':'100%', 'textAlign': 'center'}}>
-									<span style={{'writingMode': 'vertical-rl', 'textOrientation': 'mixed', 'float': 'left', 'marginTop':'0.5em'}}>{(this.state.subgrid && this.state.min>0) ? 0 : this.unitTransform(this.state.min, this.scales)}</span>
+									<span style={{'writingMode': 'vertical-rl', 'textOrientation': 'mixed', 'float': 'left', 'marginTop':'0.5em'}}>{(this.state.subgrid && this.state.display_min>0) ? 0 : this.state.display_min}</span>
 									<span>{this.scales+this.state.units}</span>
-									<span style={{'writingMode': 'vertical-rl', 'textOrientation': 'mixed', 'float':'right', 'marginTop':'0.5em'}}>{(this.state.subgrid && this.state.max<0) ? 0: this.unitTransform(this.state.max, this.scales)}</span>
+									<span style={{'writingMode': 'vertical-rl', 'textOrientation': 'mixed', 'float':'right', 'marginTop':'0.5em'}}>{(this.state.subgrid && this.state.display_max<0) ? 0: this.state.display_max}</span>
 								</div>
 							</div>
 						</fieldset>
