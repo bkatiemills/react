@@ -14,21 +14,6 @@ class EasyoceanPlots extends React.Component {
 		document.title = 'Argovis - Easy Ocean plots'
 		super(props);
 
-        let q = new URLSearchParams(window.location.search) // parse out query string
-        this.state = {
-            centerlon: q.has('centerlon') ? q.get('centerlon') : 0,
-            woceline: q.has('woceline') ? q.get('woceline') : 'A10',
-            occupancyIndex: q.has('occupancyIndex') ? q.get('occupancyIndex') : 0,
-            variable: q.has('variable') ? q.get('variable') : 'conservative_temperature',
-            subtractionIndex: q.has('subtractionIndex') ? q.get('subtractionIndex') : -1,
-            points:[],
-        }
-
-        this.formRef = React.createRef()
-        this.statusReporting = React.createRef()
-
-        this.customQueryParams = ['centerlon', 'woceline', 'occupancyIndex', 'variable', 'subtractionIndex']
-
         // todo: autodetect this
         this.eo_occupancies = { 
             "75N":[  
@@ -325,27 +310,114 @@ class EasyoceanPlots extends React.Component {
                     [ new Date("2010-12-24T00:00:00Z"), new Date("2011-01-08T00:00:00Z") ]
                    ]
             }
+
+            let q = new URLSearchParams(window.location.search) // parse out query string
+            this.state = {
+                woceline: q.has('woceline') ? q.get('woceline') : 'A10',
+                occupancyIndex: q.has('occupancyIndex') ? parseInt(q.get('occupancyIndex')) : 0,
+                variable: q.has('variable') ? q.get('variable') : 'conservative_temperature',
+                subtractionIndex: q.has('subtractionIndex') ? parseInt(q.get('subtractionIndex')) : -1,
+                points:[],
+                urls:[],
+                refreshData: true,
+                apiKey: '',
+                centerlon: 0
+            }
+    
+            this.state.urls = this.generateURLs(this.state.woceline, this.state.occupancyIndex, this.state.subtractionIndex)
+    
+            this.formRef = React.createRef()
+            this.statusReporting = React.createRef()
+    
+            this.customQueryParams = ['woceline', 'occupancyIndex', 'variable', 'subtractionIndex']
+
+            this.downloadData()
     }
 
     componentDidUpdate(prevProps, prevState, snapshot){
+        if(this.state.refreshData){
+            if(this.statusReporting.current){
+                helpers.manageStatus.bind(this)('downloading')
+            }
+            this.downloadData()
+        }
+
         helpers.setQueryString.bind(this)()
     }
 
+    downloadData(){
+        Promise.all(this.state.urls.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+            Promise.all(responses.map(res => res.json())).then(data => {
+                for(let i=0; i<data.length; i++){
+                    let bail = helpers.handleHTTPcodes.bind(this)(data[i].code)
+                    if(bail){
+                        return
+                    }
+                }
+
+                let mappoints = data[0].map(point => {
+                    return(
+                        <CircleMarker key={point._id+Math.random()} center={[point.geolocation.coordinates[1], helpers.mutateLongitude(point.geolocation.coordinates[0], parseFloat(this.state.centerlon)) ]} radius={1} color={'red'}/>
+                    )
+                })
+
+                this.setState({
+                    points: mappoints, 
+                    refreshData: false
+                })
+
+            })
+        })
+    }
+
     changeWOCE = (event) => {
-        this.setState({ woceline: event.target.value, occupancyIndex: 0 });
+        this.setState({ 
+            woceline: event.target.value, 
+            occupancyIndex: 0,
+            subtractionIndex: -1,
+            urls: this.generateURLs(event.target.value, 0, -1),
+            refreshData: true
+        });
     };
 
     changeOccupancy = (event) => {
-        this.setState({ occupancyIndex: parseInt(event.target.value) });
+        this.setState({ 
+            occupancyIndex: parseInt(event.target.value),
+            urls: this.generateURLs(this.state.woceline, parseInt(event.target.value), this.state.subtractionIndex),
+            refreshData: true
+        });
     };
 
     changeVariable = (event) => {
-        this.setState({ variable: event.target.value });
+        this.setState({ 
+            variable: event.target.value,
+            refreshData: false
+        });
     };
 
     changeSubtraction = (event) => {
-        this.setState({ subtractionIndex: parseInt(event.target.value) });
+        this.setState({ 
+            subtractionIndex: parseInt(event.target.value),
+            urls: this.generateURLs(this.state.woceline, this.state.occupancyIndex, parseInt(event.target.value)),
+            refreshData: true
+        });
     };
+
+    generateURLs(woceline, occupancyIndex, subtractionIndex){
+        let urls = []
+        
+        let startDate = this.eo_occupancies[woceline][occupancyIndex][0].toISOString()
+        let endDate = this.eo_occupancies[woceline][occupancyIndex][1].toISOString()
+        urls[0] = `https://argovis-api.colorado.edu/easyocean?woceline=${woceline}&startDate=${startDate}&endDate=${endDate}&data=all`
+
+        if(subtractionIndex >= 0){
+            let subStartDate = this.eo_occupancies[woceline][subtractionIndex][0].toISOString()
+            let subEndDate = this.eo_occupancies[woceline][subtractionIndex][1].toISOString()
+            urls[1] = `https://argovis-api.colorado.edu/easyocean?woceline=${woceline}&startDate=${subStartDate}&endDate=${subEndDate}&data=all`
+        }
+
+        return urls
+    }
 
     render(){
         console.log(this.state)
