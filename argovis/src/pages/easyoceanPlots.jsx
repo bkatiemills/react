@@ -1,3 +1,10 @@
+// lock out sidebar while downloading
+// autodetect longitude or latitude
+// fix weird color bar
+// implement subtraction mode
+// manage status reporting
+// disable tooltips for now
+
 import React from 'react';
 import '../index.css';
 import helpers from'./helpers'
@@ -321,11 +328,12 @@ class EasyoceanPlots extends React.Component {
                 urls:[],
                 refreshData: true,
                 apiKey: '',
-                centerlon: 0
+                centerlon: 0,
+                data: [[]] // raw download data
             }
     
             this.state.urls = this.generateURLs(this.state.woceline, this.state.occupancyIndex, this.state.subtractionIndex)
-    
+            this.data = [] // data munged for plotly
             this.formRef = React.createRef()
             this.statusReporting = React.createRef()
     
@@ -355,6 +363,10 @@ class EasyoceanPlots extends React.Component {
                     }
                 }
 
+                if(this.statusReporting.current){
+                    helpers.manageStatus.bind(this)('rendering')
+                }
+
                 let mappoints = data[0].map(point => {
                     return(
                         <CircleMarker key={point._id+Math.random()} center={[point.geolocation.coordinates[1], helpers.mutateLongitude(point.geolocation.coordinates[0], parseFloat(this.state.centerlon)) ]} radius={1} color={'red'}/>
@@ -363,7 +375,8 @@ class EasyoceanPlots extends React.Component {
 
                 this.setState({
                     points: mappoints, 
-                    refreshData: false
+                    refreshData: false,
+                    data: data
                 })
 
             })
@@ -419,8 +432,124 @@ class EasyoceanPlots extends React.Component {
         return urls
     }
 
+    prepPlotlyState(markerSize){
+
+        let traversal = 0 // 0 longitude, 1 latitude; todo detect from woceline
+
+        this.data = this.state.data[0].map((d,i) => {   
+            if(i===0){
+                console.log(d)                   
+            }
+            
+            let varindex = d['data_info'][0].findIndex(x => x === this.state.variable) // where to look in the data array for the color variable
+            let presindex = d['data_info'][0].findIndex(x => x === 'pressure') // where to look in the data array for the pressure variable
+
+            return {
+                x: Array(d['data'][varindex].length).fill(d['geolocation']['coordinates'][traversal]),
+                y: d['data'][presindex],
+                mode: 'markers',
+                marker: {
+                    size: markerSize,
+                    color: d['data'][varindex],
+                    colorscale: 'Viridis',
+                    showscale: true,
+                    cmin: Math.min(...d['data'][varindex]),
+                    cmax: Math.max(...d['data'][varindex]),
+                    reversescale: false
+                }
+            }
+
+            // // filter off any points that have null for color value, don't plot these.
+            // let x = d[this.state.xKey].filter((e,j) => {return d[this.state.cKey][j] !== null})
+            // let y = d[this.state.yKey].filter((e,j) => {return d[this.state.cKey][j] !== null})
+            // let t = d['timestamp'].filter((e,j) => {return d[this.state.cKey][j] !== null}) // timestamp gets used to step through valid points later, keep it synced with the filtering 
+            // let z = []
+            // if(this.state.zKey !== '[2D plot]'){
+            //     z = d[this.state.zKey].filter((e,j) => {return d[this.state.cKey][j] !== null})
+            // }
+            // let c = d[this.state.cKey].filter(x => x!==null)
+            // let filteredData = {...d}
+            // filteredData[this.state.xKey] = x
+            // filteredData[this.state.yKey] = y
+            // filteredData[this.state.zKey] = z
+            // filteredData[this.state.cKey] = c
+            // filteredData['timestamp'] = t
+            // return {
+            //     x: filteredData[this.state.xKey],
+            //     y: filteredData[this.state.yKey],
+            //     z: filteredData[this.state.zKey],
+            //     text: this.genTooltip.bind(this)(filteredData),
+            //     hoverinfo: 'text',
+            //     type: this.state.zKey === '[2D plot]' ? 'scattergl' : 'scatter3d',
+            //     connectgaps: true,
+            //     mode: this.state.connectingLines ? 'markers+lines' : 'markers',
+            //     line: {
+            //         color: 'grey'
+            //     },
+            //     marker: {
+            //         size: markerSize,
+            //         color: filteredData[this.state.cKey],
+            //         colorscale: this.state.cscale === 'Thermal' ? [[0,'rgb(3, 35, 51)'], [0.09,'rgb(13, 48, 100)'], [0.18,'rgb(53, 50, 155)'], [0.27,'rgb(93, 62, 153)'], [0.36,'rgb(126, 77, 143)'], [0.45,'rgb(158, 89, 135)'], [0.54,'rgb(193, 100, 121)'], [0.63,'rgb(225, 113, 97)'], [0.72,'rgb(246, 139, 69)'], [0.81,'rgb(251, 173, 60)'], [0.90,'rgb(246, 211, 70)'], [1,'rgb(231, 250, 90)']] : this.state.cscale,
+            //         cmin: Math.min(crange[0], crange[1]),
+            //         cmax: Math.max(crange[0], crange[1]),
+            //         showscale: needsScale(helpers.showTrace.bind(this)(d._id)),
+            //         reversescale: this.state.reverseC,
+            //         colorbar: {
+            //             title: helpers.generateAxisTitle.bind(this)(this.state.cKey),
+            //             titleside: 'right',
+            //             tickmode: this.state.cKey === 'timestamp' ? 'array' : 'auto',
+            //             ticktext: colortics[0],
+            //             tickvals: colortics[1]
+            //         }
+            //     },
+            //     name: d._id,
+            //     visible: this.state.counterTraces.includes(d._id) ? !this.state.showAll : this.state.showAll
+            // }
+
+        })
+
+        this.layout = {
+            datarevision: Math.random(),
+            autosize: true, 
+            showlegend: false,
+            font: {
+                size: 20
+            },
+            xaxis: {
+                title: traversal === 0 ? 'Longitude' : 'Latitude',
+                //range: xrange,
+                //type: this.state.xKey === 'timestamp' ? 'date' : '-'
+            },
+            yaxis: {
+                title: 'Pressure [dbar]',
+                autorange: 'reversed',
+                //range: yrange,
+                //type: this.state.yKey === 'timestamp' ? 'date' : '-',
+            },
+            margin: {t: 30},
+            scene: {
+                xaxis:{
+                    title: 'TBD',
+                    //range: xrange,
+                    //type: this.state.xKey === 'timestamp' ? 'date' : '-'
+                },
+                yaxis:{
+                    title: 'TBD',
+                    //range: yrange,
+                    //type: this.state.yKey === 'timestamp' ? 'date' : '-'
+                },
+                zaxis:{
+                    title: 'TBD',
+                    //range: zrange,
+                    //type: this.state.zKey === 'timestamp' ? 'date' : '-'
+                }
+            }
+        }
+    }
+
     render(){
         console.log(this.state)
+        this.prepPlotlyState(6)
 
         return(
             <>
@@ -438,11 +567,11 @@ class EasyoceanPlots extends React.Component {
 					    </MapContainer>
                         <div className='mapSearchInputs plotting-scrollit'>
                             <div className='verticalGroup'>
-                                <h5>Plot Controls</h5>
+                                <h5>Data Selection</h5>
 
                                 <div className="form-text">
-			            <span>WOCE line</span>
-				</div>
+			                        <span>WOCE line</span>
+				                </div>
                                 <select value={this.state.woceline} onChange={this.changeWOCE} className="form-select" aria-label="Default select example">
                                    {Object.keys(this.eo_occupancies).map((key) => (
                                         <option key={key} value={key}>{key}</option>
@@ -450,8 +579,8 @@ class EasyoceanPlots extends React.Component {
                                 </select>
 
                                 <div className="form-text">
-			            <span>Occupancy</span>
-				</div>
+			                        <span>Occupancy</span>
+				                </div>
                                 <select value={this.state.occupancyIndex} onChange={this.changeOccupancy} className="form-select" aria-label="Default select example">
                                    {this.eo_occupancies[this.state.woceline].map((occupancy, i) => (
                                         <option key={Math.random()} value={i}>{occupancy.map(date => date.toISOString().split('T')[0]).join(' to ')}</option>
@@ -459,8 +588,8 @@ class EasyoceanPlots extends React.Component {
                                 </select>
 
                                 <div className="form-text">
-			            <span>Variable</span>
-				</div>
+			                        <span>Variable</span>
+				                </div>
                                 <select value={this.state.variable} onChange={this.changeVariable} className="form-select" aria-label="Default select example">
                                     <option key={Math.random()} value={'ctd_temperature'}>CTD Temperature</option>
                                     <option key={Math.random()} value={'ctd_salinity'}>CTD Salinity</option>
@@ -470,21 +599,21 @@ class EasyoceanPlots extends React.Component {
                                 </select>
 
                                 <div className="form-text">
-			            <span>
+			                        <span>
                                         Subtraction Occupancy
                                         <OverlayTrigger
-					    placement="right"
-					    overlay={
-						<Tooltip id="compression-tooltip" className="wide-tooltip">
-						    Subtraction Occupancy: Plot the difference in your selected variable between the selected occupancy and this one
-						</Tooltip>
-					    }
-					    trigger="click"
-					>
-					<i style={{'float':'left'}} className="fa fa-question-circle" aria-hidden="true"></i>
-                                    </OverlayTrigger>
+					                        placement="right"
+					                        overlay={
+						                        <Tooltip id="compression-tooltip" className="wide-tooltip">
+						                            Subtraction Occupancy: Plot the difference in your selected variable between the selected occupancy and this one
+						                        </Tooltip>
+					                        }
+					                        trigger="click"
+					                    >
+					                    <i style={{'float':'left'}} className="fa fa-question-circle" aria-hidden="true"></i>
+                                        </OverlayTrigger>
                                     </span>
-				</div>
+				                </div>
                                 <select value={this.state.subtractionIndex} onChange={this.changeSubtraction} className="form-select" aria-label="Default select example">
                                    <option key='nosub' value={-1}>No subtraction</option>
                                    {this.eo_occupancies[this.state.woceline].map((occupancy, i) => (
@@ -498,7 +627,13 @@ class EasyoceanPlots extends React.Component {
                 </div>
 
                 <div className='col-lg-9'>
-
+                    <Plot
+                    data={this.data}
+                    onRelayout={e=>helpers.zoomSync.bind(this)(e)}
+                    layout={this.layout}
+                    style={{width: '100%', height: '90vh'}}
+                    config={{showTips: false, responsive: true}}
+                    />
                 </div>
             </div>
             </>

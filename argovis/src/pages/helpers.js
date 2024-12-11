@@ -1416,6 +1416,8 @@ helpers.downloadData = function(defaultX, defaultY, defaultZ, defaultC, mergePoi
 
 					this.prepCSV(data, meta)
 
+                    console.log(p)
+
 					this.setState({
 						data:p, 
 						variables: vars, 
