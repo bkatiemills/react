@@ -6,8 +6,7 @@ import React from 'react';
 import '../index.css';
 import helpers from'./helpers'
 import { MapContainer, TileLayer, CircleMarker} from 'react-leaflet';
-import GeometryUtil from "leaflet-geometryutil";
-import Autosuggest from 'react-autosuggest';
+import chroma from "chroma-js";
 import Plot from 'react-plotly.js';
 import Tooltip from 'react-bootstrap/Tooltip';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
@@ -498,6 +497,55 @@ class EasyoceanPlots extends React.Component {
         return urls
     }
 
+    alignAndSortByGeolocation(array1, array2, traversal) {
+        // when doing subtractions, it's convenient to have the data aligned by geolocation
+
+        // Extract geolocation values from both arrays
+        const geolocations1 = new Set(array1.map(item => item.geolocation.coordinates[traversal]));
+        const geolocations2 = new Set(array2.map(item => item.geolocation.coordinates[traversal]));
+      
+        // Find common geolocations
+        const commonGeolocations = [...geolocations1].filter(geo => geolocations2.has(geo));
+      
+        // Filter arrays to keep only common geolocations
+        const filteredArray1 = array1.filter(item => commonGeolocations.includes(item.geolocation.coordinates[traversal]));
+        const filteredArray2 = array2.filter(item => commonGeolocations.includes(item.geolocation.coordinates[traversal]));
+      
+        // Sort both arrays by traversal direction
+        filteredArray1.sort((a, b) => a.geolocation.coordinates[traversal] - b.geolocation.coordinates[traversal]);
+        filteredArray2.sort((a, b) => a.geolocation.coordinates[traversal] - b.geolocation.coordinates[traversal]);
+
+        return [filteredArray1, filteredArray2];
+    }
+
+      alignAndComputeDifferences(pressures1, measurements1, pressures2, measurements2) {
+        // Create maps of pressure to measurement for both profiles
+        const profile1 = new Map(pressures1.map((p, i) => [p, measurements1[i]]));
+        const profile2 = new Map(pressures2.map((p, i) => [p, measurements2[i]]));
+      
+        // Find common pressures
+        const commonPressures = pressures1.filter(p => profile2.has(p));
+      
+        // Compute differences for common pressures
+        const differences = commonPressures.map(p => profile1.get(p) - profile2.get(p));
+      
+        return [commonPressures, differences];
+    }
+
+    subtractionScale(min, max){
+        // generate a scale from min (blue) to max (red), with white pinned at 0
+
+        let scale = chroma.scale(['#0000FF', '#FFFFFF', '#FF0000']).domain([min,0,max])
+        
+        if(min > 0){
+            scale = chroma.scale(['#FFFFFF', '#FF0000']).domain([0,max])
+        } else if(max < 0){
+            scale = chroma.scale(['#0000FF', '#FFFFFF']).domain([min,0])
+        }
+
+    	return scale
+   }
+
     prepPlotlyState(markerSize){
 
         let traversal = this.eo_direction[this.state.woceline] == 'lon' ? 0 : 1 // 0 longitude, 1 latitude; todo detect from woceline
@@ -506,14 +554,33 @@ class EasyoceanPlots extends React.Component {
         let ydata = []
         let cdata = []
 
-        for(let i=0; i<this.state.data[0].length; i++){
+        if(this.state.subtractionIndex === -1){
+            // no subtraction
+            for(let i=0; i<this.state.data[0].length; i++){
 
-            let varindex = this.state.data[0][i]['data_info'][0].findIndex(x => x === this.state.variable) // where to look in the data array for the color variable
-            let presindex = this.state.data[0][i]['data_info'][0].findIndex(x => x === 'pressure') // where to look in the data array for the pressure variable
-            for(let j=0; j<this.state.data[0][i].data[varindex].length; j++){
-                xdata.push(this.state.data[0][i]['geolocation']['coordinates'][traversal])
-                ydata.push(this.state.data[0][i].data[presindex][j])
-                cdata.push(this.state.data[0][i].data[varindex][j])
+                let varindex = this.state.data[0][i]['data_info'][0].findIndex(x => x === this.state.variable) // where to look in the data array for the color variable
+                let presindex = this.state.data[0][i]['data_info'][0].findIndex(x => x === 'pressure') // where to look in the data array for the pressure variable
+                for(let j=0; j<this.state.data[0][i].data[varindex].length; j++){
+                    xdata.push(this.state.data[0][i]['geolocation']['coordinates'][traversal])
+                    ydata.push(this.state.data[0][i].data[presindex][j])
+                    cdata.push(this.state.data[0][i].data[varindex][j])
+                }
+            }
+        } else {
+            // subtraction
+            let subvarindex = this.state.data[1][0]['data_info'][0].findIndex(x => x === this.state.variable)
+            let subpresindex = this.state.data[1][0]['data_info'][0].findIndex(x => x === 'pressure') 
+            let varindex = this.state.data[0][0]['data_info'][0].findIndex(x => x === this.state.variable) 
+            let presindex = this.state.data[0][0]['data_info'][0].findIndex(x => x === 'pressure')
+
+            let alignedData = this.alignAndSortByGeolocation(this.state.data[0], this.state.data[1], traversal)
+            for(let i=0; i<alignedData[0].length; i++){
+                let [commonPressures, differences] = this.alignAndComputeDifferences(alignedData[0][i].data[presindex], alignedData[0][i].data[varindex], alignedData[1][i].data[subpresindex], alignedData[1][i].data[subvarindex])
+                for(let j=0; j<commonPressures.length; j++){
+                    xdata.push(alignedData[0][i]['geolocation']['coordinates'][traversal])
+                    ydata.push(commonPressures[j])
+                    cdata.push(differences[j])
+                }
             }
         }
 
@@ -525,9 +592,9 @@ class EasyoceanPlots extends React.Component {
             marker: {
                 size: markerSize,
                 color: cdata,
-                colorscale: 'Viridis',
+                colorscale: this.state.subtractionIndex === -1 ? 'Viridis' : this.subtractionScale(Math.min(...cdata), Math.max(...cdata)),
                 colorbar: {
-                    title: this.state.variable + (this.eo_units[this.state.variable].length > 0 ? ' [' + this.eo_units[this.state.variable] + ']' : ""),
+                    title: (this.state.subtractionIndex === -1 ? '':'Δ ') + this.state.variable + (this.eo_units[this.state.variable].length > 0 ? ' [' + this.eo_units[this.state.variable] + ']' : ""),
                     titleside: 'right',
                     tickmode: 'auto',
                     nticks: 5
