@@ -1,8 +1,6 @@
-// lock out sidebar while downloading
-// autodetect longitude or latitude
-// fix weird color bar
+// rendering notice on var change
 // implement subtraction mode
-// disable tooltips for now
+
 
 import React from 'react';
 import '../index.css';
@@ -317,6 +315,65 @@ class EasyoceanPlots extends React.Component {
                    ]
             }
 
+            this.eo_direction = {
+                "75N": "lon",
+                "A02": "lon",
+                "A03": "lon",
+                "A05": "lon",
+                "A10": "lon",
+                "A12": "lat",
+                "A13": "lat",
+                "A16-A23": "lat",
+                "A20": "lat",
+                "A22": "lat",
+                "A9.5": "lat",
+                "AR07E": "lon",
+                "AR07W": "lat",
+                "I01": "lon",
+                "I02": "lon",
+                "I03-I04": "lon",
+                "I05": "lon",
+                "I06S": "lat",
+                "I07": "lat",
+                "I08N": "lat",
+                "I08S-I09N": "lat",
+                "I09S": "lat",
+                "I10": "lat",
+                "IR06-I10": "lon",
+                "IR06E": "lat",
+                "IR06": "lat",
+                "P01": "lon",
+                "P02": "lon",
+                "P03": "lon",
+                "P04": "lon",
+                "P06": "lon",
+                "P09": "lat",
+                "P10": "lat",
+                "P11": "lat",
+                "P13": "lat",
+                "P14": "lat",
+                "P15": "lat",
+                "P16": "lat",
+                "P17E": "lat",
+                "P17": "lat",
+                "P18": "lat",
+                "P21": "lon",
+                "S04I": "lon",
+                "S04P": "lon",
+                "SR01": "lat",
+                "SR03": "lat",
+                "SR04": "lon"
+            }
+
+            this.eo_units = {
+                "pressure": "dbar",
+                "ctd_temperature": "°C",
+                "ctd_salinity": "",
+                "doxy": "umol kg-1",
+                "conservative_temperature": "°C",
+                "absolute_salinity": "g kg-1"
+            }
+
             let q = new URLSearchParams(window.location.search) // parse out query string
             this.state = {
                 woceline: q.has('woceline') ? q.get('woceline') : 'A10',
@@ -347,15 +404,15 @@ class EasyoceanPlots extends React.Component {
                 helpers.manageStatus.bind(this)('downloading')
                 this.downloadData()
               }, 1);
-
-            
         }
 
         helpers.setQueryString.bind(this)()
     }
 
-    downloadData(){        
-        console.log('starting download')
+    downloadData(){      
+        if(this.formRef.current){  
+            this.formRef.current.setAttribute('disabled', 'true')
+        }
         Promise.all(this.state.urls.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
             Promise.all(responses.map(res => res.json())).then(data => {
                 for(let i=0; i<data.length; i++){
@@ -418,6 +475,13 @@ class EasyoceanPlots extends React.Component {
         });
     };
 
+    changeAPIkey = (event) => {
+        this.setState({
+            apiKey: event.target.value,
+            refreshData: false
+        })
+    }
+
     generateURLs(woceline, occupancyIndex, subtractionIndex){
         let urls = []
         
@@ -436,7 +500,7 @@ class EasyoceanPlots extends React.Component {
 
     prepPlotlyState(markerSize){
 
-        let traversal = 0 // 0 longitude, 1 latitude; todo detect from woceline
+        let traversal = this.eo_direction[this.state.woceline] == 'lon' ? 0 : 1 // 0 longitude, 1 latitude; todo detect from woceline
 
         let xdata = []
         let ydata = []
@@ -463,7 +527,7 @@ class EasyoceanPlots extends React.Component {
                 color: cdata,
                 colorscale: 'Viridis',
                 colorbar: {
-                    title: this.state.variable,
+                    title: this.state.variable + (this.eo_units[this.state.variable].length > 0 ? ' [' + this.eo_units[this.state.variable] + ']' : ""),
                     titleside: 'right',
                     tickmode: 'auto',
                     nticks: 5
@@ -471,80 +535,10 @@ class EasyoceanPlots extends React.Component {
             }
         }]
 
-        // this.data = this.state.data[0].map((d,i) => {               
-        //     let varindex = d['data_info'][0].findIndex(x => x === this.state.variable) // where to look in the data array for the color variable
-        //     let presindex = d['data_info'][0].findIndex(x => x === 'pressure') // where to look in the data array for the pressure variable
-
-        //     return {
-        //         type: 'scattergl',
-        //         x: Array(d['data'][varindex].length).fill(d['geolocation']['coordinates'][traversal]),
-        //         y: d['data'][presindex],
-        //         mode: 'markers',
-        //         marker: {
-        //             size: markerSize,
-        //             color: d['data'][varindex],
-        //             colorscale: 'Viridis',
-        //             colorbar: {
-        //                 title: this.state.variable,
-        //                 titleside: 'right',
-        //                 tickmode: 'auto',
-        //                 nticks: 5
-        //             }
-        //         }
-        //     }
-
-        //     // // filter off any points that have null for color value, don't plot these.
-        //     // let x = d[this.state.xKey].filter((e,j) => {return d[this.state.cKey][j] !== null})
-        //     // let y = d[this.state.yKey].filter((e,j) => {return d[this.state.cKey][j] !== null})
-        //     // let t = d['timestamp'].filter((e,j) => {return d[this.state.cKey][j] !== null}) // timestamp gets used to step through valid points later, keep it synced with the filtering 
-        //     // let z = []
-        //     // if(this.state.zKey !== '[2D plot]'){
-        //     //     z = d[this.state.zKey].filter((e,j) => {return d[this.state.cKey][j] !== null})
-        //     // }
-        //     // let c = d[this.state.cKey].filter(x => x!==null)
-        //     // let filteredData = {...d}
-        //     // filteredData[this.state.xKey] = x
-        //     // filteredData[this.state.yKey] = y
-        //     // filteredData[this.state.zKey] = z
-        //     // filteredData[this.state.cKey] = c
-        //     // filteredData['timestamp'] = t
-        //     // return {
-        //     //     x: filteredData[this.state.xKey],
-        //     //     y: filteredData[this.state.yKey],
-        //     //     z: filteredData[this.state.zKey],
-        //     //     text: this.genTooltip.bind(this)(filteredData),
-        //     //     hoverinfo: 'text',
-        //     //     type: this.state.zKey === '[2D plot]' ? 'scattergl' : 'scatter3d',
-        //     //     connectgaps: true,
-        //     //     mode: this.state.connectingLines ? 'markers+lines' : 'markers',
-        //     //     line: {
-        //     //         color: 'grey'
-        //     //     },
-        //     //     marker: {
-        //     //         size: markerSize,
-        //     //         color: filteredData[this.state.cKey],
-        //     //         colorscale: this.state.cscale === 'Thermal' ? [[0,'rgb(3, 35, 51)'], [0.09,'rgb(13, 48, 100)'], [0.18,'rgb(53, 50, 155)'], [0.27,'rgb(93, 62, 153)'], [0.36,'rgb(126, 77, 143)'], [0.45,'rgb(158, 89, 135)'], [0.54,'rgb(193, 100, 121)'], [0.63,'rgb(225, 113, 97)'], [0.72,'rgb(246, 139, 69)'], [0.81,'rgb(251, 173, 60)'], [0.90,'rgb(246, 211, 70)'], [1,'rgb(231, 250, 90)']] : this.state.cscale,
-        //     //         cmin: Math.min(crange[0], crange[1]),
-        //     //         cmax: Math.max(crange[0], crange[1]),
-        //     //         showscale: needsScale(helpers.showTrace.bind(this)(d._id)),
-        //     //         reversescale: this.state.reverseC,
-        //     //         colorbar: {
-        //     //             title: helpers.generateAxisTitle.bind(this)(this.state.cKey),
-        //     //             titleside: 'right',
-        //     //             tickmode: this.state.cKey === 'timestamp' ? 'array' : 'auto',
-        //     //             ticktext: colortics[0],
-        //     //             tickvals: colortics[1]
-        //     //         }
-        //     //     },
-        //     //     name: d._id,
-        //     //     visible: this.state.counterTraces.includes(d._id) ? !this.state.showAll : this.state.showAll
-        //     // }
-
-        // })
-
         this.layout = {
             datarevision: Math.random(),
             autosize: true, 
+            hovermode: false,
             showlegend: false,
             font: {
                 size: 20
@@ -579,7 +573,12 @@ class EasyoceanPlots extends React.Component {
 
     render(){
         console.log(this.state)
-        this.prepPlotlyState(6)
+        if(!this.state.refreshData){
+            this.prepPlotlyState(6)
+        }
+        if(this.formRef.current){
+            this.formRef.current.removeAttribute('disabled')
+        }
 
         return(
             <>
@@ -650,6 +649,17 @@ class EasyoceanPlots extends React.Component {
                                         <option key={Math.random()} value={i}>{occupancy.map(date => date.toISOString().split('T')[0]).join(' to ')}</option>
                                    ))}
                                 </select>
+
+                                <h5 style={{marginTop:'1em'}}>Global Options</h5>
+                                <div className="form-floating mb-3">
+                                    <div className="form-floating mb-3" style={{'marginTop': '0.5em'}}>
+                                        <input type="password" className="form-control" id="apiKey" placeholder="" value={this.state.apiKey} onInput={this.changeAPIkey}></input>
+                                        <label htmlFor="apiKey">API Key</label>
+                                        <div id="apiKeyHelpBlock" className="form-text">
+                                            <a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
+                                        </div>
+                                    </div>
+                                </div>
 
                             </div>
                         </div>
