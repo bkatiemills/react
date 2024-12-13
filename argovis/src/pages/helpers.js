@@ -1327,7 +1327,7 @@ helpers.initPlottingPage = function(customParams, apiroot){
 	}
 
 	this.apiPrefix = apiroot
-	this.vocab = {xKey: [], yKey: [], zKey: [], cKey: [], cscale: ['Blackbody','Bluered','Blues','Cividis','Earth','Electric','Greens','Greys','Hot','Jet','Picnic','Portland','Rainbow','RdBu','Reds', 'Thermnal', 'Viridis','YlGnBu','YlOrRd']}
+	this.vocab = {xKey: [], yKey: [], zKey: [], cKey: [], cscale: ['Blackbody','Bluered','Blues','Cividis','Earth','Electric','Greens','Greys','Hot','Jet','Picnic','Portland','Rainbow','RdBu','Reds', 'Thermal', 'Viridis','YlGnBu','YlOrRd']}
 	this.statusReporting = React.createRef()
 	this.showAll = true // show all autoselect options when field is focused and empty
 	this.units = {

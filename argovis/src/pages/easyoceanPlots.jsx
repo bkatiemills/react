@@ -6,7 +6,6 @@ import React from 'react';
 import '../index.css';
 import helpers from'./helpers'
 import { MapContainer, TileLayer, CircleMarker} from 'react-leaflet';
-import chroma from "chroma-js";
 import Plot from 'react-plotly.js';
 import Tooltip from 'react-bootstrap/Tooltip';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
@@ -518,7 +517,7 @@ class EasyoceanPlots extends React.Component {
         return [filteredArray1, filteredArray2];
     }
 
-      alignAndComputeDifferences(pressures1, measurements1, pressures2, measurements2) {
+    alignAndComputeDifferences(pressures1, measurements1, pressures2, measurements2) {
         // Create maps of pressure to measurement for both profiles
         const profile1 = new Map(pressures1.map((p, i) => [p, measurements1[i]]));
         const profile2 = new Map(pressures2.map((p, i) => [p, measurements2[i]]));
@@ -535,12 +534,12 @@ class EasyoceanPlots extends React.Component {
     subtractionScale(min, max){
         // generate a scale from min (blue) to max (red), with white pinned at 0
 
-        let scale = chroma.scale(['#0000FF', '#FFFFFF', '#FF0000']).domain([min,0,max])
+        let scale = [[0, '#0000FF'], [(0-min)/(max-min), '#EEEEEE'], [1, '#FF0000']]
         
         if(min > 0){
-            scale = chroma.scale(['#FFFFFF', '#FF0000']).domain([0,max])
+            scale = [[0, '#EEEEEE'], [1, '#FF0000']]
         } else if(max < 0){
-            scale = chroma.scale(['#0000FF', '#FFFFFF']).domain([min,0])
+            scale = [[0, '#0000FF'], [1, '#EEEEEE']]
         }
 
     	return scale
@@ -548,7 +547,7 @@ class EasyoceanPlots extends React.Component {
 
     prepPlotlyState(markerSize){
 
-        let traversal = this.eo_direction[this.state.woceline] == 'lon' ? 0 : 1 // 0 longitude, 1 latitude; todo detect from woceline
+        let traversal = this.eo_direction[this.state.woceline] === 'lon' ? 0 : 1 // 0 longitude, 1 latitude; todo detect from woceline
 
         let xdata = []
         let ydata = []
@@ -584,6 +583,14 @@ class EasyoceanPlots extends React.Component {
             }
         }
 
+        // need to manually compute min and max for color scale, spread operator blows up Chrome
+        let cmin = Infinity;
+        let cmax = -Infinity;
+        for (const value of cdata) {
+            if (value < cmin) cmin = value;
+            if (value > cmax) cmax = value;
+        }
+
         this.data = [{
             type: 'scattergl',
             x: xdata,
@@ -592,12 +599,12 @@ class EasyoceanPlots extends React.Component {
             marker: {
                 size: markerSize,
                 color: cdata,
-                colorscale: this.state.subtractionIndex === -1 ? 'Viridis' : this.subtractionScale(Math.min(...cdata), Math.max(...cdata)),
+                colorscale: this.state.subtractionIndex === -1 ? 'Viridis' : this.subtractionScale(cmin, cmax),
                 colorbar: {
                     title: (this.state.subtractionIndex === -1 ? '':'Δ ') + this.state.variable + (this.eo_units[this.state.variable].length > 0 ? ' [' + this.eo_units[this.state.variable] + ']' : ""),
                     titleside: 'right',
                     tickmode: 'auto',
-                    nticks: 5
+                    nticks: 10
                 }
             }
         }]
