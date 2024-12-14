@@ -684,22 +684,27 @@ class EasyoceanPlots extends React.Component {
         })
     }
 
+    cleanupAfterPlotting(){
+        if( !this.state.refreshData && 
+            !this.state.remapData && 
+            !this.state.awaitingUserInput){
+                helpers.manageStatus.bind(this)('ready')
+                if(this.formRef.current){
+                    this.formRef.current.removeAttribute('disabled')
+                }
+        }
+    }
+
+
     render(){
         console.log(this.state)
-        // if(this.state.remapData){
-        //     console.log('refreshing data')
-        //     this.prepPlotlyState(6)
-        // }
-        if(this.formRef.current){
-            this.formRef.current.removeAttribute('disabled')
-        }
 
         return(
             <>
             <div style={{'width':'100vw', 'textAlign': 'center', 'padding':'0.5em', 'fontStyle':'italic'}} className='d-lg-none'>Use the right-hand scroll bar to scroll down for plot controls</div>
             <div className='row' style={{'width':'100vw'}}>
                 <div className='col-lg-3 order-last order-lg-first'>
-                    <fieldset ref={this.formRef}>
+                    <fieldset ref={this.formRef} disabled>
                         <span id='statusBanner' ref={this.statusReporting} className={'statusBanner busy'}>Downloading...</span>
                         <MapContainer style={{'height': '30vh'}} center={[25,parseFloat(this.state.centerlon)]} zoom={0} scrollWheelZoom={true}>
 						    <TileLayer
@@ -825,7 +830,7 @@ class EasyoceanPlots extends React.Component {
                     layout={this.layout}
                     style={{width: '100%', height: '90vh'}}
                     config={{showTips: false, responsive: true}}
-                    onAfterPlot={e=>{if(!this.state.refreshData && !this.state.remapData && !this.state.awaitingUserInput){helpers.manageStatus.bind(this)('ready')}}}
+                    onAfterPlot={this.cleanupAfterPlotting.bind(this)}
                     />
                 </div>
             </div>
