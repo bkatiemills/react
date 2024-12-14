@@ -473,6 +473,10 @@ class EasyoceanPlots extends React.Component {
             occupancyIndex: 0,
             subtractionIndex: -1,
             urls: this.generateURLs(event.target.value, 0, -1),
+            cmin: '',
+            cmax: '',
+            user_defined_cmin: false,
+            user_defined_cmax: false,
             phase: 'refreshData'
         });
     };
@@ -481,6 +485,10 @@ class EasyoceanPlots extends React.Component {
         this.setState({ 
             occupancyIndex: parseInt(event.target.value),
             urls: this.generateURLs(this.state.woceline, parseInt(event.target.value), this.state.subtractionIndex),
+            cmin: '',
+            cmax: '',
+            user_defined_cmin: false,
+            user_defined_cmax: false,
             phase: 'refreshData'
         });
     };
@@ -488,6 +496,10 @@ class EasyoceanPlots extends React.Component {
     changeVariable = (event) => {
         this.setState({ 
             variable: event.target.value,
+            cmin: '',
+            cmax: '',
+            user_defined_cmin: false,
+            user_defined_cmax: false,
             phase: 'remapData'
         });
     };
@@ -496,6 +508,10 @@ class EasyoceanPlots extends React.Component {
         this.setState({ 
             subtractionIndex: parseInt(event.target.value),
             urls: this.generateURLs(this.state.woceline, this.state.occupancyIndex, parseInt(event.target.value)),
+            cmin: '',
+            cmax: '',
+            user_defined_cmin: false,
+            user_defined_cmax: false,
             phase: 'refreshData'
         });
     };
