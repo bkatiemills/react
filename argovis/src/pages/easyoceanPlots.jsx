@@ -1,5 +1,18 @@
-// rendering notice on var change
-// implement subtraction mode
+/*
+State flow notes
+Page can be in one of several states, as indicated by state.phase:
+ - refreshData: triggered when user inputs a request that requires hitting the API. Should always conclude by transitioning to remapData
+ - remapData: triggered when we want to redraw the plot without a fresh download. Should always conclude by transitioning to idle
+ - idle: default state. This is the appropriate time to repaint plots, unlock inputs etc
+ - awaitingUserInput: go to this state when we are letting the user type in a field without triggering any downloads or replots; can transition to refreshData or remapData.
+
+Standard flows are:
+ - idle -> refreshData -> remapData -> idle: triggered ie when user selects a different option from the search controls that requires a data refresh
+ - idle -> remapData -> idle: triggered ie when user changes what or how the current data is being plotted
+ - idle -> awaitingUserInput -> [refreshData] -> remapData -> idle: awaitingUserInput phase triggered when user is typing in a field, result can kick off a fresh download if needed or just a replot.
+
+todo: this is a useful pattern, implement for other plotting and mapping pages.
+*/
 
 
 import React from 'react';
@@ -381,14 +394,12 @@ class EasyoceanPlots extends React.Component {
                 subtractionIndex: q.has('subtractionIndex') ? parseInt(q.get('subtractionIndex')) : -1,
                 points:[],
                 urls:[],
-                refreshData: true, // download new data
-                remapData: true, // redraw the data you already have
+                phase: 'refreshData', // refreshData, remapData, awaitingUserInput, or idle
                 apiKey: '',
                 centerlon: 0,
                 data: [[]], // raw download data
                 cmin: q.has('cmin') ? parseFloat(q.get('cmin')) : '',
                 cmax: q.has('cmax') ? parseFloat(q.get('cmax')) : '',
-                awaitingUserInput: false
             }
     
             this.state.urls = this.generateURLs(this.state.woceline, this.state.occupancyIndex, this.state.subtractionIndex)
@@ -404,17 +415,17 @@ class EasyoceanPlots extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState, snapshot){
-        if(this.state.refreshData){
+        if(this.state.phase === 'refreshData'){
             setTimeout(() => { // this is a total hack, but it makes the 'downloading' status show up
                 helpers.manageStatus.bind(this)('downloading')
                 this.downloadData()
               }, 1);
-        } else if(this.state.remapData){
+        } else if(this.state.phase === 'remapData'){
             setTimeout(() => {
                 helpers.manageStatus.bind(this)('rendering')
                 this.prepPlotlyState(6)
             }, 1);
-        } else if(this.state.awaitingUserInput) {
+        } else if(this.state.phase === 'awaitingUserInput') {
             setTimeout(() => {
                 helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
             }, 1);
@@ -448,8 +459,7 @@ class EasyoceanPlots extends React.Component {
 
                 this.setState({
                     points: mappoints, 
-                    refreshData: false,
-                    remapData: true,
+                    phase: 'remapData',
                     data: data
                 })
 
@@ -463,7 +473,7 @@ class EasyoceanPlots extends React.Component {
             occupancyIndex: 0,
             subtractionIndex: -1,
             urls: this.generateURLs(event.target.value, 0, -1),
-            refreshData: true
+            phase: 'refreshData'
         });
     };
 
@@ -471,15 +481,14 @@ class EasyoceanPlots extends React.Component {
         this.setState({ 
             occupancyIndex: parseInt(event.target.value),
             urls: this.generateURLs(this.state.woceline, parseInt(event.target.value), this.state.subtractionIndex),
-            refreshData: true
+            phase: 'refreshData'
         });
     };
 
     changeVariable = (event) => {
         this.setState({ 
             variable: event.target.value,
-            refreshData: false,
-            remapData: true
+            phase: 'remapData'
         });
     };
 
@@ -487,14 +496,14 @@ class EasyoceanPlots extends React.Component {
         this.setState({ 
             subtractionIndex: parseInt(event.target.value),
             urls: this.generateURLs(this.state.woceline, this.state.occupancyIndex, parseInt(event.target.value)),
-            refreshData: true
+            phase: 'refreshData'
         });
     };
 
     changeAPIkey = (event) => {
         this.setState({
             apiKey: event.target.value,
-            refreshData: false
+            phase: 'idle'
         })
     }
 
@@ -573,6 +582,9 @@ class EasyoceanPlots extends React.Component {
    }
 
     prepPlotlyState(markerSize){
+        if(this.formRef.current){  
+            this.formRef.current.setAttribute('disabled', 'true')
+        }
 
         let traversal = this.eo_direction[this.state.woceline] === 'lon' ? 0 : 1 // 0 longitude, 1 latitude; todo detect from woceline
 
@@ -680,14 +692,12 @@ class EasyoceanPlots extends React.Component {
         }
 
         this.setState({
-            remapData: false,
+            phase: 'idle',
         })
     }
 
     cleanupAfterPlotting(){
-        if( !this.state.refreshData && 
-            !this.state.remapData && 
-            !this.state.awaitingUserInput){
+        if(this.state.phase==='idle'){
                 helpers.manageStatus.bind(this)('ready')
                 if(this.formRef.current){
                     this.formRef.current.removeAttribute('disabled')
@@ -781,10 +791,10 @@ class EasyoceanPlots extends React.Component {
 											placeholder="Auto" 
 											value={this.state.cmin}
 											onChange={e => {
-												this.setState({cmin:e.target.value, awaitingUserInput: true})}
+												this.setState({cmin:e.target.value, phase: 'awaitingUserInput'})}
 											} 
-											onBlur={e => {this.setState({cmin: this.changePlotBounds(e), user_defined_cmin: e.target.defaultValue!=='', remapData: true, awaitingUserInput: false})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({cmin: this.changePlotBounds(e), user_defined_cmin: e.target.defaultValue!=='', remapData: true, awaitingUserInput: false})}}}
+											onBlur={e => {this.setState({cmin: this.changePlotBounds(e), user_defined_cmin: e.target.defaultValue!=='', phase: 'remapData'})}}
+											onKeyPress={e => {if(e.key==='Enter'){this.setState({cmin: this.changePlotBounds(e), user_defined_cmin: e.target.defaultValue!=='', phase: 'remapData'})}}}
 											aria-label="xmin" 
 											aria-describedby="basic-addon1"/>
 									</div>
@@ -798,10 +808,10 @@ class EasyoceanPlots extends React.Component {
 											placeholder="Auto" 
 											value={this.state.cmax}
 											onChange={e => {
-												this.setState({cmax:e.target.value, awaitingUserInput: true})}
+												this.setState({cmax:e.target.value, phase: 'awaitingUserInput'})}
 											} 
-											onBlur={e => {this.setState({cmax: this.changePlotBounds(e), user_defined_cmax: e.target.defaultValue!=='', remapData: true, awaitingUserInput: false})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({cmax: this.changePlotBounds(e), user_defined_cmax: e.target.defaultValue!=='', remapData: true, awaitingUserInput: false})}}}
+											onBlur={e => {this.setState({cmax: this.changePlotBounds(e), user_defined_cmax: e.target.defaultValue!=='', phase: 'remapData'})}}
+											onKeyPress={e => {if(e.key==='Enter'){this.setState({cmax: this.changePlotBounds(e), user_defined_cmax: e.target.defaultValue!=='', phase: 'remapData'})}}}
 											aria-label="xmax" 
 											aria-describedby="basic-addon1"/>
 									</div>
