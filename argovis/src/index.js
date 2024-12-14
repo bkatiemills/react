@@ -14,6 +14,7 @@ import ArgoPlots from "./pages/argoPlots"
 import TCPlots from "./pages/tcPlots"
 import DrifterPlots from "./pages/drifterPlots"
 import ShipPlots from "./pages/shipPlots"
+import EasyoceanPlots from "./pages/easyoceanPlots"
 import APIintro from "./pages/api_intro"
 import Hackathon from "./pages/hackathon2024"
 import ArgoURLhelper from "./pages/argoURLhelper"
@@ -47,6 +48,7 @@ export default function App() {
           <Route path="plots/tc" element={<TCPlots />} />
           <Route path="plots/drifters" element={<DrifterPlots />} />
           <Route path="plots/ships" element={<ShipPlots />} />
+          <Route path="plots/easyocean" element={<EasyoceanPlots />} />
           <Route path="apiintro" element={<APIintro />} />
           <Route path="hackathon" element={<Hackathon />} />
           <Route path="argourlhelper" element={<ArgoURLhelper />} />

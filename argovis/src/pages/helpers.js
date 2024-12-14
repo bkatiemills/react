@@ -401,7 +401,7 @@ helpers.setQueryString = function(){
 
 	let qparams = this.customQueryParams
 	for(let i=0; i<qparams.length; i++){
-		if(this.state.hasOwnProperty(qparams[i])){
+		if(this.state.hasOwnProperty(qparams[i]) && this.state[qparams[i]] !== ''){
 			queryManagement.searchParams.set(qparams[i], Array.isArray(this.state[qparams[i]]) ? JSON.stringify(this.state[qparams[i]]) : this.state[qparams[i]] )
 		} else{
 			queryManagement.searchParams.delete(qparams[i])
@@ -1327,7 +1327,7 @@ helpers.initPlottingPage = function(customParams, apiroot){
 	}
 
 	this.apiPrefix = apiroot
-	this.vocab = {xKey: [], yKey: [], zKey: [], cKey: [], cscale: ['Blackbody','Bluered','Blues','Cividis','Earth','Electric','Greens','Greys','Hot','Jet','Picnic','Portland','Rainbow','RdBu','Reds', 'Thermnal', 'Viridis','YlGnBu','YlOrRd']}
+	this.vocab = {xKey: [], yKey: [], zKey: [], cKey: [], cscale: ['Blackbody','Bluered','Blues','Cividis','Earth','Electric','Greens','Greys','Hot','Jet','Picnic','Portland','Rainbow','RdBu','Reds', 'Thermal', 'Viridis','YlGnBu','YlOrRd']}
 	this.statusReporting = React.createRef()
 	this.showAll = true // show all autoselect options when field is focused and empty
 	this.units = {
@@ -1415,6 +1415,8 @@ helpers.downloadData = function(defaultX, defaultY, defaultZ, defaultC, mergePoi
 					this.vocab['cKey'] = vars
 
 					this.prepCSV(data, meta)
+
+                    console.log(p)
 
 					this.setState({
 						data:p, 
