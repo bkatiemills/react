@@ -1,3 +1,5 @@
+// todo status: make all inputs update state including urls; correctly implement downloadData, continue with a plotting update function
+
 import React from 'react';
 import { MapContainer, TileLayer, Popup, Polygon, FeatureGroup, Rectangle} from 'react-leaflet'
 import { EditControl } from "react-leaflet-draw";
@@ -468,7 +470,8 @@ class Grids extends React.Component {
       	apiKey: localStorage.getItem('apiKey') ? localStorage.getItem('apiKey') : 'guest',
       	subgrid: q.has('subgrid') ? q.get('subgrid') === 'true' : false,
       	scale: chroma.scale(['#440154', '#482777', '#3f4a8a', '#31678e', '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825']),
-      	centerlon: -70
+      	centerlon: -70,
+        phase: 'refreshData', // refreshData, remapData, awaitingUserInput, or idle
       }
 
 	  this.state.timestep = q.has('timestep') ? q.get('timestep') : {
@@ -515,10 +518,11 @@ class Grids extends React.Component {
 		'glodap': ''
       }[this.state.lattice]
       this.apiPrefix = 'https://argovis-api.colorado.edu/'
-     	this.customQueryParams = ['polygon', 'grid', 'levelindex', 'sublevelindex', 'timestep', 'subtimestep', 'subgrid']
+      this.customQueryParams = ['polygon', 'grid', 'levelindex', 'sublevelindex', 'timestep', 'subtimestep', 'subgrid']
       this.vocab = {}
 
-      this.componentDidUpdate()
+      //this.componentDidUpdate()
+      this.downloadData()
     }
 
 	// componentDidMount() {
@@ -538,6 +542,79 @@ class Grids extends React.Component {
 	// 		console.log(this.demo)
 	// 	});
 	// }
+
+    componentDidUpdate(prevProps, prevState, snapshot){
+        if(this.state.phase === 'refreshData'){
+            setTimeout(() => { // this is a total hack, but it makes the 'downloading' status show up
+                helpers.manageStatus.bind(this)('downloading')
+                this.downloadData()
+              }, 1);
+        } else if(this.state.phase === 'remapData'){
+            setTimeout(() => {
+                helpers.manageStatus.bind(this)('rendering')
+                this.prepPlotlyState(6)
+            }, 1);
+        } else if(this.state.phase === 'awaitingUserInput') {
+            setTimeout(() => {
+                helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
+            }, 1);
+        }
+
+        helpers.setQueryString.bind(this)()
+    }
+
+    downloadData(){
+        if(this.formRef.current){  
+            this.formRef.current.setAttribute('disabled', 'true')
+        }
+
+        Promise.all(this.state.urls.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+            Promise.all(responses.map(res => res.json())).then(data => {
+                for(let i=0; i<data.length; i++){
+                    let bail = helpers.handleHTTPcodes.bind(this)(data[i].code)
+                    if(bail){
+                        return
+                    }
+                }
+
+                if(this.statusReporting.current){
+                    helpers.manageStatus.bind(this)('rendering')
+                }
+
+                let mappoints = data[0].map(point => {
+                    return(
+                        <CircleMarker key={point._id+Math.random()} center={[point.geolocation.coordinates[1], helpers.mutateLongitude(point.geolocation.coordinates[0], parseFloat(this.state.centerlon)) ]} radius={1} color={'red'}/>
+                    )
+                })
+
+                this.setState({
+                    points: mappoints, 
+                    phase: 'remapData',
+                    data: data
+                })
+
+            })
+        })
+
+    }
+
+    generateURLs(){
+        let urls = []
+
+        let url    = this.apiPrefix + 'grids/' + this.state.lattice+'?data='+this.state.grid+'&startDate='+this.state.timestep+'T00:00:00Z&endDate='+this.state.timestep+'T00:00:01Z&verticalRange='+(this.rawLevels[this.state.levelindex]-0.1)+','+(this.rawLevels[this.state.levelindex]+0.1)
+        let suburl = this.apiPrefix + 'grids/' + this.state.lattice+'?data='+this.state.grid+'&startDate='+this.state.subtimestep+'T00:00:00Z&endDate='+this.state.subtimestep+'T00:00:01Z&verticalRange='+(this.rawLevels[this.state.sublevelindex]-0.1)+','+(this.rawLevels[this.state.sublevelindex]+0.1)
+        if(this.state.polygon.length > 0){
+            url += '&polygon='+JSON.stringify(helpers.tidypoly(this.state.polygon))
+            suburl += '&polygon='+JSON.stringify(helpers.tidypoly(this.state.polygon))
+        }
+
+        urls.push(url)
+        if(this.state.subgrid){
+            urls.push(suburl)
+        }
+
+        return urls
+    }
 
 	chooseTitle(grid){
 		if(grid === 'rg09_temperature'){
@@ -726,6 +803,11 @@ class Grids extends React.Component {
 
     // input handlers
     changeLevel(target, index){
+        this.setState({
+            phase: 'refreshData',
+
+        })
+
     	let s = this.state
     	s[index] = parseInt(target.target.value)
     	s.refreshData = true
