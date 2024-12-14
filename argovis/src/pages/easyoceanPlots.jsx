@@ -373,8 +373,9 @@ class EasyoceanPlots extends React.Component {
             }
 
             let q = new URLSearchParams(window.location.search) // parse out query string
+
             this.state = {
-                woceline: q.has('woceline') ? q.get('woceline') : 'A10',
+                woceline: q.has('woceline') ? q.get('woceline') : '75N',
                 occupancyIndex: q.has('occupancyIndex') ? parseInt(q.get('occupancyIndex')) : 0,
                 variable: q.has('variable') ? q.get('variable') : 'conservative_temperature',
                 subtractionIndex: q.has('subtractionIndex') ? parseInt(q.get('subtractionIndex')) : -1,
@@ -385,19 +386,19 @@ class EasyoceanPlots extends React.Component {
                 apiKey: '',
                 centerlon: 0,
                 data: [[]], // raw download data
-                display_min: null,
-                display_max: null,
-                user_defined_min: false,
-                user_defined_max: false,
+                cmin: q.has('cmin') ? parseFloat(q.get('cmin')) : '',
+                cmax: q.has('cmax') ? parseFloat(q.get('cmax')) : '',
                 awaitingUserInput: false
             }
     
             this.state.urls = this.generateURLs(this.state.woceline, this.state.occupancyIndex, this.state.subtractionIndex)
+            this.state.user_defined_cmin = this.state.cmin !== ''
+            this.state.user_defined_cmax = this.state.cmax !== ''
+            
             this.data = [] // data munged for plotly
             this.formRef = React.createRef()
             this.statusReporting = React.createRef()
-    
-            this.customQueryParams = ['woceline', 'occupancyIndex', 'variable', 'subtractionIndex']
+            this.customQueryParams = ['woceline', 'occupancyIndex', 'variable', 'subtractionIndex', 'cmin', 'cmax']
 
             this.downloadData()
     }
@@ -616,11 +617,11 @@ class EasyoceanPlots extends React.Component {
             if (value < cmin) cmin = value;
             if (value > cmax) cmax = value;
         }
-        if(this.state.user_defined_min){
-            cmin = this.state.display_min
+        if(this.state.user_defined_cmin){
+            cmin = this.state.cmin
         }
-        if(this.state.user_defined_max){
-            cmax = this.state.display_max
+        if(this.state.user_defined_cmax){
+            cmax = this.state.cmax
         }
 
         this.data = [{
@@ -773,12 +774,12 @@ class EasyoceanPlots extends React.Component {
 											type="text" 
 											className="form-control minmax" 
 											placeholder="Auto" 
-											value={this.state.display_min}
+											value={this.state.cmin}
 											onChange={e => {
-												this.setState({display_min:e.target.value, awaitingUserInput: true})}
+												this.setState({cmin:e.target.value, awaitingUserInput: true})}
 											} 
-											onBlur={e => {this.setState({display_min: this.changePlotBounds(e), user_defined_min: e.target.defaultValue!=='', remapData: true, awaitingUserInput: false})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({display_min: this.changePlotBounds(e), user_defined_min: e.target.defaultValue!=='', remapData: true, awaitingUserInput: false})}}}
+											onBlur={e => {this.setState({cmin: this.changePlotBounds(e), user_defined_cmin: e.target.defaultValue!=='', remapData: true, awaitingUserInput: false})}}
+											onKeyPress={e => {if(e.key==='Enter'){this.setState({cmin: this.changePlotBounds(e), user_defined_cmin: e.target.defaultValue!=='', remapData: true, awaitingUserInput: false})}}}
 											aria-label="xmin" 
 											aria-describedby="basic-addon1"/>
 									</div>
@@ -790,12 +791,12 @@ class EasyoceanPlots extends React.Component {
 											type="text"
 											className="form-control minmax" 
 											placeholder="Auto" 
-											value={this.state.display_max}
+											value={this.state.cmax}
 											onChange={e => {
-												this.setState({display_max:e.target.value, awaitingUserInput: true})}
+												this.setState({cmax:e.target.value, awaitingUserInput: true})}
 											} 
-											onBlur={e => {this.setState({display_max: this.changePlotBounds(e), user_defined_max: e.target.defaultValue!=='', remapData: true, awaitingUserInput: false})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({display_max: this.changePlotBounds(e), user_defined_max: e.target.defaultValue!=='', remapData: true, awaitingUserInput: false})}}}
+											onBlur={e => {this.setState({cmax: this.changePlotBounds(e), user_defined_cmax: e.target.defaultValue!=='', remapData: true, awaitingUserInput: false})}}
+											onKeyPress={e => {if(e.key==='Enter'){this.setState({cmax: this.changePlotBounds(e), user_defined_cmax: e.target.defaultValue!=='', remapData: true, awaitingUserInput: false})}}}
 											aria-label="xmax" 
 											aria-describedby="basic-addon1"/>
 									</div>

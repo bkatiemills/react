@@ -401,7 +401,7 @@ helpers.setQueryString = function(){
 
 	let qparams = this.customQueryParams
 	for(let i=0; i<qparams.length; i++){
-		if(this.state.hasOwnProperty(qparams[i])){
+		if(this.state.hasOwnProperty(qparams[i]) && this.state[qparams[i]] !== ''){
 			queryManagement.searchParams.set(qparams[i], Array.isArray(this.state[qparams[i]]) ? JSON.stringify(this.state[qparams[i]]) : this.state[qparams[i]] )
 		} else{
 			queryManagement.searchParams.delete(qparams[i])
