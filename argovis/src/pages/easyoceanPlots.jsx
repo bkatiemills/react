@@ -380,10 +380,16 @@ class EasyoceanPlots extends React.Component {
                 subtractionIndex: q.has('subtractionIndex') ? parseInt(q.get('subtractionIndex')) : -1,
                 points:[],
                 urls:[],
-                refreshData: true,
+                refreshData: true, // download new data
+                remapData: true, // redraw the data you already have
                 apiKey: '',
                 centerlon: 0,
                 data: [[]], // raw download data
+                display_min: null,
+                display_max: null,
+                user_defined_min: false,
+                user_defined_max: false,
+                awaitingUserInput: false
             }
     
             this.state.urls = this.generateURLs(this.state.woceline, this.state.occupancyIndex, this.state.subtractionIndex)
@@ -402,6 +408,15 @@ class EasyoceanPlots extends React.Component {
                 helpers.manageStatus.bind(this)('downloading')
                 this.downloadData()
               }, 1);
+        } else if(this.state.remapData){
+            setTimeout(() => {
+                helpers.manageStatus.bind(this)('rendering')
+                this.prepPlotlyState(6)
+            }, 1);
+        } else if(this.state.awaitingUserInput) {
+            setTimeout(() => {
+                helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
+            }, 1);
         }
 
         helpers.setQueryString.bind(this)()
@@ -433,6 +448,7 @@ class EasyoceanPlots extends React.Component {
                 this.setState({
                     points: mappoints, 
                     refreshData: false,
+                    remapData: true,
                     data: data
                 })
 
@@ -461,7 +477,8 @@ class EasyoceanPlots extends React.Component {
     changeVariable = (event) => {
         this.setState({ 
             variable: event.target.value,
-            refreshData: false
+            refreshData: false,
+            remapData: true
         });
     };
 
@@ -478,6 +495,15 @@ class EasyoceanPlots extends React.Component {
             apiKey: event.target.value,
             refreshData: false
         })
+    }
+
+    changePlotBounds = (event) => {
+        let num = parseFloat(event.target.value)
+        if(Number.isNaN(num)){
+            return ''
+        } else {
+            return num
+        }
     }
 
     generateURLs(woceline, occupancyIndex, subtractionIndex){
@@ -590,6 +616,12 @@ class EasyoceanPlots extends React.Component {
             if (value < cmin) cmin = value;
             if (value > cmax) cmax = value;
         }
+        if(this.state.user_defined_min){
+            cmin = this.state.display_min
+        }
+        if(this.state.user_defined_max){
+            cmax = this.state.display_max
+        }
 
         this.data = [{
             type: 'scattergl',
@@ -600,6 +632,8 @@ class EasyoceanPlots extends React.Component {
                 size: markerSize,
                 color: cdata,
                 colorscale: this.state.subtractionIndex === -1 ? 'Viridis' : this.subtractionScale(cmin, cmax),
+                cmin: cmin,
+                cmax: cmax,
                 colorbar: {
                     title: (this.state.subtractionIndex === -1 ? '':'Δ ') + this.state.variable + (this.eo_units[this.state.variable].length > 0 ? ' [' + this.eo_units[this.state.variable] + ']' : ""),
                     titleside: 'right',
@@ -643,13 +677,18 @@ class EasyoceanPlots extends React.Component {
                 }
             }
         }
+
+        this.setState({
+            remapData: false,
+        })
     }
 
     render(){
         console.log(this.state)
-        if(!this.state.refreshData){
-            this.prepPlotlyState(6)
-        }
+        // if(this.state.remapData){
+        //     console.log('refreshing data')
+        //     this.prepPlotlyState(6)
+        // }
         if(this.formRef.current){
             this.formRef.current.removeAttribute('disabled')
         }
@@ -724,6 +763,44 @@ class EasyoceanPlots extends React.Component {
                                    ))}
                                 </select>
 
+                                <h5 style={{marginTop:'1em'}}>Plot Controls</h5>
+								<div className='row'>
+	      							<div className='col-6' style={{'paddingRight': '0px'}}>
+										<div className="form-text">
+						  					<span>color min</span>
+										</div>
+										<input 
+											type="text" 
+											className="form-control minmax" 
+											placeholder="Auto" 
+											value={this.state.display_min}
+											onChange={e => {
+												this.setState({display_min:e.target.value, awaitingUserInput: true})}
+											} 
+											onBlur={e => {this.setState({display_min: this.changePlotBounds(e), user_defined_min: e.target.defaultValue!=='', remapData: true, awaitingUserInput: false})}}
+											onKeyPress={e => {if(e.key==='Enter'){this.setState({display_min: this.changePlotBounds(e), user_defined_min: e.target.defaultValue!=='', remapData: true, awaitingUserInput: false})}}}
+											aria-label="xmin" 
+											aria-describedby="basic-addon1"/>
+									</div>
+									<div className='col-6' style={{'paddingRight': '0px'}}>
+										<div className="form-text">
+						  					<span>color max</span>
+										</div>
+										<input 
+											type="text"
+											className="form-control minmax" 
+											placeholder="Auto" 
+											value={this.state.display_max}
+											onChange={e => {
+												this.setState({display_max:e.target.value, awaitingUserInput: true})}
+											} 
+											onBlur={e => {this.setState({display_max: this.changePlotBounds(e), user_defined_max: e.target.defaultValue!=='', remapData: true, awaitingUserInput: false})}}
+											onKeyPress={e => {if(e.key==='Enter'){this.setState({display_max: this.changePlotBounds(e), user_defined_max: e.target.defaultValue!=='', remapData: true, awaitingUserInput: false})}}}
+											aria-label="xmax" 
+											aria-describedby="basic-addon1"/>
+									</div>
+								</div>
+
                                 <h5 style={{marginTop:'1em'}}>Global Options</h5>
                                 <div className="form-floating mb-3">
                                     <div className="form-floating mb-3" style={{'marginTop': '0.5em'}}>
@@ -747,7 +824,7 @@ class EasyoceanPlots extends React.Component {
                     layout={this.layout}
                     style={{width: '100%', height: '90vh'}}
                     config={{showTips: false, responsive: true}}
-                    onAfterPlot={e=>helpers.manageStatus.bind(this)('ready')}
+                    onAfterPlot={e=>{if(!this.state.refreshData && !this.state.remapData && !this.state.awaitingUserInput){helpers.manageStatus.bind(this)('ready')}}}
                     />
                 </div>
             </div>
