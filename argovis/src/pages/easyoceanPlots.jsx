@@ -415,29 +415,10 @@ class EasyoceanPlots extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState, snapshot){
-        if(this.state.phase === 'refreshData'){
-            setTimeout(() => { // this is a total hack, but it makes the 'downloading' status show up
-                helpers.manageStatus.bind(this)('downloading')
-                this.downloadData()
-              }, 1);
-        } else if(this.state.phase === 'remapData'){
-            setTimeout(() => {
-                helpers.manageStatus.bind(this)('rendering')
-                this.prepPlotlyState(6)
-            }, 1);
-        } else if(this.state.phase === 'awaitingUserInput') {
-            setTimeout(() => {
-                helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
-            }, 1);
-        }
-
-        helpers.setQueryString.bind(this)()
+    	helpers.phaseManager.bind(this)(prevProps, prevState, snapshot)
     }
 
     downloadData(){      
-        if(this.formRef.current){  
-            this.formRef.current.setAttribute('disabled', 'true')
-        }
         Promise.all(this.state.urls.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
             Promise.all(responses.map(res => res.json())).then(data => {
                 for(let i=0; i<data.length; i++){
@@ -445,10 +426,6 @@ class EasyoceanPlots extends React.Component {
                     if(bail){
                         return
                     }
-                }
-
-                if(this.statusReporting.current){
-                    helpers.manageStatus.bind(this)('rendering')
                 }
 
                 let mappoints = data[0].map(point => {
@@ -464,6 +441,117 @@ class EasyoceanPlots extends React.Component {
                 })
 
             })
+        })
+    }
+
+    replot(){
+        let traversal = this.eo_direction[this.state.woceline] === 'lon' ? 0 : 1 // 0 longitude, 1 latitude; todo detect from woceline
+        let markerSize = 6
+        let xdata = []
+        let ydata = []
+        let cdata = []
+
+        if(this.state.subtractionIndex === -1){
+            // no subtraction
+            for(let i=0; i<this.state.data[0].length; i++){
+
+                let varindex = this.state.data[0][i]['data_info'][0].findIndex(x => x === this.state.variable) // where to look in the data array for the color variable
+                let presindex = this.state.data[0][i]['data_info'][0].findIndex(x => x === 'pressure') // where to look in the data array for the pressure variable
+                for(let j=0; j<this.state.data[0][i].data[varindex].length; j++){
+                    xdata.push(this.state.data[0][i]['geolocation']['coordinates'][traversal])
+                    ydata.push(this.state.data[0][i].data[presindex][j])
+                    cdata.push(this.state.data[0][i].data[varindex][j])
+                }
+            }
+        } else {
+            // subtraction
+            let subvarindex = this.state.data[1][0]['data_info'][0].findIndex(x => x === this.state.variable)
+            let subpresindex = this.state.data[1][0]['data_info'][0].findIndex(x => x === 'pressure') 
+            let varindex = this.state.data[0][0]['data_info'][0].findIndex(x => x === this.state.variable) 
+            let presindex = this.state.data[0][0]['data_info'][0].findIndex(x => x === 'pressure')
+
+            let alignedData = this.alignAndSortByGeolocation(this.state.data[0], this.state.data[1], traversal)
+            for(let i=0; i<alignedData[0].length; i++){
+                let [commonPressures, differences] = this.alignAndComputeDifferences(alignedData[0][i].data[presindex], alignedData[0][i].data[varindex], alignedData[1][i].data[subpresindex], alignedData[1][i].data[subvarindex])
+                for(let j=0; j<commonPressures.length; j++){
+                    xdata.push(alignedData[0][i]['geolocation']['coordinates'][traversal])
+                    ydata.push(commonPressures[j])
+                    cdata.push(differences[j])
+                }
+            }
+        }
+
+        // need to manually compute min and max for color scale, spread operator blows up Chrome
+        let cmin = Infinity;
+        let cmax = -Infinity;
+        for (const value of cdata) {
+            if (value < cmin) cmin = value;
+            if (value > cmax) cmax = value;
+        }
+        if(this.state.user_defined_cmin){
+            cmin = this.state.cmin
+        }
+        if(this.state.user_defined_cmax){
+            cmax = this.state.cmax
+        }
+
+        this.data = [{
+            type: 'scattergl',
+            x: xdata,
+            y: ydata,
+            mode: 'markers',
+            marker: {
+                size: markerSize,
+                color: cdata,
+                colorscale: this.state.subtractionIndex === -1 ? 'Viridis' : this.subtractionScale(cmin, cmax),
+                cmin: cmin,
+                cmax: cmax,
+                colorbar: {
+                    title: (this.state.subtractionIndex === -1 ? '':'Δ ') + this.state.variable + (this.eo_units[this.state.variable].length > 0 ? ' [' + this.eo_units[this.state.variable] + ']' : ""),
+                    titleside: 'right',
+                    tickmode: 'auto',
+                    nticks: 10
+                }
+            }
+        }]
+
+        this.layout = {
+            datarevision: Math.random(),
+            autosize: true, 
+            hovermode: false,
+            showlegend: false,
+            font: {
+                size: 20
+            },
+            xaxis: {
+                title: traversal === 0 ? 'Longitude' : 'Latitude',
+                //range: xrange,
+                //type: this.state.xKey === 'timestamp' ? 'date' : '-'
+            },
+            yaxis: {
+                title: 'Pressure [dbar]',
+                autorange: 'reversed',
+                //range: yrange,
+                //type: this.state.yKey === 'timestamp' ? 'date' : '-',
+            },
+
+            margin: {t: 30},
+            scene: {
+                xaxis:{
+                    title: 'TBD',
+                    //range: xrange,
+                    //type: this.state.xKey === 'timestamp' ? 'date' : '-'
+                },
+                yaxis:{
+                    title: 'TBD',
+                    //range: yrange,
+                    //type: this.state.yKey === 'timestamp' ? 'date' : '-'
+                }
+            }
+        }
+
+        this.setState({
+            phase: 'idle',
         })
     }
 
@@ -595,132 +683,7 @@ class EasyoceanPlots extends React.Component {
         }
 
     	return scale
-   }
-
-    prepPlotlyState(markerSize){
-        if(this.formRef.current){  
-            this.formRef.current.setAttribute('disabled', 'true')
-        }
-
-        let traversal = this.eo_direction[this.state.woceline] === 'lon' ? 0 : 1 // 0 longitude, 1 latitude; todo detect from woceline
-
-        let xdata = []
-        let ydata = []
-        let cdata = []
-
-        if(this.state.subtractionIndex === -1){
-            // no subtraction
-            for(let i=0; i<this.state.data[0].length; i++){
-
-                let varindex = this.state.data[0][i]['data_info'][0].findIndex(x => x === this.state.variable) // where to look in the data array for the color variable
-                let presindex = this.state.data[0][i]['data_info'][0].findIndex(x => x === 'pressure') // where to look in the data array for the pressure variable
-                for(let j=0; j<this.state.data[0][i].data[varindex].length; j++){
-                    xdata.push(this.state.data[0][i]['geolocation']['coordinates'][traversal])
-                    ydata.push(this.state.data[0][i].data[presindex][j])
-                    cdata.push(this.state.data[0][i].data[varindex][j])
-                }
-            }
-        } else {
-            // subtraction
-            let subvarindex = this.state.data[1][0]['data_info'][0].findIndex(x => x === this.state.variable)
-            let subpresindex = this.state.data[1][0]['data_info'][0].findIndex(x => x === 'pressure') 
-            let varindex = this.state.data[0][0]['data_info'][0].findIndex(x => x === this.state.variable) 
-            let presindex = this.state.data[0][0]['data_info'][0].findIndex(x => x === 'pressure')
-
-            let alignedData = this.alignAndSortByGeolocation(this.state.data[0], this.state.data[1], traversal)
-            for(let i=0; i<alignedData[0].length; i++){
-                let [commonPressures, differences] = this.alignAndComputeDifferences(alignedData[0][i].data[presindex], alignedData[0][i].data[varindex], alignedData[1][i].data[subpresindex], alignedData[1][i].data[subvarindex])
-                for(let j=0; j<commonPressures.length; j++){
-                    xdata.push(alignedData[0][i]['geolocation']['coordinates'][traversal])
-                    ydata.push(commonPressures[j])
-                    cdata.push(differences[j])
-                }
-            }
-        }
-
-        // need to manually compute min and max for color scale, spread operator blows up Chrome
-        let cmin = Infinity;
-        let cmax = -Infinity;
-        for (const value of cdata) {
-            if (value < cmin) cmin = value;
-            if (value > cmax) cmax = value;
-        }
-        if(this.state.user_defined_cmin){
-            cmin = this.state.cmin
-        }
-        if(this.state.user_defined_cmax){
-            cmax = this.state.cmax
-        }
-
-        this.data = [{
-            type: 'scattergl',
-            x: xdata,
-            y: ydata,
-            mode: 'markers',
-            marker: {
-                size: markerSize,
-                color: cdata,
-                colorscale: this.state.subtractionIndex === -1 ? 'Viridis' : this.subtractionScale(cmin, cmax),
-                cmin: cmin,
-                cmax: cmax,
-                colorbar: {
-                    title: (this.state.subtractionIndex === -1 ? '':'Δ ') + this.state.variable + (this.eo_units[this.state.variable].length > 0 ? ' [' + this.eo_units[this.state.variable] + ']' : ""),
-                    titleside: 'right',
-                    tickmode: 'auto',
-                    nticks: 10
-                }
-            }
-        }]
-
-        this.layout = {
-            datarevision: Math.random(),
-            autosize: true, 
-            hovermode: false,
-            showlegend: false,
-            font: {
-                size: 20
-            },
-            xaxis: {
-                title: traversal === 0 ? 'Longitude' : 'Latitude',
-                //range: xrange,
-                //type: this.state.xKey === 'timestamp' ? 'date' : '-'
-            },
-            yaxis: {
-                title: 'Pressure [dbar]',
-                autorange: 'reversed',
-                //range: yrange,
-                //type: this.state.yKey === 'timestamp' ? 'date' : '-',
-            },
-
-            margin: {t: 30},
-            scene: {
-                xaxis:{
-                    title: 'TBD',
-                    //range: xrange,
-                    //type: this.state.xKey === 'timestamp' ? 'date' : '-'
-                },
-                yaxis:{
-                    title: 'TBD',
-                    //range: yrange,
-                    //type: this.state.yKey === 'timestamp' ? 'date' : '-'
-                }
-            }
-        }
-
-        this.setState({
-            phase: 'idle',
-        })
     }
-
-    cleanupAfterPlotting(){
-        if(this.state.phase==='idle'){
-                helpers.manageStatus.bind(this)('ready')
-                if(this.formRef.current){
-                    this.formRef.current.removeAttribute('disabled')
-                }
-        }
-    }
-
 
     render(){
         console.log(this.state)
@@ -856,7 +819,6 @@ class EasyoceanPlots extends React.Component {
                     layout={this.layout}
                     style={{width: '100%', height: '90vh'}}
                     config={{showTips: false, responsive: true}}
-                    onAfterPlot={this.cleanupAfterPlotting.bind(this)}
                     />
                 </div>
             </div>

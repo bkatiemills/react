@@ -468,7 +468,9 @@ class Grids extends React.Component {
       	apiKey: localStorage.getItem('apiKey') ? localStorage.getItem('apiKey') : 'guest',
       	subgrid: q.has('subgrid') ? q.get('subgrid') === 'true' : false,
       	scale: chroma.scale(['#440154', '#482777', '#3f4a8a', '#31678e', '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825']),
-      	centerlon: -70
+      	centerlon: -70,
+        data: [[]], // raw download data
+        phase: 'refreshData', // refreshData, remapData, awaitingUserInput, or idle
       }
 
 	  this.state.timestep = q.has('timestep') ? q.get('timestep') : {
@@ -515,10 +517,11 @@ class Grids extends React.Component {
 		'glodap': ''
       }[this.state.lattice]
       this.apiPrefix = 'https://argovis-api.colorado.edu/'
-     	this.customQueryParams = ['polygon', 'grid', 'levelindex', 'sublevelindex', 'timestep', 'subtimestep', 'subgrid']
+      this.customQueryParams = ['polygon', 'grid', 'levelindex', 'sublevelindex', 'timestep', 'subtimestep', 'subgrid']
       this.vocab = {}
-
-      this.componentDidUpdate()
+    
+      this.state.urls = this.generateURLs(this.state.lattice, this.state.grid, this.state.timestep, this.state.levelindex, this.state.subtimestep, this.state.sublevelindex, this.state.polygon, this.state.subgrid)
+      this.downloadData()
     }
 
 	// componentDidMount() {
@@ -538,6 +541,113 @@ class Grids extends React.Component {
 	// 		console.log(this.demo)
 	// 	});
 	// }
+
+    componentDidUpdate(prevProps, prevState, snapshot){
+    	helpers.phaseManager.bind(this)(prevProps, prevState, snapshot)
+    }
+
+    downloadData(){
+        Promise.all(this.state.urls.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+            Promise.all(responses.map(res => res.json())).then(data => {
+                for(let i=0; i<data.length; i++){
+                    let bail = helpers.handleHTTPcodes.bind(this)(data[i].code)
+                    if(bail){
+                        return
+                    }
+                }
+
+                this.setState({
+                    phase: 'remapData',
+                    data: data
+                })
+
+            })
+        })
+    }
+
+    replot(){
+        let s = {...this.state} 
+
+        if(this.state.subgrid && this.state.data.length == 2){
+            // munge state.data[0] and state.data[1] into profile-like objects where the data value is the delta
+
+            /// start by turning grids into kv keyed by unique concatenation of lon/lat so we can easily subtract the correct pairs of points
+            let grid1 = {}
+            for(let i=0; i<s.data[0].length; i++){
+                grid1['' + s.data[0][i].geolocation.coordinates[0] + s.data[0][i].geolocation.coordinates[1]] = {
+                    geolocation: s.data[0][i].geolocation,
+                    data: s.data[0][i].data
+                }
+            }
+            let grid2 = {}
+            for(let i=0; i<s.data[1].length; i++){
+                grid2['' + s.data[1][i].geolocation.coordinates[0] + s.data[1][i].geolocation.coordinates[1]] = {
+                    geolocation: s.data[1][i].geolocation,
+                    data: s.data[1][i].data
+                }
+            }
+            /// subrtract grids, produce a list of objects that is 'profile-like' where data are the delta values
+            s.data = [[]]
+            for(let i=0; i<Object.keys(grid1).length; i++){
+                let key = Object.keys(grid1)[i]
+                if(Object.keys(grid2).includes(key)){
+                    s.data[0].push({
+                        geolocation: grid1[key].geolocation,
+                        data: [[grid1[key].data[0][0] - grid2[key].data[0][0]]]
+                    })
+                }
+            }
+
+        } 
+
+        // determining colorscale min and max
+        let values = s.data[0].map(x=>x.data[0][0]).filter(x=>x!==null)
+        if(!s.user_defined_min){
+            s.display_min = this.unitTransform(Math.min(...values), this.scales)
+        }
+        if(!s.user_defined_max){
+            s.display_max = this.unitTransform(Math.max(...values), this.scales)
+        }
+        let min = this.state.user_defined_min ? this.inverseTransform(s.display_min, this.scales) : Math.min(...values)
+        let max = this.state.user_defined_max ? this.inverseTransform(s.display_max, this.scales) : Math.max(...values)
+        s = this.setScale(min, max, s)
+
+        this.setState({
+                ...s, 
+                gridcells: this.gridRasterfy(s), 
+                min: this.state.user_defined_min ? this.state.min : min, 
+                max: this.state.user_defined_max ? this.state.max : max, 
+                phase: 'idle'
+            }
+        )
+    }
+
+    generateURLs(lattice, grid, timestep, levelindex, subtimestep, sublevelindex, polygon, subgrid){
+        let urls = []
+
+        let current_lattice = lattice !== null ? lattice : this.state.lattice
+        let current_grid = grid !== null ? grid : this.state.grid
+        let current_timestep = timestep !== null ? timestep : this.state.timestep
+        let current_levelindex = levelindex !== null ? levelindex : this.state.levelindex
+        let current_subtimestep = subtimestep !== null ? subtimestep : this.state.subtimestep
+        let current_sublevelindex = sublevelindex !== null ? sublevelindex : this.state.sublevelindex
+        let current_polygon = polygon !== null ? polygon : this.state.polygon
+        let current_subgrid = subgrid !== null ? subgrid : this.state.subgrid
+
+        let url    = this.apiPrefix + 'grids/' + current_lattice+'?data='+current_grid+'&startDate='+current_timestep+'T00:00:00Z&endDate='+current_timestep+'T00:00:01Z&verticalRange='+(this.rawLevels[current_levelindex]-0.1)+','+(this.rawLevels[current_levelindex]+0.1)
+        let suburl = this.apiPrefix + 'grids/' + current_lattice+'?data='+current_grid+'&startDate='+current_subtimestep+'T00:00:00Z&endDate='+current_subtimestep+'T00:00:01Z&verticalRange='+(this.rawLevels[current_sublevelindex]-0.1)+','+(this.rawLevels[current_sublevelindex]+0.1)
+        if(current_polygon.length > 0){
+            url += '&polygon='+JSON.stringify(helpers.tidypoly(current_polygon))
+            suburl += '&polygon='+JSON.stringify(helpers.tidypoly(current_polygon))
+        }
+
+        urls.push(url)
+        if(current_subgrid){
+            urls.push(suburl)
+        }
+
+        return urls
+    }
 
 	chooseTitle(grid){
 		if(grid === 'rg09_temperature'){
@@ -607,150 +717,67 @@ class Grids extends React.Component {
 		return out
 	}
 
-    componentDidUpdate(prevProps, prevState, snapshot){
-    	let s = {...this.state}  // transform a copy of state until we're happy with it, and write it back
-		
-    	if(s.refreshData){
-			
-    		if(this.formRef.current){
-	    		this.formRef.current.setAttribute('disabled', 'true')
-	    	}
-    		if(this.statusReporting.current){
-					helpers.manageStatus.bind(this)('downloading')
-			}
-	    	//kick off request for new data, redraw the map when complete
-	    	let url    = this.apiPrefix + 'grids/' + s.lattice+'?data='+s.grid+'&startDate='+s.timestep+'T00:00:00Z&endDate='+s.timestep+'T00:00:01Z&verticalRange='+(this.rawLevels[s.levelindex]-0.1)+','+(this.rawLevels[s.levelindex]+0.1)
-			let suburl = this.apiPrefix + 'grids/' + s.lattice+'?data='+s.grid+'&startDate='+s.subtimestep+'T00:00:00Z&endDate='+s.subtimestep+'T00:00:01Z&verticalRange='+(this.rawLevels[s.sublevelindex]-0.1)+','+(this.rawLevels[s.sublevelindex]+0.1)
-	    	if(s.polygon.length > 0){
-	    		url += '&polygon='+JSON.stringify(helpers.tidypoly(s.polygon))
-	    		suburl += '&polygon='+JSON.stringify(helpers.tidypoly(s.polygon))
-	    	}
-
-	    	if(s.subgrid){
-				Promise.all([url,suburl].map(x => fetch(x, {headers:{'x-argokey': s.apiKey}}))).then(responses => {
-					Promise.all(responses.map(res => res.json())).then(data => {
-						// start by checking for error codes
-						for(let i=0; i<data.length; i++){
-							let bail = helpers.handleHTTPcodes.bind(this)(data[i].code)
-							if(bail){
-								return
-							}
-						}
-						s.points = data[0]
-						s.subpoints = data[1]
-						// construct grid subtraction delta
-						/// start by turning grids into kv keyed by unique concatenation of lon/lat so we can easily subtract the correct pairs of points
-						let grid1 = {}
-						for(let i=0; i<data[0].length; i++){
-							grid1['' + data[0][i].geolocation.coordinates[0] + data[0][i].geolocation.coordinates[1]] = {
-								geolocation: data[0][i].geolocation,
-								data: data[0][i].data
-							}
-						}
-						let grid2 = {}
-						for(let i=0; i<data[1].length; i++){
-							grid2['' + data[1][i].geolocation.coordinates[0] + data[1][i].geolocation.coordinates[1]] = {
-								geolocation: data[1][i].geolocation,
-								data: data[1][i].data
-							}
-						}
-						/// subrtract grids, produce a list of objects that is 'profile-like' where data are the delta values
-						s.data = []
-						for(let i=0; i<Object.keys(grid1).length; i++){
-							let key = Object.keys(grid1)[i]
-							if(Object.keys(grid2).includes(key)){
-								s.data.push({
-									geolocation: grid1[key].geolocation,
-									data: [[grid1[key].data[0][0] - grid2[key].data[0][0]]]
-								})
-							}
-						}
-						helpers.manageStatus.bind(this)('rendering')
-						let values = s.data.map(x=>x.data[0][0]).filter(x=>x!==null)
-						if(!s.user_defined_min){
-							s.display_min = this.unitTransform(Math.min(...values), this.scales)
-						}
-						if(!s.user_defined_max){
-							s.display_max = this.unitTransform(Math.max(...values), this.scales)
-						}
-						let min = this.state.user_defined_min ? this.inverseTransform(s.display_min, this.scales) : Math.min(...values)
-						let max = this.state.user_defined_max ? this.inverseTransform(s.display_max, this.scales) : Math.max(...values)
-						s = this.setScale(min, max, s)
-						helpers.setQueryString.bind(this)()
-						this.refreshMap(false, min, max, s)	
-					})
-				})
-			} else {
-				Promise.all([url].map(x => fetch(x, {headers:{'x-argokey': s.apiKey}}))).then(responses => {
-					Promise.all(responses.map(res => res.json())).then(data => {
-						// start by checking for error codes
-						for(let i=0; i<data.length; i++){
-							let bail = helpers.handleHTTPcodes.bind(this)(data[i].code)
-							if(bail){
-								return
-							}
-						}
-						s.points = data[0]
-						s.data = data[0]
-						helpers.manageStatus.bind(this)('rendering')
-						let values = s.data.map(x=>x.data[0][0]).filter(x=>x!==null)
-						if(!s.user_defined_min){
-							s.display_min = this.unitTransform(Math.min(...values), this.scales)
-						}
-						if(!s.user_defined_max){
-							s.display_max = this.unitTransform(Math.max(...values), this.scales)
-						}
-						let min = this.state.user_defined_min ? this.inverseTransform(s.display_min, this.scales) : Math.min(...values)
-						let max = this.state.user_defined_max ? this.inverseTransform(s.display_max, this.scales) : Math.max(...values)
-						s = this.setScale(min, max, s)
-						helpers.setQueryString.bind(this)()
-						this.refreshMap(false, min, max, s)	
-					}) 
-				})
-			}
-		} else if(s.remapData){
-			let values = s.data.map(x=>x.data[0][0]).filter(x=>x!==null)
-			if(!s.user_defined_min){
-				s.display_min = this.unitTransform(Math.min(...values), this.scales)
-			}
-			if(!s.user_defined_max){
-				s.display_max = this.unitTransform(Math.max(...values), this.scales)
-			}
-			let min = this.state.user_defined_min ? this.inverseTransform(s.display_min, this.scales) : Math.min(...values)
-			let max = this.state.user_defined_max ? this.inverseTransform(s.display_max, this.scales) : Math.max(...values)
-			s = this.setScale(min, max, s)
-			helpers.setQueryString.bind(this)()
-			this.refreshMap(false, min, max, s)	
-		}
-    }
-
     // input handlers
     changeLevel(target, index){
-    	let s = this.state
+    	let s = {...this.state}
+
     	s[index] = parseInt(target.target.value)
-    	s.refreshData = true
+        let levelindex = index === 'levelindex' ? target.target.value : null
+        let sublevelindex = index === 'sublevelindex' ? target.target.value : null
+    	s.phase = 'refreshData'
 		s.user_defined_min = false
 		s.user_defined_max = false
-    	this.setState(s)
+        s.urls = this.generateURLs(null, null, null, levelindex, null, sublevelindex, null, null)
+
+        this.setState(s)
     }
 
     changeDate(target, index){
-    	let s = this.state
+    	let s = {...this.state}
+
     	s[index] = target.target.value
-    	s.refreshData = true
+        let timestep = index === 'timestep' ? target.target.value : null
+        let subtimestep = index === 'subtimestep' ? target.target.value : null
+    	s.phase = 'refreshData'
 		s.user_defined_min = false
 		s.user_defined_max = false
-    	this.setState(s)
+        s.urls = this.generateURLs(null, null, timestep, null, subtimestep, null, null, null)
+    	
+        this.setState(s)
     }
 
-    changeVariable(target, index){
-    	let s = this.state
-    	s[index] = target.target.value
+    changeVariable(target){
+    	let s = {...this.state}
+
+    	s.grid = target.target.value
 		s.title = this.chooseTitle(target.target.value)
-    	s.refreshData = true
+    	s.phase = 'refreshData'
 		s.user_defined_min = false
 		s.user_defined_max = false
-    	this.setState(s)
+        s.urls = this.generateURLs(null, target.target.value, null, null, null, null, null, null)
+    	
+        this.setState(s)
+    }
+
+    changeRange(e, index){
+        let s = {...this.state}
+
+        s.phase = 'awaitingUserInput'
+        s[index] = e.target.value
+        
+        this.setState(s)
+    }
+
+    toggleSubgrid(e){
+    	let s = {...this.state}
+        
+        s.urls = this.generateURLs(null, null, null, null, null, null, null, !s.subgrid)
+        s.subgrid = !s.subgrid
+        s.phase = 'refreshData'
+		s.user_defined_min = false
+		s.user_defined_max = false
+
+        this.setState(s)
     }
 
     // mungers
@@ -772,32 +799,14 @@ class Grids extends React.Component {
     		)})
     }
 
-    refreshMap(needNewData, min, max, state){
-    	// redraw the map and render the dom
-    	if(state.points.length > 0){
-			this.setState({
-					...state, 
-					gridcells: this.gridRasterfy(state), 
-					min: this.state.user_defined_min ? this.state.min : min, 
-					max: this.state.user_defined_max ? this.state.max : max, 
-					refreshData: needNewData,
-					remapData: false
-				}, 
-				() => {helpers.manageStatus.bind(this)('ready')}
-			)
-	    } else {
-	    	helpers.manageStatus.bind(this)('error', 'No data found for this search.')
-	    }
-	    this.formRef.current.removeAttribute('disabled')
-    }
-
     gridRasterfy(state){
+
     	// expects a list from a data endpoint
 			if(state.data.hasOwnProperty('code') || state.data[0].hasOwnProperty('code')){
 				return null
 			}
 			else {
-				let points = state.data.map(point => {return(
+				let points = state.data[0].map(point => {return(
 					<Rectangle 
 						key={Math.random()} 
 						bounds={[[point.geolocation.coordinates[1]-0.5, helpers.mutateLongitude(point.geolocation.coordinates[0], parseFloat(state.centerlon))-0.5],[point.geolocation.coordinates[1]+0.5, helpers.mutateLongitude(point.geolocation.coordinates[0], parseFloat(state.centerlon))+0.5]]} 
@@ -806,8 +815,8 @@ class Grids extends React.Component {
 							weight: 0, 
 							color: this.chooseColor(point.data[0][0], state) 
 						}}>
-      				{this.genTooltip(point)}
-    			</Rectangle>
+      				    {this.genTooltip(point)}
+    			    </Rectangle>
 				)})
 				return points
 			}
@@ -915,14 +924,6 @@ class Grids extends React.Component {
     	return state
    }
 
-	toggleCoupling(s){
-    	// if changing a toggle for this page needs to trigger a side effect on state, do so here.
-		s.user_defined_min = false
-		s.user_defined_max = false
-		
-		return s
-  }
-
 	render(){
 		console.log(this.state)
 		return(
@@ -978,7 +979,7 @@ class Grids extends React.Component {
 									<div className='row'>
 										<div className='col-12'>
 											<small className="form-text text-muted">Variable</small>
-											<select className="form-select" value={this.state.grid} onChange={(v) => this.changeVariable(v, 'grid')}>
+											<select className="form-select" value={this.state.grid} onChange={(v) => this.changeVariable(v)}>
 												{this.variables}
 											</select>
 										</div>
@@ -986,7 +987,7 @@ class Grids extends React.Component {
 								</div>
 
 								<div className="form-check" style={{'marginTop': '1em'}}>
-									<input className="form-check-input" checked={this.state.subgrid} onChange={(v) => helpers.toggle.bind(this)(v, 'subgrid')} type="checkbox" id='subgrid'></input>
+									<input className="form-check-input" checked={this.state.subgrid} onChange={this.toggleSubgrid.bind(this)} type="checkbox" id='subgrid'></input>
 									{this.state.lattice !== 'glodap' &&
 									<label className="form-check-label" htmlFor='subgrid'>Subtract another level or date</label>}
 									{this.state.lattice === 'glodap' &&
@@ -1022,12 +1023,9 @@ class Grids extends React.Component {
 											className="form-control minmax" 
 											placeholder="Auto" 
 											value={this.state.display_min}
-											onChange={e => {
-												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
-												this.setState({display_min:e.target.value})}
-											} 
-											onBlur={e => {this.setState({display_min: parseFloat(e.target.defaultValue), user_defined_min: e.target.defaultValue!=='', remapData: true})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({display_min: parseFloat(e.target.defaultValue), user_defined_min: e.target.defaultValue!=='', remapData: true})}}}
+                                            onChange={e => this.changeRange(e, 'display_min')}
+											onBlur={e => {this.setState({display_min: parseFloat(e.target.defaultValue), user_defined_min: e.target.defaultValue!=='', phase: 'remapData'})}}
+											onKeyPress={e => {if(e.key==='Enter'){this.setState({display_min: parseFloat(e.target.defaultValue), user_defined_min: e.target.defaultValue!=='', phase: 'remapData'})}}}
 											aria-label="xmin" 
 											aria-describedby="basic-addon1"/>
 									</div>
@@ -1040,12 +1038,9 @@ class Grids extends React.Component {
 											className="form-control minmax" 
 											placeholder="Auto" 
 											value={this.state.display_max}
-											onChange={e => {
-												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
-												this.setState({display_max:e.target.value})}
-											} 
-											onBlur={e => {this.setState({display_max: parseFloat(e.target.defaultValue), user_defined_max: e.target.defaultValue!=='', remapData: true})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({display_max: parseFloat(e.target.defaultValue), user_defined_max: e.target.defaultValue!=='', remapData: true})}}}
+                                            onChange={e => this.changeRange(e, 'display_max')}
+											onBlur={e => {this.setState({display_max: parseFloat(e.target.defaultValue), user_defined_max: e.target.defaultValue!=='', phase: 'remapData'})}}
+											onKeyPress={e => {if(e.key==='Enter'){this.setState({display_max: parseFloat(e.target.defaultValue), user_defined_max: e.target.defaultValue!=='', phase: 'remapData'})}}}
 											aria-label="xmax" 
 											aria-describedby="basic-addon1"/>
 									</div>
@@ -1093,16 +1088,16 @@ class Grids extends React.Component {
 						      onDrawStop={p => helpers.onDrawStop.bind(this)(p)}
 						      onDrawStart={p => helpers.onDrawStart.bind(this)(p)}
 						      draw={{
-                    rectangle: false,
-                    circle: false,
-                    polyline: false,
-                    circlemarker: false,
-                    marker: false,
-                    polygon: {
-                    	shapeOptions: {
-                    		fillOpacity: 0
-                    	}
-                    }
+                                rectangle: false,
+                                circle: false,
+                                polyline: false,
+                                circlemarker: false,
+                                marker: false,
+                                polygon: {
+                    	            shapeOptions: {
+                    		            fillOpacity: 0
+                    	            }
+                                }
 						      }}
 						      edit={{
 										edit: false

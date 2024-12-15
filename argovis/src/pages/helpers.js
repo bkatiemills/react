@@ -179,6 +179,40 @@ helpers.clearLeafletDraw = function(){
 
 // update handlers
 
+helpers.phaseManager = function(prevProps, prevState, snapshot){
+    // intended to be bound to componentDidUpdate, this function manages the state machine
+    if(this.state.phase === 'refreshData'){
+        setTimeout(() => { // this is a total hack, but it makes the 'downloading' status show up
+            helpers.manageStatus.bind(this)('downloading')
+            if(this.formRef.current){  
+                this.formRef.current.setAttribute('disabled', 'true')
+            }
+            this.downloadData()
+          }, 1);
+    } else if(this.state.phase === 'remapData'){
+        setTimeout(() => {
+            helpers.manageStatus.bind(this)('rendering')
+            if(this.formRef.current){  
+                this.formRef.current.setAttribute('disabled', 'true')
+            }
+            this.replot()
+        }, 1);
+    } else if(this.state.phase === 'awaitingUserInput') {
+        setTimeout(() => {
+            helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
+        }, 1);
+    }else if (this.state.phase === 'idle') {
+        setTimeout(() => {
+            helpers.manageStatus.bind(this)('ready')
+            if(this.formRef.current){
+                this.formRef.current.removeAttribute('disabled')
+            }
+        }, 1);
+    }
+
+    helpers.setQueryString.bind(this)()
+}
+
 helpers.componentDidUpdate = function(){
 	// generic logic to bind into each explore page's componentDidUpdate
 
