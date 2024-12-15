@@ -1,5 +1,3 @@
-// todo status: make all inputs update state including urls; correctly implement downloadData, continue with a plotting update function
-
 import React from 'react';
 import { MapContainer, TileLayer, Popup, Polygon, FeatureGroup, Rectangle} from 'react-leaflet'
 import { EditControl } from "react-leaflet-draw";
