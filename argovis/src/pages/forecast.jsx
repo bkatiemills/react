@@ -19,20 +19,19 @@ class Forecast extends React.Component {
 
 		// default state, pulling in query string specifications
 		this.state = {
-			observingEntity: false,
 			apiKey: localStorage.getItem('apiKey') ? localStorage.getItem('apiKey') : 'guest',
 			originLon: q.has('originLon') ? parseFloat(q.get('originLon')) : -68,
 			originLat: q.has('originLat') ? parseFloat(q.get('originLat')) : 36,
 			forecastTime: q.has('forecastTime') ? parseFloat(q.get('forecastTime')) : 1800,
-			refreshData: false,
 			centerlon: q.has('centerlon') ? parseFloat(q.get('centerlon')) : -70,
 			mapkey: Math.random(),
 			urls: [],
 			points: [],
-			data: [],
+			data: [[]],
 			scale: chroma.scale(this.spectrum).domain([0,1]),
 			colormin: 0,
 			colormax: 1,
+            phase: 'refreshData'
 		}
 
         // some other useful class variables
@@ -46,38 +45,57 @@ class Forecast extends React.Component {
         this.dataset = 'argone'
         this.customQueryParams =  ['originLon', 'originLat', 'forecastTime', 'centerlon']
 		this.forecasts = this.constructForecastOptions(this.rawLevels)
-	}
 
-	componentDidMount() {
-		this.setState({refreshData:true})
+        this.state.urls = this.generateURLs(this.state.originLon, this.state.originLat, this.state.forecastTime)
+        this.downloadData()
 	}
 
     componentDidUpdate(prevProps, prevState, snapshot){
-    	helpers.componentDidUpdate.bind(this)()
-		helpers.setQueryString.bind(this)()
+    	helpers.phaseManager.bind(this)(prevProps, prevState, snapshot)
     }
 
-    refreshMap(state){
-    	// redraw the map and render the dom
-    	if(state.points.length > 0){
-			let p = state.data[0].map(point => {return point.data[0][0]})
-			let min =  Math.floor(Math.log10(Math.min(...p)))
-			let max = Math.ceil(Math.log10(Math.max(...p)))
-			let scale = chroma.scale(this.spectrum).domain([min,max])
-				this.setState(	{...state, 
-									scale: scale,
-									colormin: min,
-									colormax: max,
-									refreshData: false
-								},
-								() => {helpers.manageStatus.bind(this)('ready')} 
-							)
-	    } else {
-	    	helpers.manageStatus.bind(this)('error', 'No data found for this search.')
-			this.setState({...state, grid: [], refreshData: false})
-	    }
-	    this.formRef.current.removeAttribute('disabled')
+    downloadData(){
+        Promise.all(this.state.urls.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+            Promise.all(responses.map(res => res.json())).then(data => {
+                for(let i=0; i<data.length; i++){
+                    let bail = helpers.handleHTTPcodes.bind(this)(data[i].code)
+                    if(bail){
+                        return
+                    }
+                }
+
+                this.setState({
+                    phase: 'remapData',
+                    data: data
+                })
+
+            })
+        })
     }
+
+    replot(){
+        let points = this.mapmarkers()
+        if(points.length > 0){  
+            let p = this.state.data[0].map(point => {return point.data[0][0]})
+            let min =  Math.floor(Math.log10(Math.min(...p)))
+            let max = Math.ceil(Math.log10(Math.max(...p)))
+            let scale = chroma.scale(this.spectrum).domain([min,max])
+            this.setState({
+                scale: scale,
+                colormin: min,
+                colormax: max,
+                points: points,
+                phase: 'idle'
+            })
+        } else {
+            this.setState({points: [], phase: 'idle'})
+        }
+
+    }
+
+    generateURLs(originLon, originLat, forecastTime){
+		return [this.apiPrefix + 'argone?forecastOrigin=' + originLon + ',' + originLat + '&data=' + forecastTime]
+    }	
 
     colorscale(val, scale){
     	if(val === null){
@@ -87,28 +105,28 @@ class Forecast extends React.Component {
     	return scale(val).hex()
     }
 
-	mapmarkers(points, state){
-		if(JSON.stringify(points) === '[]'){
+	mapmarkers(){
+		if(JSON.stringify(this.state.data) === '[[]]'){
 			return []
 		}
 	
-		if(points.hasOwnProperty('code') || points[0].hasOwnProperty('code')){
+		if(this.state.data.hasOwnProperty('code') || this.state.data[0].hasOwnProperty('code')){
 			return null
 		}
 		else {
-			let p = points.map(point => {return point.data[0][0]})
+			let p = this.state.data[0].map(point => {return point.data[0][0]})
 			let min =  Math.floor(Math.log10(Math.min(...p)))
 			let max = Math.ceil(Math.log10(Math.max(...p)))
 			let scale = chroma.scale(this.spectrum).domain([min,max])
 			let originfound = false
-			let pts = points.map(point => {
+			let pts = this.state.data[0].map(point => {
 				let origin = point.geolocation_forecast.coordinates[0] === point.geolocation.coordinates[0] && point.geolocation_forecast.coordinates[1] === point.geolocation.coordinates[1]
 				if(origin){
 					originfound = true
 				}				
 				let cell = <Rectangle 
 						key={Math.random()} 
-						bounds={[[point.geolocation_forecast.coordinates[1]-1, helpers.mutateLongitude(point.geolocation_forecast.coordinates[0], parseFloat(state.centerlon))-1],[point.geolocation_forecast.coordinates[1]+1, helpers.mutateLongitude(point.geolocation_forecast.coordinates[0], parseFloat(state.centerlon))+1]]} 
+						bounds={[[point.geolocation_forecast.coordinates[1]-1, helpers.mutateLongitude(point.geolocation_forecast.coordinates[0], parseFloat(this.state.centerlon))-1],[point.geolocation_forecast.coordinates[1]+1, helpers.mutateLongitude(point.geolocation_forecast.coordinates[0], parseFloat(this.state.centerlon))+1]]} 
 						pathOptions={{ 
 							fillOpacity: 1,
 							weight: 0, 
@@ -124,7 +142,7 @@ class Forecast extends React.Component {
 				pts.push(
 					<Rectangle 
 						key={Math.random()} 
-						bounds={[[points[0].geolocation.coordinates[1]-1, helpers.mutateLongitude(points[0].geolocation.coordinates[0], parseFloat(state.centerlon))-1],[points[0].geolocation.coordinates[1]+1, helpers.mutateLongitude(points[0].geolocation.coordinates[0], parseFloat(state.centerlon))+1]]} 
+						bounds={[[this.state.data[0][0].geolocation.coordinates[1]-1, helpers.mutateLongitude(this.state.data[0][0].geolocation.coordinates[0], parseFloat(this.state.centerlon))-1],[this.state.data[0][0].geolocation.coordinates[1]+1, helpers.mutateLongitude(this.state.data[0][0].geolocation.coordinates[0], parseFloat(this.state.centerlon))+1]]} 
 						pathOptions={{ 
 							fillOpacity: 1,
 							weight: 0, 
@@ -133,8 +151,8 @@ class Forecast extends React.Component {
 
 						>
 						<Popup>
-							Longitude: {points[0].geolocation.coordinates[0]}<br/>
-							Latitude: {points[0].geolocation.coordinates[1]}<br/>
+							Longitude: {this.state.data[0][0].geolocation.coordinates[0]}<br/>
+							Latitude: {this.state.data[0][0].geolocation.coordinates[1]}<br/>
 							Forecast probability: 0<br/>
 						</Popup>
 					</Rectangle>
@@ -144,28 +162,12 @@ class Forecast extends React.Component {
 		}
 	}
 
-    changeForecast(target){
-		let s = this.state
-		s.forecastTime = target.target.value
-    	s.refreshData = true
-    	this.setState(s)
-    }
-
 	constructForecastOptions(){
 		let d = [90,180,270,360,450,540,630,720,810,900,990,1080,1170,1260,1350,1440,1530,1620,1710,1800]
 		return d.map((x) => {return(
 			<option key={x} value={x}>{x}</option>
 		)})
 	}
-
-    lookingForEntity(state){
-    	// return true if any token, valid or not, is specified for any entity query string parameter
-    	return false
-    }
-
-    generateURLs(state){
-		return [this.apiPrefix + 'argone?forecastOrigin=' + state.originLon + ',' + state.originLat + '&data=' + state.forecastTime]
-    }	
 
     genTooltip(point, state){
     	// given an array <point> corresponding to a single point returned by an API data route with compression=minimal,
@@ -183,11 +185,6 @@ class Forecast extends React.Component {
     dateRangeMultiplyer(s){
     	// allowed date range will be multiplied by this much, as a function of the mutated state s
     	return 1
-    }
-
-    toggleCoupling(s){
-    	// if changing a toggle for this page needs to trigger a side effect on state, do so here.
-    	return s
     }
 
 	generateScaleTics(tics){
@@ -215,6 +212,40 @@ class Forecast extends React.Component {
 			)
 		})	
 	}
+
+    changeLongitude(e){
+        this.setState({
+            phase: 'refreshData',
+            originLon: helpers.tidylon(Math.round(e.target.value / 2) * 2),
+            mapkey: Math.random(),
+            urls: this.generateURLs(helpers.tidylon(Math.round(e.target.value / 2) * 2), this.state.originLat, this.state.forecastTime)
+        })
+    }
+
+    changeLatitude(e){
+        this.setState({
+            phase: 'refreshData',
+            originLat: Math.round(e.target.value / 2) * 2,
+            mapkey: Math.random(),
+            urls: this.generateURLs(this.state.originLon, Math.round(e.target.value / 2) * 2, this.state.forecastTime)
+        })
+    }
+
+    changeForecast(target){
+    	this.setState({
+            forecastTime: target.target.value,
+            phase: 'refreshData',
+            urls: this.generateURLs(this.state.originLon, this.state.originLat, target.target.value)
+        })
+    }
+
+    changeCenterLongitude(e){
+        this.setState({
+            centerlon: helpers.manageCenterlon(e.target.defaultValue),
+            mapkey: Math.random(),
+            phase: 'remapData'
+        })
+    }
 
 	render(){
 		console.log(this.state)
@@ -256,23 +287,18 @@ class Forecast extends React.Component {
 											id="originLon" 
 											value={this.state.originLon} 
 											onChange={e => {
-													helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
 													this.setState({
 														originLon:e.target.value,
-														refreshData: false
+                                                        phase: 'awaitingUserInput'
 													})
 												}
 											} 
 											onBlur={e => {
-												let value = Math.round(e.target.value / 2) * 2;
-												value = helpers.tidylon(value)
-												this.setState({originLon: value, mapkey: Math.random(), refreshData: true})
+                                                this.changeLongitude(e)
 											}}
 											onKeyPress={e => {
 												if(e.key==='Enter'){
-													let value = Math.round(e.target.value / 2) * 2;
-													value = helpers.tidylon(value)
-													this.setState({originLon: value, mapkey: Math.random(), refreshData: true})
+                                                    this.changeLongitude(e)
 												}
 											}}
 										/>
@@ -285,21 +311,18 @@ class Forecast extends React.Component {
 											id="originLat" 
 											value={this.state.originLat} 
 											onChange={e => {
-													helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
 													this.setState({
 														originLat:e.target.value,
-														refreshData: false
+														phase: 'awaitingUserInput'
 													})
 												}
 											} 
 											onBlur={e => {
-												let value = Math.round(e.target.value / 2) * 2;
-												this.setState({originLat: value, mapkey: Math.random(), refreshData: true})
+                                                this.changeLatitude(e)
 											}}
 											onKeyPress={e => {
 												if(e.key==='Enter'){
-													let value = Math.round(e.target.value / 2) * 2;
-													this.setState({originLat: value, mapkey: Math.random(), refreshData: true})
+                                                    this.changeLatitude(e)
 												}
 											}}
 										/>
@@ -327,15 +350,14 @@ class Forecast extends React.Component {
 										placeholder="0" 
 										value={this.state.centerlon} 
 										onChange={e => {
-											helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
-											this.setState({centerlon:e.target.value})}
+											this.setState({centerlon:e.target.value, phase: 'awaitingUserInput'})}
 										} 
 										onBlur={e => {
-											this.setState({centerlon: helpers.manageCenterlon(e.target.defaultValue), mapkey: Math.random(), refreshData: true})
+											this.changeCenterLongitude(e)
 										}}
 										onKeyPress={e => {
 											if(e.key==='Enter'){
-												this.setState({centerlon: helpers.manageCenterlon(e.target.defaultValue), mapkey: Math.random(), refreshData: true})
+												this.changeCenterLongitude(e)
 											}
 										}}
 										aria-label="centerlon" 
