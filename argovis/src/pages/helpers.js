@@ -201,9 +201,13 @@ helpers.phaseManager = function(prevProps, prevState, snapshot){
         setTimeout(() => {
             helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
         }, 1);
-    }else if (this.state.phase === 'idle') {
+    } else if (this.state.phase === 'idle') {
         setTimeout(() => {
-            helpers.manageStatus.bind(this)('ready')
+            if(this.state.data.some(arr => arr.length === 0)){
+                helpers.manageStatus.bind(this)('error', 'No data found for this search.')
+            } else {
+                helpers.manageStatus.bind(this)('ready')
+            }
             if(this.formRef.current){
                 this.formRef.current.removeAttribute('disabled')
             }
