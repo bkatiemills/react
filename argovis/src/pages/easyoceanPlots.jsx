@@ -397,6 +397,7 @@ class EasyoceanPlots extends React.Component {
                 phase: 'refreshData', // refreshData, remapData, awaitingUserInput, or idle
                 apiKey: '',
                 centerlon: 0,
+                mode: 'scatter', // scatter or contour
                 data: [[]], // raw download data
                 cmin: q.has('cmin') ? parseFloat(q.get('cmin')) : '',
                 cmax: q.has('cmax') ? parseFloat(q.get('cmax')) : '',
@@ -409,7 +410,7 @@ class EasyoceanPlots extends React.Component {
             this.data = [] // data munged for plotly
             this.formRef = React.createRef()
             this.statusReporting = React.createRef()
-            this.customQueryParams = ['woceline', 'occupancyIndex', 'variable', 'subtractionIndex', 'cmin', 'cmax']
+            this.customQueryParams = ['woceline', 'occupancyIndex', 'variable', 'subtractionIndex', 'cmin', 'cmax', 'mode']
 
             this.downloadData()
     }
@@ -494,26 +495,49 @@ class EasyoceanPlots extends React.Component {
         if(this.state.user_defined_cmax){
             cmax = this.state.cmax
         }
+        let colorscale = this.state.subtractionIndex === -1 ? 'Viridis' : this.subtractionScale(cmin, cmax)
 
-        this.data = [{
-            type: 'scattergl',
-            x: xdata,
-            y: ydata,
-            mode: 'markers',
-            marker: {
-                size: markerSize,
-                color: cdata,
-                colorscale: this.state.subtractionIndex === -1 ? 'Viridis' : this.subtractionScale(cmin, cmax),
-                cmin: cmin,
-                cmax: cmax,
+        if(this.state.mode === 'scatter'){
+            this.data = [{
+                type: 'scattergl',
+                x: xdata,
+                y: ydata,
+                mode: 'markers',
+                marker: {
+                    size: markerSize,
+                    color: cdata,
+                    colorscale: colorscale,
+                    cmin: cmin,
+                    cmax: cmax,
+                    colorbar: {
+                        title: (this.state.subtractionIndex === -1 ? '':'Δ ') + this.state.variable + (this.eo_units[this.state.variable].length > 0 ? ' [' + this.eo_units[this.state.variable] + ']' : ""),
+                        titleside: 'right',
+                        tickmode: 'auto',
+                        nticks: 10
+                    }
+                }
+            }]
+        } else if(this.state.mode === 'contour'){
+            let traces = this.splitDataByXIntervals(xdata, ydata, cdata)
+            this.data = traces.map(trace => ({
+                type: 'contour',
+                x: trace.x,
+                y: trace.y,
+                z: trace.color,
+                connectgaps: false,
+                colorscale: colorscale,
+                contours: {
+                    start: cmin,
+                    end: cmax,
+                },
                 colorbar: {
                     title: (this.state.subtractionIndex === -1 ? '':'Δ ') + this.state.variable + (this.eo_units[this.state.variable].length > 0 ? ' [' + this.eo_units[this.state.variable] + ']' : ""),
                     titleside: 'right',
                     tickmode: 'auto',
                     nticks: 10
                 }
-            }
-        }]
+            }))
+        }
 
         this.layout = {
             datarevision: Math.random(),
@@ -531,6 +555,7 @@ class EasyoceanPlots extends React.Component {
             yaxis: {
                 title: 'Pressure [dbar]',
                 autorange: 'reversed',
+                automargin: true,
                 //range: yrange,
                 //type: this.state.yKey === 'timestamp' ? 'date' : '-',
             },
@@ -554,6 +579,42 @@ class EasyoceanPlots extends React.Component {
             phase: 'idle',
         })
     }
+
+    splitDataByXIntervals(xdata, ydata, cdata) {
+        // Step 1: Combine the arrays into a single array of objects for sorting
+        const combinedData = xdata.map((x, i) => ({
+          x,
+          y: ydata[i],
+          color: cdata[i]
+        }));
+      
+        // Step 2: Sort by x
+        combinedData.sort((a, b) => a.x - b.x);
+      
+        // Step 3: Split into separate traces based on uninterrupted x intervals
+        const traces = [];
+        let currentTrace = { x: [], y: [], color: [] };
+      
+        for (let i = 0; i < combinedData.length; i++) {
+          if (i > 0 && Math.abs(combinedData[i].x - combinedData[i - 1].x) > 0.1 + 1e-9) {
+            // If there's a gap, save the current trace and start a new one
+            traces.push(currentTrace);
+            currentTrace = { x: [], y: [], color: [] };
+          }
+      
+          // Add the current data point to the current trace
+          currentTrace.x.push(combinedData[i].x);
+          currentTrace.y.push(combinedData[i].y);
+          currentTrace.color.push(combinedData[i].color);
+        }
+      
+        // Add the last trace if it's not empty
+        if (currentTrace.x.length > 0) {
+          traces.push(currentTrace);
+        }
+      
+        return traces;
+      }
 
     changeWOCE = (event) => {
         this.setState({ 
@@ -603,6 +664,13 @@ class EasyoceanPlots extends React.Component {
             phase: 'refreshData'
         });
     };
+
+    changeMode = (event) => {
+        this.setState({
+            mode: event.target.value,
+            phase: 'remapData'
+        })
+    }
 
     changeAPIkey = (event) => {
         this.setState({
@@ -795,6 +863,24 @@ class EasyoceanPlots extends React.Component {
 											aria-describedby="basic-addon1"/>
 									</div>
 								</div>
+
+                                <div>
+                                    <div className="form-text">
+						  				<span>Plot Mode</span>
+									</div>
+                                    <div class="form-check">
+                                        <input className="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault1" value='scatter' checked={this.state.mode === 'scatter'} onChange={this.changeMode}/>
+                                        <label className="form-check-label" for="flexRadioDefault1">
+                                            Scatter
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input className="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault2" value='contour' checked={this.state.mode === 'contour'} onChange={this.changeMode}/>
+                                        <label className="form-check-label" for="flexRadioDefault2">
+                                            Contour
+                                        </label>
+                                    </div>
+                                </div>
 
                                 <h5 style={{marginTop:'1em'}}>Global Options</h5>
                                 <div className="form-floating mb-3">
