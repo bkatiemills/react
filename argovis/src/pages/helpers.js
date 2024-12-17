@@ -180,6 +180,7 @@ helpers.clearLeafletDraw = function(){
 // update handlers
 
 helpers.phaseManager = function(prevProps, prevState, snapshot){
+
     // intended to be bound to componentDidUpdate, this function manages the state machine
     if(this.state.phase === 'refreshData'){
         setTimeout(() => { // this is a total hack, but it makes the 'downloading' status show up
@@ -482,7 +483,7 @@ helpers.setDate = function(date, v, maxdays){
     return [start, end]
 }
 
-helpers.setToken = function(key, v, message, persist){
+helpers.setToken = function(key, v, persist){
 	// key: state key labeling this input token
 	// v: new value being considered
 	// persist: write this to local storage
@@ -493,12 +494,8 @@ helpers.setToken = function(key, v, message, persist){
 
 	let s = {...this.state}
 	s[key] = v
-	if(v && this.vocab[key] && !this.vocab[key].includes(v)){
-		helpers.manageStatus.bind(this)('error', message)
-		s.refreshData = false
-  } else {
-		s.refreshData = true
-	}
+	s.phase = 'refreshData'
+
 	this.setState(s)
 }
 
@@ -512,18 +509,20 @@ helpers.toggle = function(v){
 
 // autosuggest callbacks
 
-helpers.onAutosuggestChange = function(message, fieldID, ref, event, change){
+helpers.onAutosuggestChange = function(fieldID, ref, event, change){
+
 	if(change.newValue !== ''){
 		this.reautofocus = ref
 	} else {
 		this.reautofocus = null
 	}
-	helpers.setToken.bind(this)(fieldID, change.newValue, message)
+	helpers.setToken.bind(this)(fieldID, change.newValue)
 }
 
 helpers.onSuggestionsFetchRequested = function(suggestionList, update){
 	let s = {}
 	s[suggestionList] = helpers.getSuggestions.bind(this)(update.value, suggestionList.slice(0,-11))
+    s.phase = 'awaitingUserInput'
 	this.setState(s)
 }
 
@@ -549,7 +548,13 @@ helpers.getSuggestionValue = function(suggestion){
 helpers.renderSuggestion = function(inputState, suggestion){
 	return(
 	  <div 
-	  	onClick={e => {this.state[inputState] = e.target.textContent}}
+	  	onClick={e => {
+            let s = {...this.state}
+            s[inputState] = e.target.textContent
+            s.phase = 'refreshData'
+
+            this.setState(s)
+        }}
 	  	onMouseOver={e => e.target.parentElement.classList.add('highlightSuggestion')}
 	  	onMouseOut={e => e.target.parentElement.classList.remove('highlightSuggestion')}
 	  	className='autocomplete-item'

@@ -117,7 +117,6 @@ class ArgoExplore extends React.Component {
     }
 
     replot(){
-    
         let points = []
 
         if(!(JSON.stringify(this.state.data) === '[[]]' || JSON.stringify(this.state.data) === '[]' || this.state.data.hasOwnProperty('code') || this.state.data[0].hasOwnProperty('code'))){
@@ -265,6 +264,39 @@ class ArgoExplore extends React.Component {
         })
     }
 
+    inputPlatform(fieldID, ref, event, change){
+        // autosuggest management
+
+        if(change.newValue !== ''){
+            this.reautofocus = ref
+        } else {
+            this.reautofocus = null
+        }
+
+        let s = {...this.state}
+        s[fieldID] = change.newValue
+        s.observingEntity = Boolean(change.newValue)
+
+        this.changePlatform(fieldID, s, event)
+    }
+
+    changePlatform(fieldID, interimState, event){
+        // actually go looking for a platform on not-a-kwystroke events, or hits enter, and only if the specified platform is valid
+
+        if( !event.hasOwnProperty('key') || 
+            (event.hasOwnProperty('key') && event.key === 'Enter')){
+            if(this.vocab.argoPlatform.includes(interimState[fieldID]) ){
+                interimState.urls = this.generateURLs(interimState[fieldID], interimState.argocore, interimState.argobgc, interimState.argodeep, interimState.startDate, interimState.endDate, interimState.polygon, interimState.depthRequired)
+                interimState.phase = 'refreshData'
+            } else if(interimState[fieldID] == '' && (event.type === 'blur' || event.type === 'keypress')){
+                interimState.urls = this.generateURLs(interimState.argoPlatform, interimState.argocore, interimState.argobgc, interimState.argodeep, interimState.startDate, interimState.endDate, interimState.polygon, interimState.depthRequired)
+                interimState.phase = 'refreshData'
+            }
+        }
+    
+        this.setState(interimState)
+    }
+
     toggleArgoProgram(program){
     	let s = {...this.state}
         
@@ -410,7 +442,14 @@ class ArgoExplore extends React.Component {
 									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'argoPlatformSuggestions')}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'argoPlatform')}
-									        inputProps={{placeholder: 'Argo platform ID', value: this.state.argoPlatform, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of Argo platform ID', 'argoPlatform', this.platformRef), id: 'argoPlatform'}}
+									        inputProps={{
+                                                placeholder: 'Argo platform ID', 
+                                                value: this.state.argoPlatform, 
+                                                onKeyPress:this.changePlatform.bind(this, 'argoPlatform', this.state),  
+                                                onBlur:this.changePlatform.bind(this, 'argoPlatform', this.state), 
+                                                onChange: this.inputPlatform.bind(this, 'argoPlatform', this.platformRef), 
+                                                id: 'argoPlatform'
+                                            }}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 									</div>
