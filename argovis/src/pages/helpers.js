@@ -203,7 +203,7 @@ helpers.phaseManager = function(prevProps, prevState, snapshot){
         }, 1);
     } else if (this.state.phase === 'idle') {
         setTimeout(() => {
-            if(this.state.data.some(arr => arr.length === 0)){
+            if(this.state.data.length === 0 || this.state.data.some(arr => arr.length === 0)){
                 helpers.manageStatus.bind(this)('error', 'No data found for this search.')
             } else {
                 helpers.manageStatus.bind(this)('ready')
@@ -363,29 +363,29 @@ helpers.refreshMap = function(state){
 	})
 }
 
-helpers.generateTemporoSpatialURL = function(prefix, route, state){
+helpers.generateTemporoSpatialURL = function(prefix, route, startDate, endDate, polygon, depthRequired){
 	//returns the api root, compression, time and space filters common to all endpoint queries
 
 	let url = prefix + route + '?compression=minimal'
 
-	if(state.depthRequired){
-		url += '&verticalRange=' + state.depthRequired + ',20000'
+	if(depthRequired){
+		url += '&verticalRange=' + depthRequired + ',20000'
 	}
 
-	if(state.startDate !== ''){
-		url += '&startDate=' + state.startDate + 'T00:00:00Z'
+	if(startDate !== ''){
+		url += '&startDate=' + startDate + 'T00:00:00Z'
 	}
 
-	if(state.endDate !== ''){
+	if(endDate !== ''){
 		// set to one day later to include the end date
-		let d = new Date(state.endDate)
+		let d = new Date(endDate)
 		d = d.getTime() + 24*60*60*1000
 		d = new Date(d)
 		url += '&endDate=' + d.toISOString().replace('.000Z', 'Z')
 	}  
 
-	if(state.polygon.length>0){
-		let tidypoly = helpers.tidypoly(state.polygon)
+	if(polygon.length>0){
+		let tidypoly = helpers.tidypoly(polygon)
 		url += '&polygon=[' + tidypoly.map(x => '['+x[0]+','+x[1]+']').join(',') + ']'
 	}    
 	return url	
@@ -453,11 +453,10 @@ helpers.setQueryString = function(){
 
 // input setters
 
-helpers.setDate = function(date, v, maxdays, noop, noup){
+helpers.setDate = function(date, v, maxdays){
 	// when setting dates from the UI, don't let the user ask for a timespan longer than some cutoff. 
 	// If they do, move the other time bound to match.
-	// If noop == true, just return the computed start and end times without invoking a state change.
-	// If noup == true, do the state update without refreshing data
+
 	let start = new Date(this.state.startDate)
 	let end = new Date(this.state.endDate)
 	let cutoff = maxdays*24*60*60*1000
@@ -467,36 +466,20 @@ helpers.setDate = function(date, v, maxdays, noop, noup){
 	} else{
 		if(date === 'startDate'){
 	    	start = new Date(v)
-	    	if(!noup){ // no need to drag other date around until we actually update
-		    	if(end.getTime() - start.getTime() > cutoff || end.getTime() - start.getTime() < 0){
-		    		end = new Date(v + cutoff)
-		    	}
-		    } 	
+            if(end.getTime() - start.getTime() > cutoff || end.getTime() - start.getTime() < 0){
+                end = new Date(v + cutoff)
+            }	
 	    } else if(date === 'endDate'){
 	    	end = new Date(v)
-	    	if(!noup){
-		    	if(end.getTime() - start.getTime() > cutoff || end.getTime() - start.getTime() < 0){
-		    		start = new Date(v - cutoff)
-		    	}
-		    }
+            if(end.getTime() - start.getTime() > cutoff || end.getTime() - start.getTime() < 0){
+                start = new Date(v - cutoff)
+            }
 	    }
 	    start = start.toISOString().slice(0,10)
 	   	end = end.toISOString().slice(0,10)
     }
-    let s = {...this.state}
-    s.startDate = start
-    s.endDate = end
-    if(!noup){
-		  s.refreshData = true
-		} else {
-			helpers.manageStatus.bind(this)('actionRequired', 'Click outside the current input to update the plot.')
-		}
-
-    if(noop){
-    	return [start, end]
-    } else {
-	    this.setState(s)
-	}
+	
+    return [start, end]
 }
 
 helpers.setToken = function(key, v, message, persist){

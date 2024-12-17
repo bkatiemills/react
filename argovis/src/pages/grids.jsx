@@ -801,24 +801,24 @@ class Grids extends React.Component {
     gridRasterfy(state){
 
     	// expects a list from a data endpoint
-			if(state.data.hasOwnProperty('code') || state.data[0].hasOwnProperty('code')){
-				return null
-			}
-			else {
-				let points = state.data[0].map(point => {return(
-					<Rectangle 
-						key={Math.random()} 
-						bounds={[[point.geolocation.coordinates[1]-0.5, helpers.mutateLongitude(point.geolocation.coordinates[0], parseFloat(state.centerlon))-0.5],[point.geolocation.coordinates[1]+0.5, helpers.mutateLongitude(point.geolocation.coordinates[0], parseFloat(state.centerlon))+0.5]]} 
-						pathOptions={{ 
-							fillOpacity: 0.5, 
-							weight: 0, 
-							color: this.chooseColor(point.data[0][0], state) 
-						}}>
-      				    {this.genTooltip(point)}
-    			    </Rectangle>
-				)})
-				return points
-			}
+        if(state.data.hasOwnProperty('code') || state.data[0].hasOwnProperty('code')){
+            return null
+        }
+        else {
+            let points = state.data[0].map(point => {return(
+                <Rectangle 
+                    key={Math.random()} 
+                    bounds={[[point.geolocation.coordinates[1]-0.5, helpers.mutateLongitude(point.geolocation.coordinates[0], parseFloat(state.centerlon))-0.5],[point.geolocation.coordinates[1]+0.5, helpers.mutateLongitude(point.geolocation.coordinates[0], parseFloat(state.centerlon))+0.5]]} 
+                    pathOptions={{ 
+                        fillOpacity: 0.5, 
+                        weight: 0, 
+                        color: this.chooseColor(point.data[0][0], state) 
+                    }}>
+                    {this.genTooltip(point)}
+                </Rectangle>
+            )})
+            return points
+        }
     }
 
     chooseColor(val, state){

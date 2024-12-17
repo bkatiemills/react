@@ -1,11 +1,12 @@
 import React from 'react';
-import { MapContainer, TileLayer, Polygon, FeatureGroup, Popup} from 'react-leaflet'
+import { MapContainer, TileLayer, Polygon, FeatureGroup, Popup, CircleMarker} from 'react-leaflet'
 import { EditControl } from "react-leaflet-draw";
 import Autosuggest from 'react-autosuggest';
 import '../index.css';
 import helpers from'./helpers'
 import Tooltip from 'react-bootstrap/Tooltip';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
+
 
 class ArgoExplore extends React.Component {
 
@@ -33,6 +34,7 @@ class ArgoExplore extends React.Component {
 			argoPlatform: q.has('argoPlatform') ? q.get('argoPlatform') : '',
 			refreshData: true,
 			points: [],
+            data: [[]],
 			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [],
 			interpolated_polygon: q.has('polygon') ? helpers.insertPointsInPolygon(JSON.parse(q.get('polygon'))) : [],
 			urls: [],
@@ -66,8 +68,12 @@ class ArgoExplore extends React.Component {
         this.vocab = {}
         this.dataset = 'argo'
         this.customQueryParams = ['startDate', 'endDate', 'polygon', 'argocore', 'argobgc', 'argodeep', 'argoPlatform', 'depthRequired', 'centerlon']
+        
+        // get initial data
+        this.state.urls = this.generateURLs(this.state.argoPlatform, this.state.argocore, this.state.argobgc, this.state.argodeep, this.state.startDate, this.state.endDate, this.state.polygon, this.state.depthRequired)
+        this.downloadData()
 
-        // populate vocabularies, and trigger first render
+        // populate vocabularies for UI
         let vocabURLs = [this.apiPrefix + 'argo/vocabulary?parameter=platform', this.apiPrefix + 'argo/overview']
 		Promise.all(vocabURLs.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 			Promise.all(responses.map(res => res.json())).then(data => {
@@ -88,42 +94,73 @@ class ArgoExplore extends React.Component {
 	}
 
     componentDidUpdate(prevProps, prevState, snapshot){
-    	helpers.componentDidUpdate.bind(this)()
+    	helpers.phaseManager.bind(this)(prevProps, prevState, snapshot)
     }
 
-	refreshMap(state){
-		helpers.refreshMap.bind(this)(state)
-	}
+    downloadData(){
+        Promise.all(this.state.urls.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+            Promise.all(responses.map(res => res.json())).then(data => {
+                for(let i=0; i<data.length; i++){
+                    let bail = helpers.handleHTTPcodes.bind(this)(data[i].code)
+                    if(bail){
+                        return
+                    }
+                }
 
-    lookingForEntity(state){
-    	// return true if any token, valid or not, is specified for any entity query string parameter
-    	return Boolean(state.argoPlatform)
+                this.setState({
+                    phase: 'remapData',
+                    data: data
+                })
+
+            })
+        })
     }
 
-    generateURLs(state) {
-    	if(state.argoPlatform !== ''){
-    		return [this.apiPrefix +'argo?compression=minimal&platform=' + state.argoPlatform]
+    replot(){
+    
+        let points = []
+
+        if(!(JSON.stringify(this.state.data) === '[[]]' || JSON.stringify(this.state.data) === '[]' || this.state.data.hasOwnProperty('code') || this.state.data[0].hasOwnProperty('code'))){
+            for(let i=0; i<this.state.data.length; i++){
+                let newpoints = this.state.data[i].map(point => {return(
+                    <CircleMarker key={point[0]+Math.random()} center={[point[2], helpers.mutateLongitude(point[1], parseFloat(this.state.centerlon)) ]} radius={2} color={this.chooseColor(point)}>
+                        {this.genTooltip.bind(this)(point)}
+                    </CircleMarker>
+                  )})
+                points = points.concat(newpoints)
+            }
+        }
+
+        this.setState({ 
+            points: points, 
+            phase: 'idle'
+        })
+    }
+
+    generateURLs(argoPlatform, argocore, argobgc, argodeep, startDate, endDate, polygon, depthRequired){
+    	if(argoPlatform !== ''){
+    		return [this.apiPrefix +'argo?compression=minimal&platform=' + argoPlatform]
     	} else {
 
-	    	let url = helpers.generateTemporoSpatialURL.bind(this)(this.apiPrefix, 'argo', state)	
+	    	let url = helpers.generateTemporoSpatialURL.bind(this)(this.apiPrefix, 'argo', startDate, endDate, polygon, depthRequired)	
 
 	    	// decide on source.source
 	    	let source = []
-	    	if(!state.argocore && !state.argobgc && !state.argodeep){
+	    	if(!argocore && !argobgc && !argodeep){
 	    		return []
-	    	} else if(state.argocore && state.argobgc && state.argodeep){
+	    	} else if(argocore && argobgc && argodeep){
 	    		source = ['argo_core']
-	    	} else if(state.argocore && state.argobgc && !state.argodeep){
+	    	} else if(argocore && argobgc && !argodeep){
 	    		source = ['argo_core,~argo_deep', 'argo_bgc']
-	    	} else if(state.argocore && !state.argobgc && state.argodeep){
+	    	} else if(argocore && !argobgc && argodeep){
 	    		source = ['argo_core,~argo_bgc', 'argo_deep']
-	    	} else if(!state.argocore && state.argobgc && state.argodeep){
+	    	} else if(!argocore && argobgc && argodeep){
 	    		source = ['argo_bgc', 'argo_deep']
-	    	} else if(state.argocore && !state.argobgc && !state.argodeep){
+	    	} else if(argocore && !argobgc && !argodeep){
 	    		source = ['argo_core,~argo_bgc,~argo_deep']
-	    	} else if(!state.argocore && state.argobgc && !state.argodeep){
+	    	} else if(!argocore && argobgc && !argodeep){
 	    		source = ['argo_bgc']
-	    	} else if(!state.argocore && !state.argobgc && state.argodeep){
+	    	} else if(!argocore && !argobgc && argodeep){
 	    		source = ['argo_deep']
 	    	}
 
@@ -132,9 +169,29 @@ class ArgoExplore extends React.Component {
 	    	} else{
 	    		url = source.map(x => url+'&source='+x)
 	    	}
-	    	console.log(url)
+
 	    	return url
 	    }
+    }
+
+
+
+
+
+
+
+
+    // componentDidUpdate(prevProps, prevState, snapshot){
+    // 	helpers.componentDidUpdate.bind(this)()
+    // }
+
+	refreshMap(state){
+		helpers.refreshMap.bind(this)(state)
+	}
+
+    lookingForEntity(state){
+    	// return true if any token, valid or not, is specified for any entity query string parameter
+    	return Boolean(state.argoPlatform)
     }
 
 	mapmarkers(points, state){
@@ -153,11 +210,11 @@ class ArgoExplore extends React.Component {
 	    }
     }
 
-    genTooltip(point, state){
+    genTooltip(point){
     	// given an array <point> corresponding to a single point returned by an API data route with compression=minimal,
     	// return the jsx for an appropriate tooltip for this point.
 
-    	let regionLink = helpers.genRegionLink(state.polygon, state.startDate, state.endDate, state.centerlon, 'argo')
+    	let regionLink = helpers.genRegionLink(this.state.polygon, this.state.startDate, this.state.endDate, this.state.centerlon, 'argo')
 
     	return(
 		    <Popup>
@@ -165,8 +222,8 @@ class ArgoExplore extends React.Component {
 		      Long / Lat: {helpers.mungePrecision(point[1])} / {helpers.mungePrecision(point[2])} <br />
 		      Date: {point[3]} <br />
 		      Data Sources: {point[4].join(', ')} <br />
-		      <a target="_blank" rel="noreferrer" href={'/plots/argo?showAll=true&argoPlatform='+point[0].split('_')[0]+'&centerlon='+state.centerlon}>Platform Page</a><br />
-		      <a target="_blank" rel="noreferrer" href={'/plots/argo?argoPlatform='+point[0].split('_')[0]+'&counterTraces=["'+point[0]+'"]&centerlon='+state.centerlon}>Profile Page</a>
+		      <a target="_blank" rel="noreferrer" href={'/plots/argo?showAll=true&argoPlatform='+point[0].split('_')[0]+'&centerlon='+this.state.centerlon}>Platform Page</a><br />
+		      <a target="_blank" rel="noreferrer" href={'/plots/argo?argoPlatform='+point[0].split('_')[0]+'&counterTraces=["'+point[0]+'"]&centerlon='+this.state.centerlon}>Profile Page</a>
 		      {regionLink}
 		    </Popup>
     	)
@@ -188,6 +245,35 @@ class ArgoExplore extends React.Component {
 
     	return s
     }
+
+    changeDates(date, e){
+        let daterange = helpers.setDate.bind(this)(date, e.target.valueAsNumber, this.state.maxDayspan)
+        let s = {...this.state}
+        s.startDate = daterange[0]
+        s.endDate = daterange[1]
+        s.phase = 'refreshData'
+        s.urls = this.generateURLs(s.argoPlatform, s.argocore, s.argobgc, s.argodeep, daterange[0], daterange[1], s.polygon, s.depthRequired)
+
+        this.setState(s)
+    }
+
+    changeDepth(e){
+        this.setState({
+            depthRequired:e.target.value, 
+            phase: 'refreshData',
+            urls: this.generateURLs(this.state.argoPlatform, this.state.argocore, this.state.argobgc, this.state.argodeep, this.state.startDate, this.state.endDate, this.state.polygon, e.target.value)
+        })
+    }
+
+    toggleArgoProgram(program){
+    	let s = {...this.state}
+        
+        s[program] = !s[program]
+        s.urls = this.generateURLs(s.argoPlatform, s.argocore, s.argobgc, s.argodeep, s.startDate, s.endDate, s.polygon, s.depthRequired)
+        s.phase = 'refreshData'
+
+        this.setState(s)
+    }    
 
 	render(){
 		console.log(this.state)
@@ -232,9 +318,9 @@ class ArgoExplore extends React.Component {
 											id="startDate" 
 											value={this.state.startDate} 
 											placeholder="" 
-											onChange={v => helpers.setDate.bind(this)('startDate', v.target.valueAsNumber, this.state.maxDayspan, false, true)}
-											onBlur={e => helpers.setDate.bind(this)('startDate', e.target.valueAsNumber, this.state.maxDayspan, false, false)}
-											onKeyPress={e => {if(e.key==='Enter'){helpers.setDate.bind(this)('startDate', e.target.valueAsNumber, this.state.maxDayspan, false, false)}}}
+                                            onChange={e => {this.setState({startDate:e.target.value, phase: 'awaitingUserInput'})}} 
+                                            onBlur={e => {this.changeDates.bind(this)('startDate', e)}}
+                                            onKeyPress={e => {if(e.key==='Enter'){this.changeDates.bind(this)('startDate', e)}}}
 										/>
 										<label htmlFor="startDate">Start Date</label>
 									</div>
@@ -243,12 +329,12 @@ class ArgoExplore extends React.Component {
 											type="date" 
 											disabled={this.state.observingEntity} 
 											className="form-control" 
-											id="startDate" 
+											id="endDate" 
 											value={this.state.endDate} 
 											placeholder="" 
-											onChange={v => helpers.setDate.bind(this)('endDate', v.target.valueAsNumber, this.state.maxDayspan, false, true)}
-											onBlur={e => helpers.setDate.bind(this)('endDate', e.target.valueAsNumber, this.state.maxDayspan, false, false)}
-											onKeyPress={e => {if(e.key==='Enter'){helpers.setDate.bind(this)('endDate', e.target.valueAsNumber, this.state.maxDayspan, false, false)}}}
+                                            onChange={e => {this.setState({endDate:e.target.value, phase: 'awaitingUserInput'})}} 
+                                            onBlur={e => {this.changeDates.bind(this)('endDate', e)}}
+                                            onKeyPress={e => {if(e.key==='Enter'){this.changeDates.bind(this)('endDate', e)}}}
 										/>
 										<label htmlFor="endDate">End Date</label>
 									</div>
@@ -265,12 +351,9 @@ class ArgoExplore extends React.Component {
 											className="form-control" 
 											placeholder="0" 
 											value={this.state.depthRequired} 
-											onChange={e => {
-												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
-												this.setState({depthRequired:e.target.value})}
-											} 
-											onBlur={e => {this.setState({depthRequired:e.target.defaultValue, refreshData: true})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({depthRequired:e.target.defaultValue, refreshData: true})}}}
+                                            onChange={e => {this.setState({depthRequired:e.target.value, phase: 'awaitingUserInput'})}} 
+											onBlur={e => {this.changeDepth.bind(this)(e)}}
+                                            onKeyPress={e => {if(e.key==='Enter'){this.changeDepth.bind(this)(e)}}}
 											aria-label="depthRequired" 
 											aria-describedby="basic-addon1"/>
 										<label htmlFor="depth">Require levels deeper than [m]:</label>
@@ -285,16 +368,13 @@ class ArgoExplore extends React.Component {
 											className="form-control" 
 											placeholder="0" 
 											value={this.state.centerlon} 
-											onChange={e => {
-												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
-												this.setState({centerlon:e.target.value})}
-											} 
+                                            onChange={e => {this.setState({centerlon:e.target.value, phase: 'awaitingUserInput'})}} 
 											onBlur={e => {
-												this.setState({centerlon: helpers.manageCenterlon(e.target.defaultValue), mapkey: Math.random(), refreshData: true})
+												this.setState({centerlon: helpers.manageCenterlon(e.target.value), mapkey: Math.random(), phase: 'remapData'})
 											}}
 											onKeyPress={e => {
 												if(e.key==='Enter'){
-													this.setState({centerlon: helpers.manageCenterlon(e.target.defaultValue), mapkey: Math.random(), refreshData: true})
+													this.setState({centerlon: helpers.manageCenterlon(e.target.value), mapkey: Math.random(), phase: 'remapData'})
 												}
 											}}
 											aria-label="centerlon" 
@@ -306,15 +386,15 @@ class ArgoExplore extends React.Component {
 								<div className='verticalGroup'>
 									<h6>Subsets</h6>
 									<div className="form-check">
-										<input className="form-check-input" checked={this.state.argocore} onChange={(v) => helpers.toggle.bind(this)(v, 'argocore')} type="checkbox" id='argocore'></input>
+										<input className="form-check-input" checked={this.state.argocore} onChange={(v) => this.toggleArgoProgram.bind(this)('argocore')} type="checkbox" id='argocore'></input>
 										<label className="form-check-label" htmlFor='argocore'>Display Argo Core <span style={{'color':this.chooseColor([null,null,null,null,['argo_core']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 									<div className="form-check">
-										<input className="form-check-input" checked={this.state.argobgc} onChange={(v) => helpers.toggle.bind(this)(v, 'argobgc')} type="checkbox" id='argobgc'></input>
+										<input className="form-check-input" checked={this.state.argobgc} onChange={(v) => this.toggleArgoProgram.bind(this)('argobgc')} type="checkbox" id='argobgc'></input>
 										<label className="form-check-label" htmlFor='argobgc'>Display Argo BGC <span style={{'color':this.chooseColor([null,null,null,null,['argo_bgc']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 									<div className="form-check">
-										<input className="form-check-input" checked={this.state.argodeep} onChange={(v) => helpers.toggle.bind(this)(v, 'argodeep')} type="checkbox" id='argodeep'></input>
+										<input className="form-check-input" checked={this.state.argodeep} onChange={(v) => this.toggleArgoProgram.bind(this)('argodeep')} type="checkbox" id='argodeep'></input>
 										<label className="form-check-label" htmlFor='argodeep'>Display Argo Deep <span style={{'color':this.chooseColor([null,null,null,null,['argo_deep']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 								</div>
