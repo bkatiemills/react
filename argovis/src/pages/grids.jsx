@@ -450,7 +450,6 @@ class Grids extends React.Component {
 		gridcells: [],
       	points: [],
       	subpoints: [],
-      	data: [],
       	polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : this.defaultPolygon,
       	interpolated_polygon: q.has('polygon') ? helpers.insertPointsInPolygon(JSON.parse(q.get('polygon'))) : helpers.insertPointsInPolygon(this.defaultPolygon),
       	min: 0,
@@ -568,7 +567,7 @@ class Grids extends React.Component {
     replot(){
         let s = {...this.state} 
 
-        if(this.state.subgrid && this.state.data.length == 2){
+        if(this.state.subgrid && this.state.data.length === 2){
             // munge state.data[0] and state.data[1] into profile-like objects where the data value is the delta
 
             /// start by turning grids into kv keyed by unique concatenation of lon/lat so we can easily subtract the correct pairs of points
