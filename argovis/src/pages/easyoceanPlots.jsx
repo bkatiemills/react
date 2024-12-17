@@ -397,10 +397,11 @@ class EasyoceanPlots extends React.Component {
                 phase: 'refreshData', // refreshData, remapData, awaitingUserInput, or idle
                 apiKey: '',
                 centerlon: 0,
-                mode: 'scatter', // scatter or contour
+                mode: q.has('mode') ? q.get('mode') : 'scatter' , // scatter or contour
                 data: [[]], // raw download data
                 cmin: q.has('cmin') ? parseFloat(q.get('cmin')) : '',
                 cmax: q.has('cmax') ? parseFloat(q.get('cmax')) : '',
+                contourStep: q.has('contourStep') ? parseFloat(q.get('contourStep')) : 1,
             }
     
             this.state.urls = this.generateURLs(this.state.woceline, this.state.occupancyIndex, this.state.subtractionIndex)
@@ -410,7 +411,7 @@ class EasyoceanPlots extends React.Component {
             this.data = [] // data munged for plotly
             this.formRef = React.createRef()
             this.statusReporting = React.createRef()
-            this.customQueryParams = ['woceline', 'occupancyIndex', 'variable', 'subtractionIndex', 'cmin', 'cmax', 'mode']
+            this.customQueryParams = ['woceline', 'occupancyIndex', 'variable', 'subtractionIndex', 'cmin', 'cmax', 'mode', 'contourStep']
 
             this.downloadData()
     }
@@ -529,6 +530,7 @@ class EasyoceanPlots extends React.Component {
                 contours: {
                     start: cmin,
                     end: cmax,
+                    size: this.state.contourStep,
                 },
                 colorbar: {
                     title: (this.state.subtractionIndex === -1 ? '':'Δ ') + this.state.variable + (this.eo_units[this.state.variable].length > 0 ? ' [' + this.eo_units[this.state.variable] + ']' : ""),
@@ -680,6 +682,15 @@ class EasyoceanPlots extends React.Component {
     }
 
     changePlotBounds = (event) => {
+        let num = parseFloat(event.target.value)
+        if(Number.isNaN(num)){
+            return ''
+        } else {
+            return num
+        }
+    }
+
+    changeContourStep = (event) => {
         let num = parseFloat(event.target.value)
         if(Number.isNaN(num)){
             return ''
@@ -842,7 +853,7 @@ class EasyoceanPlots extends React.Component {
 											} 
 											onBlur={e => {this.setState({cmin: this.changePlotBounds(e), user_defined_cmin: e.target.defaultValue!=='', phase: 'remapData'})}}
 											onKeyPress={e => {if(e.key==='Enter'){this.setState({cmin: this.changePlotBounds(e), user_defined_cmin: e.target.defaultValue!=='', phase: 'remapData'})}}}
-											aria-label="xmin" 
+											aria-label="cmin" 
 											aria-describedby="basic-addon1"/>
 									</div>
 									<div className='col-6' style={{'paddingRight': '0px'}}>
@@ -859,7 +870,7 @@ class EasyoceanPlots extends React.Component {
 											} 
 											onBlur={e => {this.setState({cmax: this.changePlotBounds(e), user_defined_cmax: e.target.defaultValue!=='', phase: 'remapData'})}}
 											onKeyPress={e => {if(e.key==='Enter'){this.setState({cmax: this.changePlotBounds(e), user_defined_cmax: e.target.defaultValue!=='', phase: 'remapData'})}}}
-											aria-label="xmax" 
+											aria-label="cmax" 
 											aria-describedby="basic-addon1"/>
 									</div>
 								</div>
@@ -880,6 +891,24 @@ class EasyoceanPlots extends React.Component {
                                             Contour
                                         </label>
                                     </div>
+
+                                    {this.state.mode === 'contour' && <div>
+										<div className="form-text">
+						  					<span>contour step size</span>
+										</div>
+										<input 
+											type="text" 
+											className="form-control minmax" 
+											placeholder="Auto" 
+											value={this.state.contourStep}
+											onChange={e => {
+												this.setState({contourStep:e.target.value, phase: 'awaitingUserInput'})}
+											} 
+											onBlur={e => {this.setState({contourStep: this.changeContourStep(e), phase: 'remapData'})}}
+											onKeyPress={e => {if(e.key==='Enter'){this.setState({contourStep: this.changeContourStep(e), phase: 'remapData'})}}}
+											aria-label="contourStep" 
+											aria-describedby="basic-addon1"/>
+									</div>}
                                 </div>
 
                                 <h5 style={{marginTop:'1em'}}>Global Options</h5>
