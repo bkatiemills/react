@@ -98,7 +98,7 @@ helpers.onPolyCreate = function(payload){
 
 helpers.onPolyDelete = function(defaultPoly, payload){
 
-	this.setState({polygon: defaultPoly, interpolated_polygon: helpers.insertPointsInPolygon(defaultPoly), maxDayspan: this.defaultDayspan, startDate: this.state.startDate, endDate: this.state.endDate, refreshData: true})
+	this.setState({polygon: defaultPoly, interpolated_polygon: helpers.insertPointsInPolygon(defaultPoly), maxDayspan: this.defaultDayspan, startDate: this.state.startDate, endDate: this.state.endDate, phase: 'refreshData'})
 }
 
 helpers.fetchPolygon = function(coords){
@@ -107,7 +107,8 @@ helpers.fetchPolygon = function(coords){
 	vertexes.push(vertexes[0])
 
 	let newState = helpers.manageAllowedDates.bind(this)(vertexes)
-	newState.refreshData = true
+	newState.phase = 'refreshData'
+    newState.urls = this.generateURLs()
 
 	this.setState(newState)
 }

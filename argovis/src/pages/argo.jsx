@@ -32,7 +32,6 @@ class ArgoExplore extends React.Component {
 			argodeep: q.has('argodeep') ? q.get('argodeep') === 'true' : false,
 			argoPlatformSuggestions: [],
 			argoPlatform: q.has('argoPlatform') ? q.get('argoPlatform') : '',
-			refreshData: true,
 			points: [],
             data: [[]],
 			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [],
@@ -43,7 +42,8 @@ class ArgoExplore extends React.Component {
 			mapkey: Math.random(),
 			nCore: 0,
 			nBGC: 0,
-			nDeep: 0
+			nDeep: 0,
+            phase: 'refreshData',
 		}
 
 		this.state.maxDayspan = helpers.calculateDayspan.bind(this)(this.state)
@@ -82,7 +82,6 @@ class ArgoExplore extends React.Component {
 				} else {
 					this.vocab['argoPlatform'] = data[0]
 					this.setState({
-						refreshData:true,
 						nCore: data[1][0].summary.nCore,
 						nBGC: data[1][0].summary.nBGC,
 						nDeep: data[1][0].summary.nDeep
@@ -137,7 +136,7 @@ class ArgoExplore extends React.Component {
     }
 
     generateURLs(argoPlatform, argocore, argobgc, argodeep, startDate, endDate, polygon, depthRequired){
-    	if(argoPlatform !== ''){
+        if(argoPlatform !== ''){
     		return [this.apiPrefix +'argo?compression=minimal&platform=' + argoPlatform]
     	} else {
 
@@ -306,6 +305,44 @@ class ArgoExplore extends React.Component {
 
         this.setState(s)
     }    
+
+    onPolyCreate(p){
+    
+        // make a ring, insert extra points, and redraw the polygon
+        let original_vertexes = p.layer.getLatLngs()[0].map(x => [x['lng'], x['lat']])
+        original_vertexes.push(original_vertexes[0])
+        let vertexes = original_vertexes.slice(0, original_vertexes.length-1)
+        vertexes = helpers.insertPointsInPolygon(vertexes)
+        p.layer.setLatLngs(vertexes.map(x => ({'lng': x[0], 'lat': x[1]})))
+       
+        let s = {...this.state}
+        s.polygon = original_vertexes // use these to search mongo
+        s.interpolated_polygon = vertexes // use these to draw something in leaflet that roughly resembles the mongo search region
+    
+        let maxdays = helpers.calculateDayspan.bind(this)(s)
+        s.maxDayspan = maxdays
+    
+        if(maxdays < this.state.maxDayspan){
+            // rethink the end date in case they drew a bigger polygon and the date range needs to be forcibly contracted
+            let timebox = helpers.setDate.bind(this)('startDate', document.getElementById('startDate').valueAsNumber, maxdays)
+            s.endDate = timebox[1]
+        }
+        s.phase = 'refreshData'
+        s.urls = this.generateURLs(s.argoPlatform, s.argocore, s.argobgc, s.argodeep, s.startDate, s.endDate, s.polygon, s.depthRequired)
+    
+        this.setState(s)
+    }
+
+    onPolyDelete(defaultPoly){
+
+        this.setState({
+            polygon: defaultPoly, 
+            interpolated_polygon: helpers.insertPointsInPolygon(defaultPoly), 
+            maxDayspan: this.defaultDayspan, 
+            urls: this.generateURLs(this.state.argoPlatform, this.state.argocore, this.state.argobgc, this.state.argodeep, this.state.startDate, this.state.endDate, defaultPoly, this.state.depthRequired),
+            phase: 'refreshData'
+        })
+    }
 
 	render(){
 		console.log(this.state)
@@ -477,8 +514,8 @@ class ArgoExplore extends React.Component {
 							<FeatureGroup ref={this.fgRef}>
 								<EditControl
 								position='topleft'
-								onCreated={p => helpers.onPolyCreate.bind(this)(p)}
-								onDeleted={p => helpers.onPolyDelete.bind(this)([],p)}
+								onCreated={p => this.onPolyCreate.bind(this)(p)}
+								onDeleted={p => this.onPolyDelete.bind(this)([],p)}
 								onDrawStop={p => helpers.onDrawStop.bind(this)(p)}
 								onDrawStart={p => helpers.onDrawStart.bind(this)(p)}
 								draw={{
