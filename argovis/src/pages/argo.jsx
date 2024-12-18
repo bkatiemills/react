@@ -172,30 +172,6 @@ class ArgoExplore extends React.Component {
 	    }
     }
 
-
-
-
-
-
-
-
-    // componentDidUpdate(prevProps, prevState, snapshot){
-    // 	helpers.componentDidUpdate.bind(this)()
-    // }
-
-	refreshMap(state){
-		helpers.refreshMap.bind(this)(state)
-	}
-
-    lookingForEntity(state){
-    	// return true if any token, valid or not, is specified for any entity query string parameter
-    	return Boolean(state.argoPlatform)
-    }
-
-	mapmarkers(points, state){
-		return helpers.circlefy.bind(this)(points, state)
-	}
-
     chooseColor(point){
     	if(point[4].includes('argo_bgc')){
     		return 'green'
@@ -234,14 +210,6 @@ class ArgoExplore extends React.Component {
     		m = 5 // 5x date range when not asking for core.
     	}
     	return m
-    }
-
-    toggleCoupling(s){
-    	// if changing a toggle for this page needs to trigger a side effect on state, do so here.
-
-    	s.maxDayspan = helpers.calculateDayspan.bind(this)(s)
-
-    	return s
     }
 
     changeDates(date, e){
