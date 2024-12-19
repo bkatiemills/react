@@ -44,6 +44,7 @@ class ArgoExplore extends React.Component {
 			nBGC: 0,
 			nDeep: 0,
             phase: 'refreshData',
+            suppressBlur: false,
 		}
 
 		this.state.maxDayspan = helpers.calculateDayspan.bind(this)(this.state)
@@ -71,7 +72,7 @@ class ArgoExplore extends React.Component {
         
         // get initial data
         this.state.urls = this.generateURLs(this.state.argoPlatform, this.state.argocore, this.state.argobgc, this.state.argodeep, this.state.startDate, this.state.endDate, this.state.polygon, this.state.depthRequired)
-        this.downloadData()
+        //this.downloadData() // note the setState from the vocab fetch will kick off the data download since we initialize in phase refreshData, so we omit it here
 
         // populate vocabularies for UI
         let vocabURLs = [this.apiPrefix + 'argo/vocabulary?parameter=platform', this.apiPrefix + 'argo/overview']
@@ -131,7 +132,8 @@ class ArgoExplore extends React.Component {
 
         this.setState({ 
             points: points, 
-            phase: 'idle'
+            phase: 'idle',
+            suppressBlur: false
         })
     }
 
@@ -171,6 +173,100 @@ class ArgoExplore extends React.Component {
 	    	return url
 	    }
     }
+
+    regionURL(polygon, startDate, endDate, depthRequired){
+        // generate URLs using existing state, but with a new polygon, startDate, and endDate
+        return this.generateURLs(this.state.argoPlatform, this.state.argocore, this.state.argobgc, this.state.argodeep, startDate, endDate, polygon, depthRequired)
+    }
+
+    changeDepth(e){
+        this.setState({
+            depthRequired:e.target.value, 
+            phase: 'refreshData',
+            urls: this.regionURL(this.state.polygon, this.state.startDate, this.state.endDate, e.target.value),
+            suppressBlur: e.type === 'keypress'
+        })
+    }
+
+    inputPlatform(fieldID, ref, event, change){
+        // autosuggest management
+
+        if(change.newValue !== ''){
+            this.reautofocus = ref
+        } else {
+            this.reautofocus = null
+        }
+
+        let s = {...this.state}
+        s[fieldID] = change.newValue
+        s.observingEntity = Boolean(change.newValue)
+        this.changePlatform(fieldID, s, event)
+    }
+
+    changePlatform(fieldID, interimState, event){
+        // actually go looking for a platform on not-a-kwystroke events, or hits enter, and only if the specified platform is valid
+        if(event.type === 'blur' && interimState.suppressBlur){
+            return
+        } else if(event.type === 'click' || event.type === 'blur' || (event.type === 'keypress' && event.key === 'Enter')){  
+            if(this.vocab.argoPlatform.includes(interimState[fieldID]) || interimState[fieldID] === '' ){
+                interimState.urls = this.generateURLs(interimState[fieldID], interimState.argocore, interimState.argobgc, interimState.argodeep, interimState.startDate, interimState.endDate, interimState.polygon, interimState.depthRequired)
+                interimState.phase = 'refreshData'
+            } 
+            interimState.suppressBlur = (event.type === 'keypress' && event.key === 'Enter') || (event.type === 'click')
+            this.setState(interimState)
+        } else if (event.type === 'change'){
+            this.setState(interimState)
+        }
+    }
+
+    toggleArgoProgram(program){
+    	let s = {...this.state}
+        
+        s[program] = !s[program]
+        s.urls = this.generateURLs(s.argoPlatform, s.argocore, s.argobgc, s.argodeep, s.startDate, s.endDate, s.polygon, s.depthRequired)
+        s.phase = 'refreshData'
+
+        this.setState(s)
+    }    
+
+    onPolyCreate(p){
+    
+        // make a ring, insert extra points, and redraw the polygon
+        let original_vertexes = p.layer.getLatLngs()[0].map(x => [x['lng'], x['lat']])
+        original_vertexes.push(original_vertexes[0])
+        let vertexes = original_vertexes.slice(0, original_vertexes.length-1)
+        vertexes = helpers.insertPointsInPolygon(vertexes)
+        p.layer.setLatLngs(vertexes.map(x => ({'lng': x[0], 'lat': x[1]})))
+       
+        let s = {...this.state}
+        s.polygon = original_vertexes // use these to search mongo
+        s.interpolated_polygon = vertexes // use these to draw something in leaflet that roughly resembles the mongo search region
+    
+        let maxdays = helpers.calculateDayspan.bind(this)(s)
+        s.maxDayspan = maxdays
+    
+        if(maxdays < this.state.maxDayspan){
+            // rethink the end date in case they drew a bigger polygon and the date range needs to be forcibly contracted
+            let timebox = helpers.setDate.bind(this)('startDate', document.getElementById('startDate').valueAsNumber, maxdays)
+            s.endDate = timebox[1]
+        }
+        s.phase = 'refreshData'
+        s.urls = this.regionURL(s.polygon, s.startDate, s.endDate, s.depthRequired)
+    
+        this.setState(s)
+    }
+
+    onPolyDelete(defaultPoly){
+
+        this.setState({
+            polygon: defaultPoly, 
+            interpolated_polygon: helpers.insertPointsInPolygon(defaultPoly), 
+            maxDayspan: this.defaultDayspan, 
+            urls: this.generateURLs(this.state.argoPlatform, this.state.argocore, this.state.argobgc, this.state.argodeep, this.state.startDate, this.state.endDate, defaultPoly, this.state.depthRequired),
+            phase: 'refreshData'
+        })
+    }
+
 
     chooseColor(point){
     	if(point[4].includes('argo_bgc')){
@@ -212,106 +308,6 @@ class ArgoExplore extends React.Component {
     	return m
     }
 
-    changeDates(date, e){
-        let daterange = helpers.setDate.bind(this)(date, e.target.valueAsNumber, this.state.maxDayspan)
-        let s = {...this.state}
-        s.startDate = daterange[0]
-        s.endDate = daterange[1]
-        s.phase = 'refreshData'
-        s.urls = this.generateURLs(s.argoPlatform, s.argocore, s.argobgc, s.argodeep, daterange[0], daterange[1], s.polygon, s.depthRequired)
-
-        this.setState(s)
-    }
-
-    changeDepth(e){
-        this.setState({
-            depthRequired:e.target.value, 
-            phase: 'refreshData',
-            urls: this.generateURLs(this.state.argoPlatform, this.state.argocore, this.state.argobgc, this.state.argodeep, this.state.startDate, this.state.endDate, this.state.polygon, e.target.value)
-        })
-    }
-
-    inputPlatform(fieldID, ref, event, change){
-        // autosuggest management
-
-        if(change.newValue !== ''){
-            this.reautofocus = ref
-        } else {
-            this.reautofocus = null
-        }
-
-        let s = {...this.state}
-        s[fieldID] = change.newValue
-        s.observingEntity = Boolean(change.newValue)
-
-        this.changePlatform(fieldID, s, event)
-    }
-
-    changePlatform(fieldID, interimState, event){
-        // actually go looking for a platform on not-a-kwystroke events, or hits enter, and only if the specified platform is valid
-
-        if( !event.hasOwnProperty('key') || 
-            (event.hasOwnProperty('key') && event.key === 'Enter')){
-            if(this.vocab.argoPlatform.includes(interimState[fieldID]) ){
-                interimState.urls = this.generateURLs(interimState[fieldID], interimState.argocore, interimState.argobgc, interimState.argodeep, interimState.startDate, interimState.endDate, interimState.polygon, interimState.depthRequired)
-                interimState.phase = 'refreshData'
-            } else if(interimState[fieldID] == '' && (event.type === 'blur' || event.type === 'keypress')){
-                interimState.urls = this.generateURLs(interimState.argoPlatform, interimState.argocore, interimState.argobgc, interimState.argodeep, interimState.startDate, interimState.endDate, interimState.polygon, interimState.depthRequired)
-                interimState.phase = 'refreshData'
-            }
-        }
-    
-        this.setState(interimState)
-    }
-
-    toggleArgoProgram(program){
-    	let s = {...this.state}
-        
-        s[program] = !s[program]
-        s.urls = this.generateURLs(s.argoPlatform, s.argocore, s.argobgc, s.argodeep, s.startDate, s.endDate, s.polygon, s.depthRequired)
-        s.phase = 'refreshData'
-
-        this.setState(s)
-    }    
-
-    onPolyCreate(p){
-    
-        // make a ring, insert extra points, and redraw the polygon
-        let original_vertexes = p.layer.getLatLngs()[0].map(x => [x['lng'], x['lat']])
-        original_vertexes.push(original_vertexes[0])
-        let vertexes = original_vertexes.slice(0, original_vertexes.length-1)
-        vertexes = helpers.insertPointsInPolygon(vertexes)
-        p.layer.setLatLngs(vertexes.map(x => ({'lng': x[0], 'lat': x[1]})))
-       
-        let s = {...this.state}
-        s.polygon = original_vertexes // use these to search mongo
-        s.interpolated_polygon = vertexes // use these to draw something in leaflet that roughly resembles the mongo search region
-    
-        let maxdays = helpers.calculateDayspan.bind(this)(s)
-        s.maxDayspan = maxdays
-    
-        if(maxdays < this.state.maxDayspan){
-            // rethink the end date in case they drew a bigger polygon and the date range needs to be forcibly contracted
-            let timebox = helpers.setDate.bind(this)('startDate', document.getElementById('startDate').valueAsNumber, maxdays)
-            s.endDate = timebox[1]
-        }
-        s.phase = 'refreshData'
-        s.urls = this.generateURLs(s.argoPlatform, s.argocore, s.argobgc, s.argodeep, s.startDate, s.endDate, s.polygon, s.depthRequired)
-    
-        this.setState(s)
-    }
-
-    onPolyDelete(defaultPoly){
-
-        this.setState({
-            polygon: defaultPoly, 
-            interpolated_polygon: helpers.insertPointsInPolygon(defaultPoly), 
-            maxDayspan: this.defaultDayspan, 
-            urls: this.generateURLs(this.state.argoPlatform, this.state.argocore, this.state.argobgc, this.state.argodeep, this.state.startDate, this.state.endDate, defaultPoly, this.state.depthRequired),
-            phase: 'refreshData'
-        })
-    }
-
 	render(){
 		console.log(this.state)
 
@@ -321,7 +317,7 @@ class ArgoExplore extends React.Component {
 				<div className='row' style={{'width':'100vw'}}>
 					<div className='col-lg-3 order-last order-lg-first'>
 						<fieldset ref={this.formRef}>
-							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Downloading...</span>
+							<span id='statusBanner' ref={this.statusReporting} className='statusBanner busy'>Preparing...</span>
 							<div className='mapSearchInputs scrollit' style={{'height':'90vh'}}> 
 								<h5>
 									<OverlayTrigger
@@ -339,7 +335,14 @@ class ArgoExplore extends React.Component {
 								</h5>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">
-										<input type="password" className="form-control" id="apiKey" value={this.state.apiKey} placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
+										<input 
+                                            type="password" 
+                                            className="form-control" 
+                                            id="apiKey" 
+                                            value={this.state.apiKey} 
+                                            placeholder="" 
+                                            onInput={helpers.changeAPIkey.bind(this)}
+                                        ></input>
 										<label htmlFor="apiKey">API Key</label>
 										<div id="apiKeyHelpBlock" className="form-text">
 						  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
@@ -356,8 +359,16 @@ class ArgoExplore extends React.Component {
 											value={this.state.startDate} 
 											placeholder="" 
                                             onChange={e => {this.setState({startDate:e.target.value, phase: 'awaitingUserInput'})}} 
-                                            onBlur={e => {this.changeDates.bind(this)('startDate', e)}}
-                                            onKeyPress={e => {if(e.key==='Enter'){this.changeDates.bind(this)('startDate', e)}}}
+                                            onBlur={e => {
+                                                if(!this.state.suppressBlur){
+                                                    helpers.changeDates.bind(this)('startDate', e)
+                                                }
+                                            }}
+                                            onKeyPress={e => {
+                                                if(e.key==='Enter'){
+                                                    helpers.changeDates.bind(this)('startDate', e)
+                                                }
+                                            }}
 										/>
 										<label htmlFor="startDate">Start Date</label>
 									</div>
@@ -370,8 +381,16 @@ class ArgoExplore extends React.Component {
 											value={this.state.endDate} 
 											placeholder="" 
                                             onChange={e => {this.setState({endDate:e.target.value, phase: 'awaitingUserInput'})}} 
-                                            onBlur={e => {this.changeDates.bind(this)('endDate', e)}}
-                                            onKeyPress={e => {if(e.key==='Enter'){this.changeDates.bind(this)('endDate', e)}}}
+                                            onBlur={e => {
+                                                if(!this.state.suppressBlur){
+                                                    helpers.changeDates.bind(this)('endDate', e)
+                                                }
+                                            }}
+                                            onKeyPress={e => {
+                                                if(e.key==='Enter')
+                                                    {helpers.changeDates.bind(this)('endDate', e)
+                                                }
+                                            }}
 										/>
 										<label htmlFor="endDate">End Date</label>
 									</div>
@@ -389,8 +408,16 @@ class ArgoExplore extends React.Component {
 											placeholder="0" 
 											value={this.state.depthRequired} 
                                             onChange={e => {this.setState({depthRequired:e.target.value, phase: 'awaitingUserInput'})}} 
-											onBlur={e => {this.changeDepth.bind(this)(e)}}
-                                            onKeyPress={e => {if(e.key==='Enter'){this.changeDepth.bind(this)(e)}}}
+											onBlur={e => {
+                                                if(!this.state.suppressBlur){
+                                                    this.changeDepth.bind(this)(e)
+                                                }
+                                            }}
+                                            onKeyPress={e => {
+                                                if(e.key==='Enter')
+                                                    {this.changeDepth.bind(this)(e)
+                                                }
+                                            }}
 											aria-label="depthRequired" 
 											aria-describedby="basic-addon1"/>
 										<label htmlFor="depth">Require levels deeper than [m]:</label>
@@ -407,11 +434,20 @@ class ArgoExplore extends React.Component {
 											value={this.state.centerlon} 
                                             onChange={e => {this.setState({centerlon:e.target.value, phase: 'awaitingUserInput'})}} 
 											onBlur={e => {
-												this.setState({centerlon: helpers.manageCenterlon(e.target.value), mapkey: Math.random(), phase: 'remapData'})
+												this.setState({
+                                                    centerlon: helpers.manageCenterlon(e.target.value), 
+                                                    mapkey: Math.random(), 
+                                                    phase: 'remapData'
+                                                })
 											}}
 											onKeyPress={e => {
 												if(e.key==='Enter'){
-													this.setState({centerlon: helpers.manageCenterlon(e.target.value), mapkey: Math.random(), phase: 'remapData'})
+													this.setState({
+                                                        centerlon: helpers.manageCenterlon(e.target.value), 
+                                                        mapkey: Math.random(), 
+                                                        phase: 'remapData',
+                                                        suppressBlur: true
+                                                    })
 												}
 											}}
 											aria-label="centerlon" 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapContainer, TileLayer, Polygon, FeatureGroup, Popup} from 'react-leaflet'
+import { MapContainer, TileLayer, Polygon, FeatureGroup, Popup, CircleMarker} from 'react-leaflet'
 import { EditControl } from "react-leaflet-draw";
 import Autosuggest from 'react-autosuggest';
 import '../index.css';
@@ -33,14 +33,16 @@ class ShipsExplore extends React.Component {
 			woceline: q.has('woceline') ? q.get('woceline') : '',
 			cruiseSuggestions: [],
 			cruise: q.has('cruise') ? q.get('cruise') : '',
-			refreshData: true,
 			points: [],
 			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : [],
 			interpolated_polygon: q.has('polygon') ? helpers.insertPointsInPolygon(JSON.parse(q.get('polygon'))) : [],
 			urls: [],
 			depthRequired: q.has('depthRequired') ? parseFloat(q.get('depthRequired')) : 0,
 			centerlon: q.has('centerlon') ? parseFloat(q.get('centerlon')) : -160,
-			mapkey: Math.random()
+			mapkey: Math.random(),
+            phase: 'refreshData',
+            data: [[]],
+
 		}
 		this.state.maxDayspan = helpers.calculateDayspan.bind(this)(this.state)
 
@@ -68,6 +70,9 @@ class ShipsExplore extends React.Component {
         this.dataset = 'cchdo'
         this.customQueryParams = ['startDate', 'endDate', 'polygon', 'depthRequired', 'woce', 'goship', 'other', 'woceline', 'cruise', 'centerlon']
 
+        // get initial data
+        this.state.urls = this.generateURLs()
+        this.downloadData()
 
         // populate vocabularies, and trigger first render
         let vocabURLs = [this.apiPrefix + 'summary?id=cchdo_occupancies', this.apiPrefix + 'cchdo/vocabulary?parameter=cchdo_cruise']
@@ -87,11 +92,110 @@ class ShipsExplore extends React.Component {
 					})
 					this.vocab['woceline'] = [].concat(...this.vocab['woceline'])
 					this.vocab['cruise'] = data[1].map(x=>String(x))
-					this.setState({refreshData:true})
 				}
 			})
 		})
 	}
+
+    componentDidUpdate(prevProps, prevState, snapshot){
+    	helpers.phaseManager.bind(this)(prevProps, prevState, snapshot)
+    }
+
+    downloadData(){
+        Promise.all(this.state.urls.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+            Promise.all(responses.map(res => res.json())).then(data => {
+                for(let i=0; i<data.length; i++){
+                    let bail = helpers.handleHTTPcodes.bind(this)(data[i].code)
+                    if(bail){
+                        return
+                    }
+                }
+
+                this.setState({
+                    phase: 'remapData',
+                    data: data
+                })
+
+            })
+        })
+    }
+
+    replot(){
+        let points = []
+
+        if(!(JSON.stringify(this.state.data) === '[[]]' || JSON.stringify(this.state.data) === '[]' || this.state.data.hasOwnProperty('code') || this.state.data[0].hasOwnProperty('code'))){
+            for(let i=0; i<this.state.data.length; i++){
+                let newpoints = this.state.data[i].map(point => {return(
+                    <CircleMarker key={point[0]+Math.random()} center={[point[2], helpers.mutateLongitude(point[1], parseFloat(this.state.centerlon)) ]} radius={2} color={this.chooseColor(point)}>
+                        {this.genTooltip.bind(this)(point)}
+                    </CircleMarker>
+                  )})
+                points = points.concat(newpoints)
+            }
+        }
+
+        this.setState({ 
+            points: points, 
+            phase: 'idle'
+        })
+    }
+
+    generateURLs(woceline, cruise, startDate, endDate, polygon, depthRequired, woce, goship, other) {
+    	if(woceline !== ''){
+    		// parse out what WOCE line and date range is meant by the autocomplete, and give an extra hour on either end
+    		let woceline = woceline.split(' ')[0]
+    		let startDate = new Date(this.wocelineLookup[woceline].startDate)
+    		let endDate = new Date(this.wocelineLookup[woceline].endDate)
+    		startDate.setHours(startDate.getHours() - 1)
+    		endDate.setHours(endDate.getHours() + 1)
+    		return [this.apiPrefix +'cchdo?compression=minimal&woceline=' + woceline + '&startDate=' + startDate.toISOString().replace('.000Z', 'Z') + '&endDate=' + endDate.toISOString().replace('.000Z', 'Z')]
+    	} else if(cruise !== '') {
+    		return [this.apiPrefix +'cchdo?compression=minimal&cchdo_cruise=' + cruise]
+    	} else {
+
+	    	let url = helpers.generateTemporoSpatialURL.bind(this)(this.apiPrefix, 'cchdo', startDate, endDate, polygon, depthRequired)	
+
+	    	// decide on source.source
+	    	let source = []
+	    	if(!other && !woce && !goship){
+	    		return []
+	    	}else if(other && woce && goship){
+	    		source = []
+	    	} else if(other && woce && !goship){
+	    		source = ['~cchdo_woce,~cchdo_go-ship', 'cchdo_woce']
+	    	} else if(other && !woce && goship){
+	    		source = ['~cchdo_woce,~cchdo_go-ship', 'cchdo_go-ship']
+	    	} else if(!other && woce && goship){
+	    		source = ['cchdo_go-ship', 'cchdo_woce']
+	    	} else if(other && !woce && !goship){
+	    		source = ['~cchdo_go-ship,~cchdo_woce']
+	    	} else if(!other && woce && !goship){
+	    		source = ['cchdo_woce']
+	    	} else if(!other && !woce && goship){
+	    		source = ['cchdo_go-ship']
+	    	}
+
+	    	if(source.length === 0){
+	    		return [url]
+	    	} else{
+	    		return source.map(x => url+'&source='+x)
+	    	}
+	    }
+    }
+
+    regionURL(polygon, startDate, endDate){
+        // generate URLs using existing state, but with a new polygon, startDate, and endDate
+        return this.generateURLs(this.state.woceline, this.state.cruise, startDate, endDate, polygon, this.state.depthRequired, this.state.woce, this.state.goship, this.state.other)
+    }
+
+
+
+
+
+
+
+
+
 
     componentDidUpdate(prevProps, prevState, snapshot){
     	helpers.componentDidUpdate.bind(this)()
@@ -104,49 +208,6 @@ class ShipsExplore extends React.Component {
     lookingForEntity(state){
     	// return true if any token, valid or not, is specified for any entity query string parameter
     	return Boolean(state.woceline || state.cruise)
-    }
-
-    generateURLs(state) {
-    	if(state.woceline !== ''){
-    		// parse out what WOCE line and date range is meant by the autocomplete, and give an extra hour on either end
-    		let woceline = state.woceline.split(' ')[0]
-    		let startDate = new Date(this.wocelineLookup[state.woceline].startDate)
-    		let endDate = new Date(this.wocelineLookup[state.woceline].endDate)
-    		startDate.setHours(startDate.getHours() - 1)
-    		endDate.setHours(endDate.getHours() + 1)
-    		return [this.apiPrefix +'cchdo?compression=minimal&woceline=' + woceline + '&startDate=' + startDate.toISOString().replace('.000Z', 'Z') + '&endDate=' + endDate.toISOString().replace('.000Z', 'Z')]
-    	} else if(state.cruise !== '') {
-    		return [this.apiPrefix +'cchdo?compression=minimal&cchdo_cruise=' + state.cruise]
-    	} else {
-
-	    	let url = helpers.generateTemporoSpatialURL.bind(this)(this.apiPrefix, 'cchdo', state)	
-
-	    	// decide on source.source
-	    	let source = []
-	    	if(!state.other && !state.woce && !state.goship){
-	    		return []
-	    	}else if(state.other && state.woce && state.goship){
-	    		source = []
-	    	} else if(state.other && state.woce && !state.goship){
-	    		source = ['~cchdo_woce,~cchdo_go-ship', 'cchdo_woce']
-	    	} else if(state.other && !state.woce && state.goship){
-	    		source = ['~cchdo_woce,~cchdo_go-ship', 'cchdo_go-ship']
-	    	} else if(!state.other && state.woce && state.goship){
-	    		source = ['cchdo_go-ship', 'cchdo_woce']
-	    	} else if(state.other && !state.woce && !state.goship){
-	    		source = ['~cchdo_go-ship,~cchdo_woce']
-	    	} else if(!state.other && state.woce && !state.goship){
-	    		source = ['cchdo_woce']
-	    	} else if(!state.other && !state.woce && state.goship){
-	    		source = ['cchdo_go-ship']
-	    	}
-
-	    	if(source.length === 0){
-	    		return [url]
-	    	} else{
-	    		return source.map(x => url+'&source='+x)
-	    	}
-	    }
     }
 
 	mapmarkers(points, state){
@@ -229,12 +290,20 @@ class ShipsExplore extends React.Component {
 								</h5>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">
-										<input type="password" className="form-control" id="apiKey" value={this.state.apiKey} placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
+                                    <input 
+                                            type="password" 
+                                            className="form-control" 
+                                            id="apiKey" 
+                                            value={this.state.apiKey} 
+                                            placeholder="" 
+                                            onInput={helpers.changeAPIkey.bind(this)}
+                                        ></input>
 										<label htmlFor="apiKey">API Key</label>
 										<div id="apiKeyHelpBlock" className="form-text">
 						  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
 										</div>
 									</div>
+
 									<h6>Time range</h6>
 									<div className="form-floating mb-3">
 										<input 
@@ -244,9 +313,9 @@ class ShipsExplore extends React.Component {
 											id="startDate" 
 											value={this.state.startDate} 
 											placeholder="" 
-											onChange={v => helpers.setDate.bind(this)('startDate', v.target.valueAsNumber, this.state.maxDayspan, false, true)}
-											onBlur={e => helpers.setDate.bind(this)('startDate', e.target.valueAsNumber, this.state.maxDayspan, false, false)}
-											onKeyPress={e => {if(e.key==='Enter'){helpers.setDate.bind(this)('startDate', e.target.valueAsNumber, this.state.maxDayspan, false, false)}}}
+                                            onChange={e => {this.setState({startDate:e.target.value, phase: 'awaitingUserInput'})}} 
+                                            onBlur={e => {helpers.changeDates.bind(this)('startDate', e)}}
+                                            onKeyPress={e => {if(e.key==='Enter'){helpers.changeDates.bind(this)('startDate', e)}}}
 										/>
 										<label htmlFor="startDate">Start Date</label>
 									</div>
@@ -255,12 +324,12 @@ class ShipsExplore extends React.Component {
 											type="date" 
 											disabled={this.state.observingEntity} 
 											className="form-control" 
-											id="startDate" 
+											id="endDate" 
 											value={this.state.endDate} 
 											placeholder="" 
-											onChange={v => helpers.setDate.bind(this)('endDate', v.target.valueAsNumber, this.state.maxDayspan, false, true)}
-											onBlur={e => helpers.setDate.bind(this)('endDate', e.target.valueAsNumber, this.state.maxDayspan, false, false)}
-											onKeyPress={e => {if(e.key==='Enter'){helpers.setDate.bind(this)('endDate', e.target.valueAsNumber, this.state.maxDayspan, false, false)}}}
+                                            onChange={e => {this.setState({endDate:e.target.value, phase: 'awaitingUserInput'})}} 
+                                            onBlur={e => {helpers.changeDates.bind(this)('endDate', e)}}
+                                            onKeyPress={e => {if(e.key==='Enter'){helpers.changeDates.bind(this)('endDate', e)}}}
 										/>
 										<label htmlFor="endDate">End Date</label>
 									</div>

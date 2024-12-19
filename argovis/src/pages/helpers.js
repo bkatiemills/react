@@ -299,6 +299,35 @@ helpers.componentDidUpdate = function(){
 	}
 }
 
+helpers.changeAPIkey = function(event){
+    localStorage.setItem('apiKey', event.target.value)
+
+    this.setState({
+        apiKey: event.target.value,
+        phase: 'idle'
+    })
+}
+
+helpers.changeDates = function(date, e){
+    let daterange = helpers.setDate.bind(this)(date, e.target.valueAsNumber, this.state.maxDayspan)
+    let s = {...this.state}
+    s.startDate = daterange[0]
+    s.endDate = daterange[1]
+    s.phase = 'refreshData'
+    s.urls = this.regionURL(s.polygon, s.startDate, s.endDate, s.depthRequired)
+    s.suppressBlur = e.type === 'keypress'
+
+    this.setState(s)
+}
+
+helpers.changeDepth = function(e){
+    this.setState({
+        depthRequired:e.target.value, 
+        phase: 'refreshData',
+        urls: this.regionURL(this.state.polygon, this.state.startDate, this.state.endDate, e.target.value)
+    })
+}
+
 helpers.handleHTTPcodes = function(code){
 	let bail = false
 
@@ -511,7 +540,6 @@ helpers.toggle = function(v){
 // autosuggest callbacks
 
 helpers.onAutosuggestChange = function(fieldID, ref, event, change){
-
 	if(change.newValue !== ''){
 		this.reautofocus = ref
 	} else {
@@ -528,9 +556,11 @@ helpers.onSuggestionsFetchRequested = function(suggestionList, update){
 }
 
 helpers.onSuggestionsClearRequested = function(suggestionList){
-	let s = {}
-	s[suggestionList] = []
-	this.setState(s)
+	// let s = {}
+	// s[suggestionList] = []
+	// this.setState(s)
+    // seems to fire twice and not actually help much, just nerf this
+    return
 }
 
 helpers.getSuggestions = function(value, vocabKey){
@@ -553,6 +583,7 @@ helpers.renderSuggestion = function(inputState, suggestion){
             let s = {...this.state}
             s[inputState] = e.target.textContent
             s.phase = 'refreshData'
+            s.urls = this.regionURL(s.polygon, s.startDate, s.endDate, s.depthRequired)
 
             this.setState(s)
         }}
@@ -1477,10 +1508,10 @@ helpers.mungeTime = function(q, nDays, defaultEnd){
   if(q.has('endDate') && q.has('startDate')){
   	let t0 = new Date(q.get('startDate'))
   	let t1 = new Date(q.get('endDate'))
-  	if(t1.getTime() - t0.getTime() < (nDays * 24 * 60 * 60 * 1000)){
+  	if(t1.getTime() - t0.getTime() <= (nDays * 24 * 60 * 60 * 1000)){
   		this.state.startDate = q.get('startDate')
     	this.state.endDate = q.get('endDate')
-  	} 
+  	}
   }
 }
 

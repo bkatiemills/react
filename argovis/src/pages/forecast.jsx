@@ -31,7 +31,8 @@ class Forecast extends React.Component {
 			scale: chroma.scale(this.spectrum).domain([0,1]),
 			colormin: 0,
 			colormax: 1,
-            phase: 'refreshData'
+            phase: 'refreshData',
+            suppressBlur: false
 		}
 
         // some other useful class variables
@@ -85,10 +86,15 @@ class Forecast extends React.Component {
                 colormin: min,
                 colormax: max,
                 points: points,
-                phase: 'idle'
+                phase: 'idle',
+                suppressBlur: false
             })
         } else {
-            this.setState({points: [], phase: 'idle'})
+            this.setState({
+                points: [], 
+                phase: 'idle',
+                suppressBlur: false
+            })
         }
 
     }
@@ -218,7 +224,8 @@ class Forecast extends React.Component {
             phase: 'refreshData',
             originLon: helpers.tidylon(Math.round(e.target.value / 2) * 2),
             mapkey: Math.random(),
-            urls: this.generateURLs(helpers.tidylon(Math.round(e.target.value / 2) * 2), this.state.originLat, this.state.forecastTime)
+            urls: this.generateURLs(helpers.tidylon(Math.round(e.target.value / 2) * 2), this.state.originLat, this.state.forecastTime),
+            suppressBlur: e.type === 'keypress'
         })
     }
 
@@ -227,7 +234,8 @@ class Forecast extends React.Component {
             phase: 'refreshData',
             originLat: Math.round(e.target.value / 2) * 2,
             mapkey: Math.random(),
-            urls: this.generateURLs(this.state.originLon, Math.round(e.target.value / 2) * 2, this.state.forecastTime)
+            urls: this.generateURLs(this.state.originLon, Math.round(e.target.value / 2) * 2, this.state.forecastTime),
+            suppressBlur: e.type === 'keypress'
         })
     }
 
@@ -243,7 +251,8 @@ class Forecast extends React.Component {
         this.setState({
             centerlon: helpers.manageCenterlon(e.target.defaultValue),
             mapkey: Math.random(),
-            phase: 'remapData'
+            phase: 'remapData',
+            suppressBlur: e.type === 'keypress'
         })
     }
 
@@ -294,7 +303,9 @@ class Forecast extends React.Component {
 												}
 											} 
 											onBlur={e => {
-                                                this.changeLongitude(e)
+                                                if(!this.state.suppressBlur){
+                                                    this.changeLongitude(e)
+                                                }
 											}}
 											onKeyPress={e => {
 												if(e.key==='Enter'){
@@ -318,7 +329,9 @@ class Forecast extends React.Component {
 												}
 											} 
 											onBlur={e => {
-                                                this.changeLatitude(e)
+                                                if(!this.state.suppressBlur){
+                                                    this.changeLatitude(e)
+                                                }
 											}}
 											onKeyPress={e => {
 												if(e.key==='Enter'){
@@ -353,7 +366,9 @@ class Forecast extends React.Component {
 											this.setState({centerlon:e.target.value, phase: 'awaitingUserInput'})}
 										} 
 										onBlur={e => {
-											this.changeCenterLongitude(e)
+                                            if(!this.state.suppressBlur){
+    											this.changeCenterLongitude(e)
+                                            }
 										}}
 										onKeyPress={e => {
 											if(e.key==='Enter'){

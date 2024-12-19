@@ -470,6 +470,7 @@ class Grids extends React.Component {
       	centerlon: -70,
         data: [[]], // raw download data
         phase: 'refreshData', // refreshData, remapData, awaitingUserInput, or idle
+        suppressBlur: false,
       }
 
 	  this.state.timestep = q.has('timestep') ? q.get('timestep') : {
@@ -616,7 +617,8 @@ class Grids extends React.Component {
                 gridcells: this.gridRasterfy(s), 
                 min: this.state.user_defined_min ? this.state.min : min, 
                 max: this.state.user_defined_max ? this.state.max : max, 
-                phase: 'idle'
+                phase: 'idle',
+                suppressBlur: false
             }
         )
     }
@@ -1023,8 +1025,25 @@ class Grids extends React.Component {
 											placeholder="Auto" 
 											value={this.state.display_min}
                                             onChange={e => this.changeRange(e, 'display_min')}
-											onBlur={e => {this.setState({display_min: parseFloat(e.target.defaultValue), user_defined_min: e.target.defaultValue!=='', phase: 'remapData'})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({display_min: parseFloat(e.target.defaultValue), user_defined_min: e.target.defaultValue!=='', phase: 'remapData'})}}}
+                                            onBlur={e => {
+                                                if(!this.state.suppressBlur){
+                                                    this.setState({
+                                                        display_min: parseFloat(e.target.defaultValue), 
+                                                        user_defined_min: e.target.defaultValue!=='', 
+                                                        phase: 'remapData'
+                                                    })
+                                                }
+                                            }}
+											onKeyPress={e => {
+                                                if(e.key==='Enter'){
+                                                    this.setState({
+                                                        display_min: parseFloat(e.target.defaultValue), 
+                                                        user_defined_min: e.target.defaultValue!=='', 
+                                                        phase: 'remapData',
+                                                        suppressBlur: true
+                                                    })
+                                                }
+                                            }}
 											aria-label="xmin" 
 											aria-describedby="basic-addon1"/>
 									</div>
@@ -1038,8 +1057,25 @@ class Grids extends React.Component {
 											placeholder="Auto" 
 											value={this.state.display_max}
                                             onChange={e => this.changeRange(e, 'display_max')}
-											onBlur={e => {this.setState({display_max: parseFloat(e.target.defaultValue), user_defined_max: e.target.defaultValue!=='', phase: 'remapData'})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({display_max: parseFloat(e.target.defaultValue), user_defined_max: e.target.defaultValue!=='', phase: 'remapData'})}}}
+                                            onBlur={e => {
+                                                if(!this.state.suppressBlur){
+                                                    this.setState({
+                                                        display_max: parseFloat(e.target.defaultValue), 
+                                                        user_defined_max: e.target.defaultValue!=='', 
+                                                        phase: 'remapData'
+                                                    })
+                                                }
+                                            }}
+											onKeyPress={e => {
+                                                if(e.key==='Enter'){
+                                                    this.setState({
+                                                        display_max: parseFloat(e.target.defaultValue), 
+                                                        user_defined_max: e.target.defaultValue!=='', 
+                                                        phase: 'remapData',
+                                                        suppressBlur: true
+                                                    })
+                                                }
+                                            }}
 											aria-label="xmax" 
 											aria-describedby="basic-addon1"/>
 									</div>

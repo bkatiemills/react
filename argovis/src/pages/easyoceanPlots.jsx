@@ -402,6 +402,7 @@ class EasyoceanPlots extends React.Component {
                 cmin: q.has('cmin') ? parseFloat(q.get('cmin')) : '',
                 cmax: q.has('cmax') ? parseFloat(q.get('cmax')) : '',
                 contourStep: q.has('contourStep') ? parseFloat(q.get('contourStep')) : 1,
+                suppressBlur: false, // submitting with enter key triggers keypress and blur events, just want one.
             }
     
             this.state.urls = this.generateURLs(this.state.woceline, this.state.occupancyIndex, this.state.subtractionIndex)
@@ -579,6 +580,7 @@ class EasyoceanPlots extends React.Component {
 
         this.setState({
             phase: 'idle',
+            suppressBlur: false
         })
     }
 
@@ -682,6 +684,7 @@ class EasyoceanPlots extends React.Component {
     }
 
     changePlotBounds = (event) => {
+
         let num = parseFloat(event.target.value)
         if(Number.isNaN(num)){
             return ''
@@ -851,8 +854,21 @@ class EasyoceanPlots extends React.Component {
 											onChange={e => {
 												this.setState({cmin:e.target.value, phase: 'awaitingUserInput'})}
 											} 
-											onBlur={e => {this.setState({cmin: this.changePlotBounds(e), user_defined_cmin: e.target.defaultValue!=='', phase: 'remapData'})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({cmin: this.changePlotBounds(e), user_defined_cmin: e.target.defaultValue!=='', phase: 'remapData'})}}}
+											onBlur={e => {
+                                                if(!this.state.suppressBlur){
+                                                    this.setState({cmin: this.changePlotBounds(e), user_defined_cmin: e.target.defaultValue!=='', phase: 'remapData'})
+                                                }
+                                            }}
+											onKeyPress={e => {
+                                                if(e.key==='Enter'){
+                                                    this.setState({
+                                                        cmin: this.changePlotBounds(e), 
+                                                        user_defined_cmin: e.target.defaultValue!=='', 
+                                                        phase: 'remapData', 
+                                                        suppressBlur: true
+                                                    })
+                                                }
+                                            }}
 											aria-label="cmin" 
 											aria-describedby="basic-addon1"/>
 									</div>
@@ -868,8 +884,21 @@ class EasyoceanPlots extends React.Component {
 											onChange={e => {
 												this.setState({cmax:e.target.value, phase: 'awaitingUserInput'})}
 											} 
-											onBlur={e => {this.setState({cmax: this.changePlotBounds(e), user_defined_cmax: e.target.defaultValue!=='', phase: 'remapData'})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({cmax: this.changePlotBounds(e), user_defined_cmax: e.target.defaultValue!=='', phase: 'remapData'})}}}
+											onBlur={e => {
+                                                if(!this.state.suppressBlur){
+                                                    this.setState({cmax: this.changePlotBounds(e), user_defined_cmax: e.target.defaultValue!=='', phase: 'remapData'})
+                                                }
+                                            }}
+											onKeyPress={e => {
+                                                if(e.key==='Enter'){
+                                                    this.setState({
+                                                        cmax: this.changePlotBounds(e), 
+                                                        user_defined_cmax: e.target.defaultValue!=='', 
+                                                        phase: 'remapData', 
+                                                        suppressBlur: true
+                                                    })
+                                                }
+                                            }}
 											aria-label="cmax" 
 											aria-describedby="basic-addon1"/>
 									</div>
@@ -879,15 +908,15 @@ class EasyoceanPlots extends React.Component {
                                     <div className="form-text">
 						  				<span>Plot Mode</span>
 									</div>
-                                    <div class="form-check">
+                                    <div className="form-check">
                                         <input className="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault1" value='scatter' checked={this.state.mode === 'scatter'} onChange={this.changeMode}/>
-                                        <label className="form-check-label" for="flexRadioDefault1">
+                                        <label className="form-check-label" htmlFor="flexRadioDefault1">
                                             Scatter
                                         </label>
                                     </div>
-                                    <div class="form-check">
+                                    <div className="form-check">
                                         <input className="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault2" value='contour' checked={this.state.mode === 'contour'} onChange={this.changeMode}/>
-                                        <label className="form-check-label" for="flexRadioDefault2">
+                                        <label className="form-check-label" htmlFor="flexRadioDefault2">
                                             Contour
                                         </label>
                                     </div>
@@ -904,8 +933,20 @@ class EasyoceanPlots extends React.Component {
 											onChange={e => {
 												this.setState({contourStep:e.target.value, phase: 'awaitingUserInput'})}
 											} 
-											onBlur={e => {this.setState({contourStep: this.changeContourStep(e), phase: 'remapData'})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({contourStep: this.changeContourStep(e), phase: 'remapData'})}}}
+                                            onBlur={e => {
+                                                if(!this.state.suppressBlur){
+                                                    this.setState({contourStep: this.changeContourStep(e), phase: 'remapData'})
+                                                }
+                                            }}
+											onKeyPress={e => {
+                                                if(e.key==='Enter'){
+                                                    this.setState({
+                                                        contourStep: this.changeContourStep(e), 
+                                                        phase: 'remapData', 
+                                                        suppressBlur: true
+                                                    })
+                                                }
+                                            }}
 											aria-label="contourStep" 
 											aria-describedby="basic-addon1"/>
 									</div>}
