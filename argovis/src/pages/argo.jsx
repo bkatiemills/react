@@ -25,7 +25,7 @@ class ArgoExplore extends React.Component {
 
 		// default state, pulling in query string specifications
 		this.state = {
-			observingEntity: false,
+			observingEntity: Boolean(q.has('argoPlatform') ? q.get('argoPlatform') : ''),
 			apiKey: localStorage.getItem('apiKey') ? localStorage.getItem('apiKey') : 'guest',
 			argocore: q.has('argocore') ? q.get('argocore') === 'true' : false,
 			argobgc: q.has('argobgc') ? q.get('argobgc') === 'true' : false,
@@ -71,7 +71,7 @@ class ArgoExplore extends React.Component {
         this.customQueryParams = ['startDate', 'endDate', 'polygon', 'argocore', 'argobgc', 'argodeep', 'argoPlatform', 'depthRequired', 'centerlon']
         
         // get initial data
-        this.state.urls = this.generateURLs(this.state.argoPlatform, this.state.argocore, this.state.argobgc, this.state.argodeep, this.state.startDate, this.state.endDate, this.state.polygon, this.state.depthRequired)
+        this.state.urls = this.generateURLs(this.state)
         //this.downloadData() // note the setState from the vocab fetch will kick off the data download since we initialize in phase refreshData, so we omit it here
 
         // populate vocabularies for UI
@@ -137,7 +137,16 @@ class ArgoExplore extends React.Component {
         })
     }
 
-    generateURLs(argoPlatform, argocore, argobgc, argodeep, startDate, endDate, polygon, depthRequired){
+    generateURLs(params){
+        let argoPlatform = params.hasOwnProperty('argoPlatform') ? params.argoPlatform : this.state.argoPlatform
+        let argocore = params.hasOwnProperty('argocore') ? params.argocore : this.state.argocore
+        let argobgc = params.hasOwnProperty('argobgc') ? params.argobgc : this.state.argobgc
+        let argodeep = params.hasOwnProperty('argodeep') ? params.argodeep : this.state.argodeep
+        let startDate = params.hasOwnProperty('startDate') ? params.startDate : this.state.startDate
+        let endDate = params.hasOwnProperty('endDate') ? params.endDate : this.state.endDate
+        let polygon = params.hasOwnProperty('polygon') ? params.polygon : this.state.polygon
+        let depthRequired = params.hasOwnProperty('depthRequired') ? params.depthRequired : this.state.depthRequired
+
         if(argoPlatform !== ''){
     		return [this.apiPrefix +'argo?compression=minimal&platform=' + argoPlatform]
     	} else {
@@ -174,99 +183,17 @@ class ArgoExplore extends React.Component {
 	    }
     }
 
-    regionURL(polygon, startDate, endDate, depthRequired){
-        // generate URLs using existing state, but with a new polygon, startDate, and endDate
-        return this.generateURLs(this.state.argoPlatform, this.state.argocore, this.state.argobgc, this.state.argodeep, startDate, endDate, polygon, depthRequired)
-    }
-
-    changeDepth(e){
-        this.setState({
-            depthRequired:e.target.value, 
-            phase: 'refreshData',
-            urls: this.regionURL(this.state.polygon, this.state.startDate, this.state.endDate, e.target.value),
-            suppressBlur: e.type === 'keypress'
-        })
-    }
-
-    inputPlatform(fieldID, ref, event, change){
-        // autosuggest management
-
-        if(change.newValue !== ''){
-            this.reautofocus = ref
-        } else {
-            this.reautofocus = null
-        }
-
-        let s = {...this.state}
-        s[fieldID] = change.newValue
-        s.observingEntity = Boolean(change.newValue)
-        this.changePlatform(fieldID, s, event)
-    }
-
-    changePlatform(fieldID, interimState, event){
-        // actually go looking for a platform on not-a-kwystroke events, or hits enter, and only if the specified platform is valid
-        if(event.type === 'blur' && interimState.suppressBlur){
-            return
-        } else if(event.type === 'click' || event.type === 'blur' || (event.type === 'keypress' && event.key === 'Enter')){  
-            if(this.vocab.argoPlatform.includes(interimState[fieldID]) || interimState[fieldID] === '' ){
-                interimState.urls = this.generateURLs(interimState[fieldID], interimState.argocore, interimState.argobgc, interimState.argodeep, interimState.startDate, interimState.endDate, interimState.polygon, interimState.depthRequired)
-                interimState.phase = 'refreshData'
-            } 
-            interimState.suppressBlur = (event.type === 'keypress' && event.key === 'Enter') || (event.type === 'click')
-            this.setState(interimState)
-        } else if (event.type === 'change'){
-            this.setState(interimState)
-        }
-    }
-
     toggleArgoProgram(program){
     	let s = {...this.state}
         
         s[program] = !s[program]
-        s.urls = this.generateURLs(s.argoPlatform, s.argocore, s.argobgc, s.argodeep, s.startDate, s.endDate, s.polygon, s.depthRequired)
+        let params = {}
+        params[program] = s[program]
+        s.urls = this.generateURLs(params)
         s.phase = 'refreshData'
 
         this.setState(s)
     }    
-
-    onPolyCreate(p){
-    
-        // make a ring, insert extra points, and redraw the polygon
-        let original_vertexes = p.layer.getLatLngs()[0].map(x => [x['lng'], x['lat']])
-        original_vertexes.push(original_vertexes[0])
-        let vertexes = original_vertexes.slice(0, original_vertexes.length-1)
-        vertexes = helpers.insertPointsInPolygon(vertexes)
-        p.layer.setLatLngs(vertexes.map(x => ({'lng': x[0], 'lat': x[1]})))
-       
-        let s = {...this.state}
-        s.polygon = original_vertexes // use these to search mongo
-        s.interpolated_polygon = vertexes // use these to draw something in leaflet that roughly resembles the mongo search region
-    
-        let maxdays = helpers.calculateDayspan.bind(this)(s)
-        s.maxDayspan = maxdays
-    
-        if(maxdays < this.state.maxDayspan){
-            // rethink the end date in case they drew a bigger polygon and the date range needs to be forcibly contracted
-            let timebox = helpers.setDate.bind(this)('startDate', document.getElementById('startDate').valueAsNumber, maxdays)
-            s.endDate = timebox[1]
-        }
-        s.phase = 'refreshData'
-        s.urls = this.regionURL(s.polygon, s.startDate, s.endDate, s.depthRequired)
-    
-        this.setState(s)
-    }
-
-    onPolyDelete(defaultPoly){
-
-        this.setState({
-            polygon: defaultPoly, 
-            interpolated_polygon: helpers.insertPointsInPolygon(defaultPoly), 
-            maxDayspan: this.defaultDayspan, 
-            urls: this.generateURLs(this.state.argoPlatform, this.state.argocore, this.state.argobgc, this.state.argodeep, this.state.startDate, this.state.endDate, defaultPoly, this.state.depthRequired),
-            phase: 'refreshData'
-        })
-    }
-
 
     chooseColor(point){
     	if(point[4].includes('argo_bgc')){
@@ -410,12 +337,12 @@ class ArgoExplore extends React.Component {
                                             onChange={e => {this.setState({depthRequired:e.target.value, phase: 'awaitingUserInput'})}} 
 											onBlur={e => {
                                                 if(!this.state.suppressBlur){
-                                                    this.changeDepth.bind(this)(e)
+                                                    helpers.changeDepth.bind(this)(e)
                                                 }
                                             }}
                                             onKeyPress={e => {
                                                 if(e.key==='Enter')
-                                                    {this.changeDepth.bind(this)(e)
+                                                    {helpers.changeDepth.bind(this)(e)
                                                 }
                                             }}
 											aria-label="depthRequired" 
@@ -459,15 +386,15 @@ class ArgoExplore extends React.Component {
 								<div className='verticalGroup'>
 									<h6>Subsets</h6>
 									<div className="form-check">
-										<input className="form-check-input" checked={this.state.argocore} onChange={(v) => this.toggleArgoProgram.bind(this)('argocore')} type="checkbox" id='argocore'></input>
+										<input className="form-check-input" disabled={this.state.observingEntity} checked={this.state.argocore} onChange={(v) => this.toggleArgoProgram.bind(this)('argocore')} type="checkbox" id='argocore'></input>
 										<label className="form-check-label" htmlFor='argocore'>Display Argo Core <span style={{'color':this.chooseColor([null,null,null,null,['argo_core']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 									<div className="form-check">
-										<input className="form-check-input" checked={this.state.argobgc} onChange={(v) => this.toggleArgoProgram.bind(this)('argobgc')} type="checkbox" id='argobgc'></input>
+										<input className="form-check-input" disabled={this.state.observingEntity} checked={this.state.argobgc} onChange={(v) => this.toggleArgoProgram.bind(this)('argobgc')} type="checkbox" id='argobgc'></input>
 										<label className="form-check-label" htmlFor='argobgc'>Display Argo BGC <span style={{'color':this.chooseColor([null,null,null,null,['argo_bgc']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 									<div className="form-check">
-										<input className="form-check-input" checked={this.state.argodeep} onChange={(v) => this.toggleArgoProgram.bind(this)('argodeep')} type="checkbox" id='argodeep'></input>
+										<input className="form-check-input" disabled={this.state.observingEntity} checked={this.state.argodeep} onChange={(v) => this.toggleArgoProgram.bind(this)('argodeep')} type="checkbox" id='argodeep'></input>
 										<label className="form-check-label" htmlFor='argodeep'>Display Argo Deep <span style={{'color':this.chooseColor([null,null,null,null,['argo_deep']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 								</div>
@@ -486,9 +413,9 @@ class ArgoExplore extends React.Component {
 									        inputProps={{
                                                 placeholder: 'Argo platform ID', 
                                                 value: this.state.argoPlatform, 
-                                                onKeyPress:this.changePlatform.bind(this, 'argoPlatform', this.state),  
-                                                onBlur:this.changePlatform.bind(this, 'argoPlatform', this.state), 
-                                                onChange: this.inputPlatform.bind(this, 'argoPlatform', this.platformRef), 
+                                                onKeyPress: helpers.changeAutoSuggest.bind(this, 'argoPlatform', this.vocab.argoPlatform, this.state),  
+                                                onBlur: helpers.changeAutoSuggest.bind(this, 'argoPlatform', this.vocab.argoPlatform, this.state), 
+                                                onChange: helpers.inputAutoSuggest.bind(this, 'argoPlatform', this.vocab.argoPlatform, this.platformRef), 
                                                 id: 'argoPlatform'
                                             }}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
@@ -518,8 +445,8 @@ class ArgoExplore extends React.Component {
 							<FeatureGroup ref={this.fgRef}>
 								<EditControl
 								position='topleft'
-								onCreated={p => this.onPolyCreate.bind(this)(p)}
-								onDeleted={p => this.onPolyDelete.bind(this)([],p)}
+								onCreated={p => helpers.onPolyCreate.bind(this)(p)}
+								onDeleted={p => helpers.onPolyDelete.bind(this)([],p)}
 								onDrawStop={p => helpers.onDrawStop.bind(this)(p)}
 								onDrawStart={p => helpers.onDrawStart.bind(this)(p)}
 								draw={{

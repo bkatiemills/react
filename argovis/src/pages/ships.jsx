@@ -42,6 +42,7 @@ class ShipsExplore extends React.Component {
 			mapkey: Math.random(),
             phase: 'refreshData',
             data: [[]],
+            suppressBlur: false,
 
 		}
 		this.state.maxDayspan = helpers.calculateDayspan.bind(this)(this.state)
@@ -71,7 +72,7 @@ class ShipsExplore extends React.Component {
         this.customQueryParams = ['startDate', 'endDate', 'polygon', 'depthRequired', 'woce', 'goship', 'other', 'woceline', 'cruise', 'centerlon']
 
         // get initial data
-        this.state.urls = this.generateURLs()
+        this.state.urls = this.generateURLs(this.state)
         this.downloadData()
 
         // populate vocabularies, and trigger first render
@@ -136,19 +137,34 @@ class ShipsExplore extends React.Component {
 
         this.setState({ 
             points: points, 
-            phase: 'idle'
+            phase: 'idle',
+            suppressBlur: false,
         })
     }
 
-    generateURLs(woceline, cruise, startDate, endDate, polygon, depthRequired, woce, goship, other) {
-    	if(woceline !== ''){
+    generateURLs(params) {
+        let woceline = params.hasOwnProperty('woceline') ? params.woceline : this.state.woceline
+        let cruise = params.hasOwnProperty('cruise') ? params.cruise : this.state.cruise
+        let startDate = params.hasOwnProperty('startDate') ? params.startDate : this.state.startDate
+        let endDate = params.hasOwnProperty('endDate') ? params.endDate : this.state.endDate
+        let polygon = params.hasOwnProperty('polygon') ? params.polygon : this.state.polygon
+        let depthRequired = params.hasOwnProperty('depthRequired') ? params.depthRequired : this.state.depthRequired
+        let woce = params.hasOwnProperty('woce') ? params.woce : this.state.woce
+        let goship = params.hasOwnProperty('goship') ? params.goship : this.state.goship
+        let other = params.hasOwnProperty('other') ? params.other : this.state.other
+
+        if(woceline !== ''){
     		// parse out what WOCE line and date range is meant by the autocomplete, and give an extra hour on either end
-    		let woceline = woceline.split(' ')[0]
-    		let startDate = new Date(this.wocelineLookup[woceline].startDate)
-    		let endDate = new Date(this.wocelineLookup[woceline].endDate)
-    		startDate.setHours(startDate.getHours() - 1)
-    		endDate.setHours(endDate.getHours() + 1)
-    		return [this.apiPrefix +'cchdo?compression=minimal&woceline=' + woceline + '&startDate=' + startDate.toISOString().replace('.000Z', 'Z') + '&endDate=' + endDate.toISOString().replace('.000Z', 'Z')]
+    		if(this.wocelineLookup.hasOwnProperty(woceline)){
+                let wl = woceline.split(' ')[0]
+                let sd = new Date(this.wocelineLookup[woceline].startDate)
+                let ed = new Date(this.wocelineLookup[woceline].endDate)
+                sd.setHours(sd.getHours() - 1)
+                ed.setHours(ed.getHours() + 1)
+                return [this.apiPrefix +'cchdo?compression=minimal&woceline=' + wl + '&startDate=' + sd.toISOString().replace('.000Z', 'Z') + '&endDate=' + ed.toISOString().replace('.000Z', 'Z')]
+            } else{
+                return []
+            }
     	} else if(cruise !== '') {
     		return [this.apiPrefix +'cchdo?compression=minimal&cchdo_cruise=' + cruise]
     	} else {
@@ -183,10 +199,15 @@ class ShipsExplore extends React.Component {
 	    }
     }
 
-    regionURL(polygon, startDate, endDate){
-        // generate URLs using existing state, but with a new polygon, startDate, and endDate
-        return this.generateURLs(this.state.woceline, this.state.cruise, startDate, endDate, polygon, this.state.depthRequired, this.state.woce, this.state.goship, this.state.other)
-    }
+    toggleCCHDOProgram(program){
+    	let s = {...this.state}
+        
+        s[program] = !s[program]
+        s.urls = this.generateURLs(s)
+        s.phase = 'refreshData'
+
+        this.setState(s)
+    }  
 
 
 
@@ -195,11 +216,7 @@ class ShipsExplore extends React.Component {
 
 
 
-
-
-    componentDidUpdate(prevProps, prevState, snapshot){
-    	helpers.componentDidUpdate.bind(this)()
-    }
+ 
 
 	refreshMap(state){
 		helpers.refreshMap.bind(this)(state)
@@ -224,7 +241,7 @@ class ShipsExplore extends React.Component {
 	    }
     }
 
-    genTooltip(point, state){
+    genTooltip(point){
     	// given an array <point> corresponding to a single point returned by an API data route with compression=minimal,
     	// return the jsx for an appropriate tooltip for this point.
 
@@ -236,7 +253,7 @@ class ShipsExplore extends React.Component {
     		return [x].concat(timespan)
     	})
 
-      	let regionLink = helpers.genRegionLink(state.polygon, state.startDate, state.endDate, state.centerlon, 'ships')
+      	let regionLink = helpers.genRegionLink(this.state.polygon, this.state.startDate, this.state.endDate, this.state.centerlon, 'ships')
 
     	return(
 		    <Popup>
@@ -304,7 +321,7 @@ class ShipsExplore extends React.Component {
 										</div>
 									</div>
 
-									<h6>Time range</h6>
+                                    <h6>Time range</h6>
 									<div className="form-floating mb-3">
 										<input 
 											type="date" 
@@ -314,8 +331,16 @@ class ShipsExplore extends React.Component {
 											value={this.state.startDate} 
 											placeholder="" 
                                             onChange={e => {this.setState({startDate:e.target.value, phase: 'awaitingUserInput'})}} 
-                                            onBlur={e => {helpers.changeDates.bind(this)('startDate', e)}}
-                                            onKeyPress={e => {if(e.key==='Enter'){helpers.changeDates.bind(this)('startDate', e)}}}
+                                            onBlur={e => {
+                                                if(!this.state.suppressBlur){
+                                                    helpers.changeDates.bind(this)('startDate', e)
+                                                }
+                                            }}
+                                            onKeyPress={e => {
+                                                if(e.key==='Enter'){
+                                                    helpers.changeDates.bind(this)('startDate', e)
+                                                }
+                                            }}
 										/>
 										<label htmlFor="startDate">Start Date</label>
 									</div>
@@ -328,8 +353,16 @@ class ShipsExplore extends React.Component {
 											value={this.state.endDate} 
 											placeholder="" 
                                             onChange={e => {this.setState({endDate:e.target.value, phase: 'awaitingUserInput'})}} 
-                                            onBlur={e => {helpers.changeDates.bind(this)('endDate', e)}}
-                                            onKeyPress={e => {if(e.key==='Enter'){helpers.changeDates.bind(this)('endDate', e)}}}
+                                            onBlur={e => {
+                                                if(!this.state.suppressBlur){
+                                                    helpers.changeDates.bind(this)('endDate', e)
+                                                }
+                                            }}
+                                            onKeyPress={e => {
+                                                if(e.key==='Enter')
+                                                    {helpers.changeDates.bind(this)('endDate', e)
+                                                }
+                                            }}
 										/>
 										<label htmlFor="endDate">End Date</label>
 									</div>
@@ -337,7 +370,7 @@ class ShipsExplore extends React.Component {
 					  					<p>Max day range: {this.state.maxDayspan+1}</p>
 									</div>
 
-									<h6>Depth</h6>
+                                    <h6>Depth</h6>
 									<div className="form-floating mb-3">
 										<input 
 											id="depth"
@@ -346,56 +379,67 @@ class ShipsExplore extends React.Component {
 											className="form-control" 
 											placeholder="0" 
 											value={this.state.depthRequired} 
-											onChange={e => {
-												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
-												this.setState({depthRequired:e.target.value})}
-											} 
-											onBlur={e => {this.setState({depthRequired:e.target.defaultValue, refreshData: true})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({depthRequired:e.target.defaultValue, refreshData: true})}}}
+                                            onChange={e => {this.setState({depthRequired:e.target.value, phase: 'awaitingUserInput'})}} 
+											onBlur={e => {
+                                                if(!this.state.suppressBlur){
+                                                    helpers.changeDepth.bind(this)(e)
+                                                }
+                                            }}
+                                            onKeyPress={e => {
+                                                if(e.key==='Enter')
+                                                    {helpers.changeDepth.bind(this)(e)
+                                                }
+                                            }}
 											aria-label="depthRequired" 
 											aria-describedby="basic-addon1"/>
 										<label htmlFor="depth">Require levels deeper than [m]:</label>
 									</div>
 								</div>
 
-								<h6>Map Center Longitude</h6>
-									<div className="form-floating mb-3">
-										<input 
-											id="centerlon"
-											type="text"
-											disabled={this.state.observingEntity} 
-											className="form-control" 
-											placeholder="0" 
-											value={this.state.centerlon} 
-											onChange={e => {
-												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
-												this.setState({centerlon:e.target.value})}
-											} 
-											onBlur={e => {
-												this.setState({centerlon: helpers.manageCenterlon(e.target.defaultValue), mapkey: Math.random(), refreshData: true})
-											}}
-											onKeyPress={e => {
-												if(e.key==='Enter'){
-													this.setState({centerlon: helpers.manageCenterlon(e.target.defaultValue), mapkey: Math.random(), refreshData: true})
-												}
-											}}
-											aria-label="centerlon" 
-											aria-describedby="basic-addon1"/>
-										<label htmlFor="depth">Center longitude on [-180,180]</label>
-									</div>
+                                <h6>Map Center Longitude</h6>
+                                <div className="form-floating mb-3">
+                                    <input 
+                                        id="centerlon"
+                                        type="text"
+                                        disabled={this.state.observingEntity} 
+                                        className="form-control" 
+                                        placeholder="0" 
+                                        value={this.state.centerlon} 
+                                        onChange={e => {this.setState({centerlon:e.target.value, phase: 'awaitingUserInput'})}} 
+                                        onBlur={e => {
+                                            this.setState({
+                                                centerlon: helpers.manageCenterlon(e.target.value), 
+                                                mapkey: Math.random(), 
+                                                phase: 'remapData'
+                                            })
+                                        }}
+                                        onKeyPress={e => {
+                                            if(e.key==='Enter'){
+                                                this.setState({
+                                                    centerlon: helpers.manageCenterlon(e.target.value), 
+                                                    mapkey: Math.random(), 
+                                                    phase: 'remapData',
+                                                    suppressBlur: true
+                                                })
+                                            }
+                                        }}
+                                        aria-label="centerlon" 
+                                        aria-describedby="basic-addon1"/>
+                                    <label htmlFor="depth">Center longitude on [-180,180]</label>
+                                </div>
 
 								<div className='verticalGroup'>
 									<h6>Subsets</h6>
 									<div className="form-check">
-										<input className="form-check-input" disabled={this.state.observingEntity} checked={this.state.woce} onChange={(v) => helpers.toggle.bind(this)(v, 'woce')} type="checkbox" id='woce'></input>
+										<input className="form-check-input" disabled={this.state.observingEntity} checked={this.state.woce} onChange={(v) => this.toggleCCHDOProgram.bind(this)('woce')} type="checkbox" id='woce'></input>
 										<label className="form-check-label" htmlFor='woce'>Display WOCE <span style={{'color':this.chooseColor([null,null,null,null,['cchdo_woce']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 									<div className="form-check">
-										<input className="form-check-input" disabled={this.state.observingEntity} checked={this.state.goship} onChange={(v) => helpers.toggle.bind(this)(v, 'goship')} type="checkbox" id='goship'></input>
+										<input className="form-check-input" disabled={this.state.observingEntity} checked={this.state.goship} onChange={(v) => this.toggleCCHDOProgram.bind(this)('goship')} type="checkbox" id='goship'></input>
 										<label className="form-check-label" htmlFor='goship'>Display GO-SHIP <span style={{'color':this.chooseColor([null,null,null,null,['cchdo_go-ship']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 									<div className="form-check">
-										<input className="form-check-input" disabled={this.state.observingEntity} checked={this.state.other} onChange={(v) => helpers.toggle.bind(this)(v, 'other')} type="checkbox" id='other'></input>
+										<input className="form-check-input" disabled={this.state.observingEntity} checked={this.state.other} onChange={(v) => this.toggleCCHDOProgram.bind(this)('other')} type="checkbox" id='other'></input>
 										<label className="form-check-label" htmlFor='other'>Display other ships <span style={{'color':this.chooseColor([null,null,null,null,['cchdo_x']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
 									</div>
 								</div>
@@ -405,14 +449,21 @@ class ShipsExplore extends React.Component {
 									<div className="form-floating mb-3">
 			      						<Autosuggest
 									      	id='woceAS'
-									      	key='woce'
 									      	ref={this.woceRef}
 									        suggestions={this.state.wocelineSuggestions}
 									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'wocelineSuggestions')}
 									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'wocelineSuggestions')}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'woceline')}
-									        inputProps={{placeholder: 'WOCE Line', value: this.state.woceline, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of WOCE line', 'woceline', this.woceRef), id: 'woceline', disabled: Boolean(this.state.cruise)}}
+									        inputProps={{
+                                                placeholder: 'WOCE Line', 
+                                                value: this.state.woceline, 
+                                                onKeyPress: helpers.changeAutoSuggest.bind(this, 'woceline', this.vocab.woceline, this.state),  
+                                                onBlur: helpers.changeAutoSuggest.bind(this, 'woceline', this.vocab.woceline, this.state), 
+                                                onChange: helpers.inputAutoSuggest.bind(this, 'woceline', this.vocab.woceline, this.woceRef), 
+                                                id: 'woceline', 
+                                                disabled: Boolean(this.state.cruise)
+                                            }}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 									</div>
@@ -420,14 +471,21 @@ class ShipsExplore extends React.Component {
 									<div className="form-floating mb-3">
 			      						<Autosuggest
 									      	id='cruiseAS'
-									      	key='cruise'
 									      	ref={this.cruiseRef}
 									        suggestions={this.state.cruiseSuggestions}
 									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'cruiseSuggestions')}
 									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'cruiseSuggestions')}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'cruise')}
-									        inputProps={{placeholder: 'Cruise ID', value: this.state.cruise, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of Cruise ID', 'cruise', this.cruiseRef), id: 'cruise', disabled: Boolean(this.state.woceline)}}
+									        inputProps={{
+                                                placeholder: 'Cruise ID', 
+                                                value: this.state.cruise, 
+                                                onKeyPress: helpers.changeAutoSuggest.bind(this, 'cruise', this.vocab.cruise, this.state),  
+                                                onBlur: helpers.changeAutoSuggest.bind(this, 'cruise', this.vocab.cruise, this.state), 
+                                                onChange: helpers.inputAutoSuggest.bind(this, 'cruise', this.vocab.cruise, this.cruiseRef),
+                                                id: 'cruise', 
+                                                disabled: Boolean(this.state.woceline)
+                                            }}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 									</div>

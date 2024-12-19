@@ -84,21 +84,42 @@ helpers.interpolatePoint = function(startPoint, endPoint, fraction) {
     return interpolatedPoint;
 }
 
-helpers.onPolyCreate = function(payload){
+helpers.onPolyCreate = function(p){
+    
+    // make a ring, insert extra points, and redraw the polygon
+    let original_vertexes = p.layer.getLatLngs()[0].map(x => [x['lng'], x['lat']])
+    original_vertexes.push(original_vertexes[0])
+    let vertexes = original_vertexes.slice(0, original_vertexes.length-1)
+    vertexes = helpers.insertPointsInPolygon(vertexes)
+    p.layer.setLatLngs(vertexes.map(x => ({'lng': x[0], 'lat': x[1]})))
+   
+    let s = {...this.state}
+    s.polygon = original_vertexes // use these to search mongo
+    s.interpolated_polygon = vertexes // use these to draw something in leaflet that roughly resembles the mongo search region
 
-	let original_vertexes = payload.layer.getLatLngs()[0]
-	let vertexes = original_vertexes.map(x => [x['lng'], x['lat']])
-	vertexes.push(vertexes[0])
-	vertexes = helpers.insertPointsInPolygon(vertexes)
-	vertexes = vertexes.map(x => ({'lng': x[0], 'lat': x[1]}))
-	payload.layer.setLatLngs(vertexes)
+    let maxdays = helpers.calculateDayspan.bind(this)(s)
+    s.maxDayspan = maxdays
 
-	helpers.fetchPolygon.bind(this)(original_vertexes)
+    if(maxdays < this.state.maxDayspan){
+        // rethink the end date in case they drew a bigger polygon and the date range needs to be forcibly contracted
+        let timebox = helpers.setDate.bind(this)('startDate', document.getElementById('startDate').valueAsNumber, maxdays)
+        s.endDate = timebox[1]
+    }
+    s.phase = 'refreshData'
+    s.urls = this.generateURLs(s)
+
+    this.setState(s)
 }
 
-helpers.onPolyDelete = function(defaultPoly, payload){
+helpers.onPolyDelete = function(defaultPoly){
 
-	this.setState({polygon: defaultPoly, interpolated_polygon: helpers.insertPointsInPolygon(defaultPoly), maxDayspan: this.defaultDayspan, startDate: this.state.startDate, endDate: this.state.endDate, phase: 'refreshData'})
+    this.setState({
+        polygon: defaultPoly, 
+        interpolated_polygon: helpers.insertPointsInPolygon(defaultPoly), 
+        maxDayspan: this.defaultDayspan, 
+        urls: this.generateURLs({polygon: defaultPoly}),
+        phase: 'refreshData'
+    })
 }
 
 helpers.fetchPolygon = function(coords){
@@ -205,7 +226,7 @@ helpers.phaseManager = function(prevProps, prevState, snapshot){
         }, 1);
     } else if (this.state.phase === 'idle') {
         setTimeout(() => {
-            if(this.state.data.length === 0 || this.state.data.some(arr => arr.length === 0)){
+            if(this.state.data.length === 0 || this.state.data.every(arr => arr.length === 0)){
                 helpers.manageStatus.bind(this)('error', 'No data found for this search.')
             } else {
                 helpers.manageStatus.bind(this)('ready')
@@ -314,7 +335,7 @@ helpers.changeDates = function(date, e){
     s.startDate = daterange[0]
     s.endDate = daterange[1]
     s.phase = 'refreshData'
-    s.urls = this.regionURL(s.polygon, s.startDate, s.endDate, s.depthRequired)
+    s.urls = this.generateURLs(s)
     s.suppressBlur = e.type === 'keypress'
 
     this.setState(s)
@@ -324,8 +345,42 @@ helpers.changeDepth = function(e){
     this.setState({
         depthRequired:e.target.value, 
         phase: 'refreshData',
-        urls: this.regionURL(this.state.polygon, this.state.startDate, this.state.endDate, e.target.value)
+        urls: this.generateURLs({depthRequired: e.target.value}),
+        suppressBlur: e.type === 'keypress'
     })
+}
+
+helpers.inputAutoSuggest = function(fieldID, vocab, ref, event, change){
+    // autosuggest management
+
+    if(change.newValue !== ''){
+        this.reautofocus = ref
+    } else {
+        this.reautofocus = null
+    }
+
+    let s = {...this.state}
+    s[fieldID] = change.newValue
+    s.observingEntity = Boolean(change.newValue)
+    helpers.changeAutoSuggest.bind(this)(fieldID, vocab, s, event)
+}
+
+helpers.changeAutoSuggest = function(fieldID, vocab, interimState, event){
+    // actually go looking for a platform on not-a-kwystroke events, or hits enter, and only if the specified platform is valid
+    if(event.type === 'blur' && interimState.suppressBlur){
+        return
+    } else if(event.type === 'click' || event.type === 'blur' || (event.type === 'keypress' && event.key === 'Enter')){  
+        if(vocab.includes(interimState[fieldID]) || interimState[fieldID] === '' ){
+            let params = {}
+            params[fieldID] = interimState[fieldID]
+            interimState.urls = this.generateURLs(params)
+            interimState.phase = 'refreshData'
+        } 
+        interimState.suppressBlur = (event.type === 'keypress' && event.key === 'Enter') || (event.type === 'click')
+        this.setState(interimState)
+    } else if (event.type === 'change'){
+        this.setState(interimState)
+    }
 }
 
 helpers.handleHTTPcodes = function(code){
@@ -577,13 +632,14 @@ helpers.getSuggestionValue = function(suggestion){
 }
 
 helpers.renderSuggestion = function(inputState, suggestion){
+
 	return(
 	  <div 
 	  	onClick={e => {
             let s = {...this.state}
             s[inputState] = e.target.textContent
             s.phase = 'refreshData'
-            s.urls = this.regionURL(s.polygon, s.startDate, s.endDate, s.depthRequired)
+            s.urls = this.generateURLs(s)
 
             this.setState(s)
         }}
