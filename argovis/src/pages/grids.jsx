@@ -520,7 +520,7 @@ class Grids extends React.Component {
       this.customQueryParams = ['polygon', 'grid', 'levelindex', 'sublevelindex', 'timestep', 'subtimestep', 'subgrid']
       this.vocab = {}
     
-      this.state.urls = this.generateURLs(this.state.lattice, this.state.grid, this.state.timestep, this.state.levelindex, this.state.subtimestep, this.state.sublevelindex, this.state.polygon, this.state.subgrid)
+      this.state.urls = this.generateURLs(this.state)
       this.downloadData()
     }
 
@@ -623,27 +623,27 @@ class Grids extends React.Component {
         )
     }
 
-    generateURLs(lattice, grid, timestep, levelindex, subtimestep, sublevelindex, polygon, subgrid){
+    generateURLs(params){
+        let lattice = params.hasOwnProperty('lattice') ? params.lattice : this.state.lattice
+        let grid = params.hasOwnProperty('grid') ? params.grid : this.state.grid
+        let timestep = params.hasOwnProperty('timestep') ? params.timestep : this.state.timestep
+        let levelindex = params.hasOwnProperty('levelindex') ? params.levelindex : this.state.levelindex
+        let subtimestep = params.hasOwnProperty('subtimestep') ? params.subtimestep : this.state.subtimestep
+        let sublevelindex = params.hasOwnProperty('sublevelindex') ? params.sublevelindex : this.state.sublevelindex
+        let polygon = params.hasOwnProperty('polygon') ? params.polygon : this.state.polygon
+        let subgrid = params.hasOwnProperty('subgrid') ? params.subgrid : this.state
+
         let urls = []
 
-        let current_lattice = lattice !== null ? lattice : this.state.lattice
-        let current_grid = grid !== null ? grid : this.state.grid
-        let current_timestep = timestep !== null ? timestep : this.state.timestep
-        let current_levelindex = levelindex !== null ? levelindex : this.state.levelindex
-        let current_subtimestep = subtimestep !== null ? subtimestep : this.state.subtimestep
-        let current_sublevelindex = sublevelindex !== null ? sublevelindex : this.state.sublevelindex
-        let current_polygon = polygon !== null ? polygon : this.state.polygon
-        let current_subgrid = subgrid !== null ? subgrid : this.state.subgrid
-
-        let url    = this.apiPrefix + 'grids/' + current_lattice+'?data='+current_grid+'&startDate='+current_timestep+'T00:00:00Z&endDate='+current_timestep+'T00:00:01Z&verticalRange='+(this.rawLevels[current_levelindex]-0.1)+','+(this.rawLevels[current_levelindex]+0.1)
-        let suburl = this.apiPrefix + 'grids/' + current_lattice+'?data='+current_grid+'&startDate='+current_subtimestep+'T00:00:00Z&endDate='+current_subtimestep+'T00:00:01Z&verticalRange='+(this.rawLevels[current_sublevelindex]-0.1)+','+(this.rawLevels[current_sublevelindex]+0.1)
-        if(current_polygon.length > 0){
-            url += '&polygon='+JSON.stringify(helpers.tidypoly(current_polygon))
-            suburl += '&polygon='+JSON.stringify(helpers.tidypoly(current_polygon))
+        let url    = this.apiPrefix + 'grids/' + lattice+'?data='+grid+'&startDate='+timestep+'T00:00:00Z&endDate='+timestep+'T00:00:01Z&verticalRange='+(this.rawLevels[levelindex]-0.1)+','+(this.rawLevels[levelindex]+0.1)
+        let suburl = this.apiPrefix + 'grids/' + lattice+'?data='+grid+'&startDate='+subtimestep+'T00:00:00Z&endDate='+subtimestep+'T00:00:01Z&verticalRange='+(this.rawLevels[sublevelindex]-0.1)+','+(this.rawLevels[sublevelindex]+0.1)
+        if(polygon.length > 0){
+            url += '&polygon='+JSON.stringify(helpers.tidypoly(polygon))
+            suburl += '&polygon='+JSON.stringify(helpers.tidypoly(polygon))
         }
 
         urls.push(url)
-        if(current_subgrid){
+        if(subgrid){
             urls.push(suburl)
         }
 
@@ -728,7 +728,15 @@ class Grids extends React.Component {
     	s.phase = 'refreshData'
 		s.user_defined_min = false
 		s.user_defined_max = false
-        s.urls = this.generateURLs(null, null, null, levelindex, null, sublevelindex, null, null)
+
+        let params = {}
+        if(levelindex !== null){
+            params.levelindex = parseInt(levelindex)
+        }
+        if(sublevelindex !== null){
+            params.sublevelindex = parseInt(sublevelindex)
+        }
+        s.urls = this.generateURLs(params)
 
         this.setState(s)
     }
@@ -742,7 +750,11 @@ class Grids extends React.Component {
     	s.phase = 'refreshData'
 		s.user_defined_min = false
 		s.user_defined_max = false
-        s.urls = this.generateURLs(null, null, timestep, null, subtimestep, null, null, null)
+        let params = {
+            timestep: timestep,
+            subtimestep: subtimestep
+        }
+        s.urls = this.generateURLs(params)
     	
         this.setState(s)
     }
@@ -755,7 +767,7 @@ class Grids extends React.Component {
     	s.phase = 'refreshData'
 		s.user_defined_min = false
 		s.user_defined_max = false
-        s.urls = this.generateURLs(null, target.target.value, null, null, null, null, null, null)
+        s.urls = this.generateURLs({grid: target.target.value})
     	
         this.setState(s)
     }
@@ -772,7 +784,7 @@ class Grids extends React.Component {
     toggleSubgrid(e){
     	let s = {...this.state}
         
-        s.urls = this.generateURLs(null, null, null, null, null, null, null, !s.subgrid)
+        s.urls = this.generateURLs({subgrid: !s.subgrid})
         s.subgrid = !s.subgrid
         s.phase = 'refreshData'
 		s.user_defined_min = false
