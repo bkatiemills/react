@@ -162,12 +162,13 @@ helpers.estimateArea = function(vertexes){
 
 helpers.calculateDayspan = function(s){
 	// s == state object being mutated
-
+    
 	if(JSON.stringify(s.polygon) === '[]'){
 		return this.minDays
 	}
 
 	let area = helpers.estimateArea(s.polygon)
+    console.log(9000, area, this.minArea, this.maxArea)
 	if(area >= this.maxArea){
 		return Math.min(this.minDays*this.dateRangeMultiplyer(s), this.maxDays)
 	} else if (area < this.minArea){
