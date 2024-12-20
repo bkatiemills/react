@@ -470,6 +470,7 @@ class Grids extends React.Component {
       	centerlon: -70,
         data: [[]], // raw download data
         phase: 'refreshData', // refreshData, remapData, awaitingUserInput, or idle
+        suppressBlur: false,
       }
 
 	  this.state.timestep = q.has('timestep') ? q.get('timestep') : {
@@ -519,27 +520,9 @@ class Grids extends React.Component {
       this.customQueryParams = ['polygon', 'grid', 'levelindex', 'sublevelindex', 'timestep', 'subtimestep', 'subgrid']
       this.vocab = {}
     
-      this.state.urls = this.generateURLs(this.state.lattice, this.state.grid, this.state.timestep, this.state.levelindex, this.state.subtimestep, this.state.sublevelindex, this.state.polygon, this.state.subgrid)
+      this.state.urls = this.generateURLs(this.state)
       this.downloadData()
     }
-
-	// componentDidMount() {
-	// 	this.fetchData();
-	// }
-	
-	// fetchData() {
-	// 	fetch('https://argovis-api.colorado.edu/grids/meta?id=glodapv2.2016b')
-	// 	.then((response) => {
-	// 		if (!response.ok) {
-	// 			throw new Error(`HTTP error! Status: ${response.status}`);
-	// 		}
-	// 		return response.json();
-	// 	})
-	// 	.then((jsonData) => {
-	// 		this.demo = jsonData[0]['data_info']
-	// 		console.log(this.demo)
-	// 	});
-	// }
 
     componentDidUpdate(prevProps, prevState, snapshot){
     	helpers.phaseManager.bind(this)(prevProps, prevState, snapshot)
@@ -616,32 +599,33 @@ class Grids extends React.Component {
                 gridcells: this.gridRasterfy(s), 
                 min: this.state.user_defined_min ? this.state.min : min, 
                 max: this.state.user_defined_max ? this.state.max : max, 
-                phase: 'idle'
+                phase: 'idle',
+                suppressBlur: false
             }
         )
     }
 
-    generateURLs(lattice, grid, timestep, levelindex, subtimestep, sublevelindex, polygon, subgrid){
+    generateURLs(params){
+        let lattice = params.hasOwnProperty('lattice') ? params.lattice : this.state.lattice
+        let grid = params.hasOwnProperty('grid') ? params.grid : this.state.grid
+        let timestep = params.hasOwnProperty('timestep') ? params.timestep : this.state.timestep
+        let levelindex = params.hasOwnProperty('levelindex') ? params.levelindex : this.state.levelindex
+        let subtimestep = params.hasOwnProperty('subtimestep') ? params.subtimestep : this.state.subtimestep
+        let sublevelindex = params.hasOwnProperty('sublevelindex') ? params.sublevelindex : this.state.sublevelindex
+        let polygon = params.hasOwnProperty('polygon') ? params.polygon : this.state.polygon
+        let subgrid = params.hasOwnProperty('subgrid') ? params.subgrid : this.state
+
         let urls = []
 
-        let current_lattice = lattice !== null ? lattice : this.state.lattice
-        let current_grid = grid !== null ? grid : this.state.grid
-        let current_timestep = timestep !== null ? timestep : this.state.timestep
-        let current_levelindex = levelindex !== null ? levelindex : this.state.levelindex
-        let current_subtimestep = subtimestep !== null ? subtimestep : this.state.subtimestep
-        let current_sublevelindex = sublevelindex !== null ? sublevelindex : this.state.sublevelindex
-        let current_polygon = polygon !== null ? polygon : this.state.polygon
-        let current_subgrid = subgrid !== null ? subgrid : this.state.subgrid
-
-        let url    = this.apiPrefix + 'grids/' + current_lattice+'?data='+current_grid+'&startDate='+current_timestep+'T00:00:00Z&endDate='+current_timestep+'T00:00:01Z&verticalRange='+(this.rawLevels[current_levelindex]-0.1)+','+(this.rawLevels[current_levelindex]+0.1)
-        let suburl = this.apiPrefix + 'grids/' + current_lattice+'?data='+current_grid+'&startDate='+current_subtimestep+'T00:00:00Z&endDate='+current_subtimestep+'T00:00:01Z&verticalRange='+(this.rawLevels[current_sublevelindex]-0.1)+','+(this.rawLevels[current_sublevelindex]+0.1)
-        if(current_polygon.length > 0){
-            url += '&polygon='+JSON.stringify(helpers.tidypoly(current_polygon))
-            suburl += '&polygon='+JSON.stringify(helpers.tidypoly(current_polygon))
+        let url    = this.apiPrefix + 'grids/' + lattice+'?data='+grid+'&startDate='+timestep+'T00:00:00Z&endDate='+timestep+'T00:00:01Z&verticalRange='+(this.rawLevels[levelindex]-0.1)+','+(this.rawLevels[levelindex]+0.1)
+        let suburl = this.apiPrefix + 'grids/' + lattice+'?data='+grid+'&startDate='+subtimestep+'T00:00:00Z&endDate='+subtimestep+'T00:00:01Z&verticalRange='+(this.rawLevels[sublevelindex]-0.1)+','+(this.rawLevels[sublevelindex]+0.1)
+        if(polygon.length > 0){
+            url += '&polygon='+JSON.stringify(helpers.tidypoly(polygon))
+            suburl += '&polygon='+JSON.stringify(helpers.tidypoly(polygon))
         }
 
         urls.push(url)
-        if(current_subgrid){
+        if(subgrid){
             urls.push(suburl)
         }
 
@@ -726,7 +710,15 @@ class Grids extends React.Component {
     	s.phase = 'refreshData'
 		s.user_defined_min = false
 		s.user_defined_max = false
-        s.urls = this.generateURLs(null, null, null, levelindex, null, sublevelindex, null, null)
+
+        let params = {}
+        if(levelindex !== null){
+            params.levelindex = parseInt(levelindex)
+        }
+        if(sublevelindex !== null){
+            params.sublevelindex = parseInt(sublevelindex)
+        }
+        s.urls = this.generateURLs(params)
 
         this.setState(s)
     }
@@ -740,7 +732,11 @@ class Grids extends React.Component {
     	s.phase = 'refreshData'
 		s.user_defined_min = false
 		s.user_defined_max = false
-        s.urls = this.generateURLs(null, null, timestep, null, subtimestep, null, null, null)
+        let params = {
+            timestep: timestep,
+            subtimestep: subtimestep
+        }
+        s.urls = this.generateURLs(params)
     	
         this.setState(s)
     }
@@ -753,7 +749,7 @@ class Grids extends React.Component {
     	s.phase = 'refreshData'
 		s.user_defined_min = false
 		s.user_defined_max = false
-        s.urls = this.generateURLs(null, target.target.value, null, null, null, null, null, null)
+        s.urls = this.generateURLs({grid: target.target.value})
     	
         this.setState(s)
     }
@@ -770,7 +766,7 @@ class Grids extends React.Component {
     toggleSubgrid(e){
     	let s = {...this.state}
         
-        s.urls = this.generateURLs(null, null, null, null, null, null, null, !s.subgrid)
+        s.urls = this.generateURLs({subgrid: !s.subgrid})
         s.subgrid = !s.subgrid
         s.phase = 'refreshData'
 		s.user_defined_min = false
@@ -801,24 +797,24 @@ class Grids extends React.Component {
     gridRasterfy(state){
 
     	// expects a list from a data endpoint
-			if(state.data.hasOwnProperty('code') || state.data[0].hasOwnProperty('code')){
-				return null
-			}
-			else {
-				let points = state.data[0].map(point => {return(
-					<Rectangle 
-						key={Math.random()} 
-						bounds={[[point.geolocation.coordinates[1]-0.5, helpers.mutateLongitude(point.geolocation.coordinates[0], parseFloat(state.centerlon))-0.5],[point.geolocation.coordinates[1]+0.5, helpers.mutateLongitude(point.geolocation.coordinates[0], parseFloat(state.centerlon))+0.5]]} 
-						pathOptions={{ 
-							fillOpacity: 0.5, 
-							weight: 0, 
-							color: this.chooseColor(point.data[0][0], state) 
-						}}>
-      				    {this.genTooltip(point)}
-    			    </Rectangle>
-				)})
-				return points
-			}
+        if(state.data.hasOwnProperty('code') || state.data[0].hasOwnProperty('code')){
+            return null
+        }
+        else {
+            let points = state.data[0].map(point => {return(
+                <Rectangle 
+                    key={Math.random()} 
+                    bounds={[[point.geolocation.coordinates[1]-0.5, helpers.mutateLongitude(point.geolocation.coordinates[0], parseFloat(state.centerlon))-0.5],[point.geolocation.coordinates[1]+0.5, helpers.mutateLongitude(point.geolocation.coordinates[0], parseFloat(state.centerlon))+0.5]]} 
+                    pathOptions={{ 
+                        fillOpacity: 0.5, 
+                        weight: 0, 
+                        color: this.chooseColor(point.data[0][0], state) 
+                    }}>
+                    {this.genTooltip(point)}
+                </Rectangle>
+            )})
+            return points
+        }
     }
 
     chooseColor(val, state){
@@ -868,16 +864,6 @@ class Grids extends React.Component {
 		} else {
 			return unit
 		}
-	}
-
-
-	manageInput(number){
-		// if(number === '-' || number[number.length-1] === '.' || number === ''){
-		// 	return number
-		// } else {
-		// 	return Math.round(1000*number)/1000
-		// }
-		return number
 	}
 
     genTooltip(point){
@@ -950,7 +936,14 @@ class Grids extends React.Component {
 								</h5>
 								<small><a target="_blank" rel="noreferrer" href={this.reflink}>Original Data Reference</a></small>
 								<div className="form-floating mb-3" style={{'marginTop': '0.5em'}}>
-									<input type="password" className="form-control" id="apiKey" value={this.state.apiKey} placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
+										<input 
+                                            type="password" 
+                                            className="form-control" 
+                                            id="apiKey" 
+                                            value={this.state.apiKey} 
+                                            placeholder="" 
+                                            onInput={helpers.changeAPIkey.bind(this)}
+                                        ></input>
 									<label htmlFor="apiKey">API Key</label>
 									<div id="apiKeyHelpBlock" className="form-text">
 					  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
@@ -1023,8 +1016,25 @@ class Grids extends React.Component {
 											placeholder="Auto" 
 											value={this.state.display_min}
                                             onChange={e => this.changeRange(e, 'display_min')}
-											onBlur={e => {this.setState({display_min: parseFloat(e.target.defaultValue), user_defined_min: e.target.defaultValue!=='', phase: 'remapData'})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({display_min: parseFloat(e.target.defaultValue), user_defined_min: e.target.defaultValue!=='', phase: 'remapData'})}}}
+                                            onBlur={e => {
+                                                if(!this.state.suppressBlur){
+                                                    this.setState({
+                                                        display_min: parseFloat(e.target.defaultValue), 
+                                                        user_defined_min: e.target.defaultValue!=='', 
+                                                        phase: 'remapData'
+                                                    })
+                                                }
+                                            }}
+											onKeyPress={e => {
+                                                if(e.key==='Enter'){
+                                                    this.setState({
+                                                        display_min: parseFloat(e.target.defaultValue), 
+                                                        user_defined_min: e.target.defaultValue!=='', 
+                                                        phase: 'remapData',
+                                                        suppressBlur: true
+                                                    })
+                                                }
+                                            }}
 											aria-label="xmin" 
 											aria-describedby="basic-addon1"/>
 									</div>
@@ -1038,8 +1048,25 @@ class Grids extends React.Component {
 											placeholder="Auto" 
 											value={this.state.display_max}
                                             onChange={e => this.changeRange(e, 'display_max')}
-											onBlur={e => {this.setState({display_max: parseFloat(e.target.defaultValue), user_defined_max: e.target.defaultValue!=='', phase: 'remapData'})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({display_max: parseFloat(e.target.defaultValue), user_defined_max: e.target.defaultValue!=='', phase: 'remapData'})}}}
+                                            onBlur={e => {
+                                                if(!this.state.suppressBlur){
+                                                    this.setState({
+                                                        display_max: parseFloat(e.target.defaultValue), 
+                                                        user_defined_max: e.target.defaultValue!=='', 
+                                                        phase: 'remapData'
+                                                    })
+                                                }
+                                            }}
+											onKeyPress={e => {
+                                                if(e.key==='Enter'){
+                                                    this.setState({
+                                                        display_max: parseFloat(e.target.defaultValue), 
+                                                        user_defined_max: e.target.defaultValue!=='', 
+                                                        phase: 'remapData',
+                                                        suppressBlur: true
+                                                    })
+                                                }
+                                            }}
 											aria-label="xmax" 
 											aria-describedby="basic-addon1"/>
 									</div>

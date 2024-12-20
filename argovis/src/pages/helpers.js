@@ -84,21 +84,42 @@ helpers.interpolatePoint = function(startPoint, endPoint, fraction) {
     return interpolatedPoint;
 }
 
-helpers.onPolyCreate = function(payload){
+helpers.onPolyCreate = function(p){
+    
+    // make a ring, insert extra points, and redraw the polygon
+    let original_vertexes = p.layer.getLatLngs()[0].map(x => [x['lng'], x['lat']])
+    original_vertexes.push(original_vertexes[0])
+    let vertexes = original_vertexes.slice(0, original_vertexes.length-1)
+    vertexes = helpers.insertPointsInPolygon(vertexes)
+    p.layer.setLatLngs(vertexes.map(x => ({'lng': x[0], 'lat': x[1]})))
+   
+    let s = {...this.state}
+    s.polygon = original_vertexes // use these to search mongo
+    s.interpolated_polygon = vertexes // use these to draw something in leaflet that roughly resembles the mongo search region
 
-	let original_vertexes = payload.layer.getLatLngs()[0]
-	let vertexes = original_vertexes.map(x => [x['lng'], x['lat']])
-	vertexes.push(vertexes[0])
-	vertexes = helpers.insertPointsInPolygon(vertexes)
-	vertexes = vertexes.map(x => ({'lng': x[0], 'lat': x[1]}))
-	payload.layer.setLatLngs(vertexes)
+    let maxdays = helpers.calculateDayspan.bind(this)(s)
+    s.maxDayspan = maxdays
 
-	helpers.fetchPolygon.bind(this)(original_vertexes)
+    if(maxdays < this.state.maxDayspan){
+        // rethink the end date in case they drew a bigger polygon and the date range needs to be forcibly contracted
+        let timebox = helpers.setDate.bind(this)('startDate', document.getElementById('startDate').valueAsNumber, maxdays)
+        s.endDate = timebox[1]
+    }
+    s.phase = 'refreshData'
+    s.urls = this.generateURLs(s)
+
+    this.setState(s)
 }
 
-helpers.onPolyDelete = function(defaultPoly, payload){
+helpers.onPolyDelete = function(defaultPoly){
 
-	this.setState({polygon: defaultPoly, interpolated_polygon: helpers.insertPointsInPolygon(defaultPoly), maxDayspan: this.defaultDayspan, startDate: this.state.startDate, endDate: this.state.endDate, refreshData: true})
+    this.setState({
+        polygon: defaultPoly, 
+        interpolated_polygon: helpers.insertPointsInPolygon(defaultPoly), 
+        maxDayspan: this.defaultDayspan, 
+        urls: this.generateURLs({polygon: defaultPoly}),
+        phase: 'refreshData'
+    })
 }
 
 helpers.fetchPolygon = function(coords){
@@ -107,7 +128,8 @@ helpers.fetchPolygon = function(coords){
 	vertexes.push(vertexes[0])
 
 	let newState = helpers.manageAllowedDates.bind(this)(vertexes)
-	newState.refreshData = true
+	newState.phase = 'refreshData'
+    newState.urls = this.generateURLs()
 
 	this.setState(newState)
 }
@@ -140,12 +162,13 @@ helpers.estimateArea = function(vertexes){
 
 helpers.calculateDayspan = function(s){
 	// s == state object being mutated
-
+    
 	if(JSON.stringify(s.polygon) === '[]'){
 		return this.minDays
 	}
 
 	let area = helpers.estimateArea(s.polygon)
+    console.log(9000, area, this.minArea, this.maxArea)
 	if(area >= this.maxArea){
 		return Math.min(this.minDays*this.dateRangeMultiplyer(s), this.maxDays)
 	} else if (area < this.minArea){
@@ -180,6 +203,7 @@ helpers.clearLeafletDraw = function(){
 // update handlers
 
 helpers.phaseManager = function(prevProps, prevState, snapshot){
+
     // intended to be bound to componentDidUpdate, this function manages the state machine
     if(this.state.phase === 'refreshData'){
         setTimeout(() => { // this is a total hack, but it makes the 'downloading' status show up
@@ -203,7 +227,7 @@ helpers.phaseManager = function(prevProps, prevState, snapshot){
         }, 1);
     } else if (this.state.phase === 'idle') {
         setTimeout(() => {
-            if(this.state.data.some(arr => arr.length === 0)){
+            if(this.state.data.length === 0 || this.state.data.every(arr => arr.length === 0)){
                 helpers.manageStatus.bind(this)('error', 'No data found for this search.')
             } else {
                 helpers.manageStatus.bind(this)('ready')
@@ -297,6 +321,115 @@ helpers.componentDidUpdate = function(){
 	}
 }
 
+helpers.changeAPIkey = function(event){
+    localStorage.setItem('apiKey', event.target.value)
+
+    this.setState({
+        apiKey: event.target.value,
+        phase: 'idle'
+    })
+}
+
+helpers.changeDates = function(date, e){
+    let daterange = helpers.setDate.bind(this)(date, e.target.valueAsNumber, this.state.maxDayspan)
+    let s = {...this.state}
+    s.startDate = daterange[0]
+    s.endDate = daterange[1]
+    s.phase = 'refreshData'
+    s.urls = this.generateURLs(s)
+    s.suppressBlur = e.type === 'keypress'
+
+    this.setState(s)
+}
+
+helpers.changeDepth = function(e){
+    this.setState({
+        depthRequired:e.target.value, 
+        phase: 'refreshData',
+        urls: this.generateURLs({depthRequired: e.target.value}),
+        suppressBlur: e.type === 'keypress'
+    })
+}
+
+helpers.inputAutoSuggest = function(fieldID, vocab, ref, event, change){
+    // autosuggest management
+
+    if(change.newValue !== ''){
+        this.reautofocus = ref
+    } else {
+        this.reautofocus = null
+    }
+
+    let s = {...this.state}
+    s[fieldID] = change.newValue
+    s.observingEntity = Boolean(change.newValue)
+    helpers.changeAutoSuggest.bind(this)(fieldID, vocab, s, event)
+}
+
+helpers.changeAutoSuggest = function(fieldID, vocab, interimState, event){
+    // actually go looking for a platform on not-a-kwystroke events, or hits enter, and only if the specified platform is valid
+    if(event.type === 'blur' && interimState.suppressBlur){
+        return
+    } else if(event.type === 'click' || event.type === 'blur' || (event.type === 'keypress' && event.key === 'Enter')){  
+        if(vocab.includes(interimState[fieldID]) || interimState[fieldID] === '' ){
+            let params = {}
+            params[fieldID] = interimState[fieldID]
+            interimState.urls = this.generateURLs(params)
+            interimState.phase = 'refreshData'
+        } 
+        interimState.suppressBlur = (event.type === 'keypress' && event.key === 'Enter') || (event.type === 'click')
+        this.setState(interimState)
+    } else if (event.type === 'change'){
+        this.setState(interimState)
+    }
+}
+
+helpers.inputAutoSuggestPlots = function(fieldID, ref, resetLimits, event, change){
+    // autosuggest management
+
+    if(change.newValue !== ''){
+        this.reautofocus = ref
+    } else {
+        this.reautofocus = null
+    }
+
+    let s = {...this.state}
+    s[fieldID] = change.newValue
+    helpers.changeAutoSuggestPlots.bind(this)(fieldID, s, resetLimits, event)
+}
+
+helpers.changeAutoSuggestPlots = function(fieldID, interimState, resetLimits, event){
+    // actually go looking for a platform on not-a-kwystroke events, or hits enter, and only if the specified platform is valid
+    if(event.type === 'blur' && interimState.suppressBlur){
+        return
+    } else if(event.type === 'click' || event.type === 'blur' || (event.type === 'keypress' && event.key === 'Enter')){  
+        
+        if(this.vocab[fieldID].includes(interimState[fieldID])){
+            interimState.phase = 'remapData'
+            if(resetLimits){
+                interimState[fieldID.slice(0,1)+'min'] = ''
+                interimState[fieldID.slice(0,1)+'max'] = ''
+            }
+            if(fieldID === 'cKey'){
+                // define some default color schemes
+                if(interimState[fieldID] === 'temperature'){
+                    interimState.cscale = 'Thermal'
+                } else if (interimState[fieldID] === 'salinity'){
+                    interimState.cscale = 'Viridis'
+                } else {
+                    interimState.cscale = 'Electric'
+                }
+            }     
+        }
+        interimState.suppressBlur = (event.type === 'keypress' && event.key === 'Enter') || (event.type === 'click')
+        this.setState(interimState)
+
+
+    } else if (event.type === 'change'){
+        this.setState(interimState)
+    }
+}
+
 helpers.handleHTTPcodes = function(code){
 	let bail = false
 
@@ -363,29 +496,29 @@ helpers.refreshMap = function(state){
 	})
 }
 
-helpers.generateTemporoSpatialURL = function(prefix, route, state){
+helpers.generateTemporoSpatialURL = function(prefix, route, startDate, endDate, polygon, depthRequired){
 	//returns the api root, compression, time and space filters common to all endpoint queries
 
 	let url = prefix + route + '?compression=minimal'
 
-	if(state.depthRequired){
-		url += '&verticalRange=' + state.depthRequired + ',20000'
+	if(depthRequired){
+		url += '&verticalRange=' + depthRequired + ',20000'
 	}
 
-	if(state.startDate !== ''){
-		url += '&startDate=' + state.startDate + 'T00:00:00Z'
+	if(startDate !== ''){
+		url += '&startDate=' + startDate + 'T00:00:00Z'
 	}
 
-	if(state.endDate !== ''){
+	if(endDate !== ''){
 		// set to one day later to include the end date
-		let d = new Date(state.endDate)
+		let d = new Date(endDate)
 		d = d.getTime() + 24*60*60*1000
 		d = new Date(d)
 		url += '&endDate=' + d.toISOString().replace('.000Z', 'Z')
 	}  
 
-	if(state.polygon.length>0){
-		let tidypoly = helpers.tidypoly(state.polygon)
+	if(polygon.length>0){
+		let tidypoly = helpers.tidypoly(polygon)
 		url += '&polygon=[' + tidypoly.map(x => '['+x[0]+','+x[1]+']').join(',') + ']'
 	}    
 	return url	
@@ -453,11 +586,10 @@ helpers.setQueryString = function(){
 
 // input setters
 
-helpers.setDate = function(date, v, maxdays, noop, noup){
+helpers.setDate = function(date, v, maxdays){
 	// when setting dates from the UI, don't let the user ask for a timespan longer than some cutoff. 
 	// If they do, move the other time bound to match.
-	// If noop == true, just return the computed start and end times without invoking a state change.
-	// If noup == true, do the state update without refreshing data
+
 	let start = new Date(this.state.startDate)
 	let end = new Date(this.state.endDate)
 	let cutoff = maxdays*24*60*60*1000
@@ -467,39 +599,23 @@ helpers.setDate = function(date, v, maxdays, noop, noup){
 	} else{
 		if(date === 'startDate'){
 	    	start = new Date(v)
-	    	if(!noup){ // no need to drag other date around until we actually update
-		    	if(end.getTime() - start.getTime() > cutoff || end.getTime() - start.getTime() < 0){
-		    		end = new Date(v + cutoff)
-		    	}
-		    } 	
+            if(end.getTime() - start.getTime() > cutoff || end.getTime() - start.getTime() < 0){
+                end = new Date(v + cutoff)
+            }	
 	    } else if(date === 'endDate'){
 	    	end = new Date(v)
-	    	if(!noup){
-		    	if(end.getTime() - start.getTime() > cutoff || end.getTime() - start.getTime() < 0){
-		    		start = new Date(v - cutoff)
-		    	}
-		    }
+            if(end.getTime() - start.getTime() > cutoff || end.getTime() - start.getTime() < 0){
+                start = new Date(v - cutoff)
+            }
 	    }
 	    start = start.toISOString().slice(0,10)
 	   	end = end.toISOString().slice(0,10)
     }
-    let s = {...this.state}
-    s.startDate = start
-    s.endDate = end
-    if(!noup){
-		  s.refreshData = true
-		} else {
-			helpers.manageStatus.bind(this)('actionRequired', 'Click outside the current input to update the plot.')
-		}
-
-    if(noop){
-    	return [start, end]
-    } else {
-	    this.setState(s)
-	}
+	
+    return [start, end]
 }
 
-helpers.setToken = function(key, v, message, persist){
+helpers.setToken = function(key, v, persist){
 	// key: state key labeling this input token
 	// v: new value being considered
 	// persist: write this to local storage
@@ -510,44 +626,42 @@ helpers.setToken = function(key, v, message, persist){
 
 	let s = {...this.state}
 	s[key] = v
-	if(v && this.vocab[key] && !this.vocab[key].includes(v)){
-		helpers.manageStatus.bind(this)('error', message)
-		s.refreshData = false
-  } else {
-		s.refreshData = true
-	}
+	s.phase = 'refreshData'
+
 	this.setState(s)
 }
 
 helpers.toggle = function(v){
 	let s = {...this.state}
 	s[v.target.id] = !s[v.target.id]
-	s.refreshData = true
-	s = this.toggleCoupling(s)
+	s.phase = 'remapData'
 	this.setState(s)
 }
 
 // autosuggest callbacks
 
-helpers.onAutosuggestChange = function(message, fieldID, ref, event, change){
+helpers.onAutosuggestChange = function(fieldID, ref, event, change){
 	if(change.newValue !== ''){
 		this.reautofocus = ref
 	} else {
 		this.reautofocus = null
 	}
-	helpers.setToken.bind(this)(fieldID, change.newValue, message)
+	helpers.setToken.bind(this)(fieldID, change.newValue)
 }
 
 helpers.onSuggestionsFetchRequested = function(suggestionList, update){
 	let s = {}
 	s[suggestionList] = helpers.getSuggestions.bind(this)(update.value, suggestionList.slice(0,-11))
+    s.phase = 'awaitingUserInput'
 	this.setState(s)
 }
 
 helpers.onSuggestionsClearRequested = function(suggestionList){
-	let s = {}
-	s[suggestionList] = []
-	this.setState(s)
+	// let s = {}
+	// s[suggestionList] = []
+	// this.setState(s)
+    // seems to fire twice and not actually help much, just nerf this
+    return
 }
 
 helpers.getSuggestions = function(value, vocabKey){
@@ -564,9 +678,17 @@ helpers.getSuggestionValue = function(suggestion){
 }
 
 helpers.renderSuggestion = function(inputState, suggestion){
+
 	return(
 	  <div 
-	  	onClick={e => {this.state[inputState] = e.target.textContent}}
+	  	onClick={e => {
+            let s = {...this.state}
+            s[inputState] = e.target.textContent
+            s.phase = 'refreshData'
+            s.urls = this.generateURLs(s)
+
+            this.setState(s)
+        }}
 	  	onMouseOver={e => e.target.parentElement.classList.add('highlightSuggestion')}
 	  	onMouseOut={e => e.target.parentElement.classList.remove('highlightSuggestion')}
 	  	className='autocomplete-item'
@@ -768,39 +890,9 @@ helpers.generateAxisTitle = function(key){
 	}
 }
 
-helpers.onPlotAutosuggestChange = function(message, fieldID, resetLimits, event, change){
-	let key = fieldID
-	let v = change.newValue
-	let s = {...this.state}
-	
-	s[key] = v
-	if(this.vocab[key] && !this.vocab[key].includes(v)){
-		helpers.manageStatus.bind(this)('error', message)
-		s.refreshData = false
-  	} else {
-	  	helpers.manageStatus.bind(this)('ready')
-		s.refreshData = true
-		if(resetLimits){
-			s[key.slice(0,1)+'min'] = ''
-			s[key.slice(0,1)+'max'] = ''
-		}
-		if(key === 'cKey'){
-			// define some default color schemes
-			if(v === 'temperature'){
-				s.cscale = 'Thermal'
-			} else if (v === 'salinity'){
-				s.cscale = 'Viridis'
-			} else {
-				s.cscale = 'Electric'
-			}
-		}
-	}
-	this.setState(s)
-}
-
 helpers.resetAxes = function(event){
 	let s = {...this.state}
-	s.refreshData = true
+	s.phase = 'remapData'
 	s[event.target.id.slice(0,1)+'min'] = ''
 	s[event.target.id.slice(0,1)+'max'] = ''
 	this.setState(s)
@@ -808,7 +900,7 @@ helpers.resetAxes = function(event){
 
 helpers.resetAllAxes = function(event){
 	let s = {...this.state}
-	s.refreshData = true
+	s.phase = 'remapData'
 	let resets = ['xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax', 'cmin', 'cmax']
 	for(let i=0; i<resets.length; i++){
 		s[resets[i]] = ''
@@ -855,6 +947,22 @@ helpers.genericTooltip = function(data){
 	return tooltips
 }
 
+helpers.changePlotAxisLimits = function(key, v, e){
+
+    if(this.state[v] === 'timestamp'){
+        console.log(e.target.value)
+        this.setState({
+            [key]: e.target.value,
+            phase: 'remapData'
+        })
+    } else if(!Number.isNaN(parseFloat(e.target.value))) {
+        this.setState({
+            [key]: parseFloat(e.target.value),
+            phase: 'remapData'
+        })
+    }
+}
+
 helpers.prepPlotlyState = function(markerSize){
 
 	let xrange = helpers.generateRange.bind(this)(this.state.xmin, this.state.xmax, this.state.xKey, this.state.reverseX)
@@ -866,116 +974,117 @@ helpers.prepPlotlyState = function(markerSize){
 	if(this.state.cKey === 'timestamp'){
 		colortics = helpers.generateTimetics(crange[0], crange[1])
 	}
-
-	if(this.state.refreshData){
 			
-			// discourage color scale from drawing any number of times other than exactly one
-			let scaleDrawn = false
-			let needsScale = function(isVisible){
-				if(!scaleDrawn && isVisible){
-					scaleDrawn = true
-					return true
-				} else {
-					return false
-				}
-			}
+    // discourage color scale from drawing any number of times other than exactly one
+    let scaleDrawn = false
+    let needsScale = function(isVisible){
+        if(!scaleDrawn && isVisible){
+            scaleDrawn = true
+            return true
+        } else {
+            return false
+        }
+    }
 
-			// generate data and layout
-			this.data = this.state.data.map((d,i) => {
-				if(d.hasOwnProperty(this.state.xKey) && d.hasOwnProperty(this.state.yKey) && (d.hasOwnProperty(this.state.zKey) || this.state.zKey === '[2D plot]') && d.hasOwnProperty(this.state.cKey)){
-					
-					// filter off any points that have null for color value, don't plot these.
-					let x = d[this.state.xKey].filter((e,j) => {return d[this.state.cKey][j] !== null})
-					let y = d[this.state.yKey].filter((e,j) => {return d[this.state.cKey][j] !== null})
-					let t = d['timestamp'].filter((e,j) => {return d[this.state.cKey][j] !== null}) // timestamp gets used to step through valid points later, keep it synced with the filtering 
-					let z = []
-					if(this.state.zKey !== '[2D plot]'){
-						z = d[this.state.zKey].filter((e,j) => {return d[this.state.cKey][j] !== null})
-					}
-					let c = d[this.state.cKey].filter(x => x!==null)
-					let filteredData = {...d}
-					filteredData[this.state.xKey] = x
-					filteredData[this.state.yKey] = y
-					filteredData[this.state.zKey] = z
-					filteredData[this.state.cKey] = c
-					filteredData['timestamp'] = t
-					return {
-						x: filteredData[this.state.xKey],
-						y: filteredData[this.state.yKey],
-						z: filteredData[this.state.zKey],
-						text: this.genTooltip.bind(this)(filteredData),
-						hoverinfo: 'text',
-						type: this.state.zKey === '[2D plot]' ? 'scattergl' : 'scatter3d',
-						connectgaps: true,
-						mode: this.state.connectingLines ? 'markers+lines' : 'markers',
-						line: {
-							color: 'grey'
-						},
-						marker: {
-							size: markerSize,
-							color: filteredData[this.state.cKey],
-							colorscale: this.state.cscale === 'Thermal' ? [[0,'rgb(3, 35, 51)'], [0.09,'rgb(13, 48, 100)'], [0.18,'rgb(53, 50, 155)'], [0.27,'rgb(93, 62, 153)'], [0.36,'rgb(126, 77, 143)'], [0.45,'rgb(158, 89, 135)'], [0.54,'rgb(193, 100, 121)'], [0.63,'rgb(225, 113, 97)'], [0.72,'rgb(246, 139, 69)'], [0.81,'rgb(251, 173, 60)'], [0.90,'rgb(246, 211, 70)'], [1,'rgb(231, 250, 90)']] : this.state.cscale,
-							cmin: Math.min(crange[0], crange[1]),
-							cmax: Math.max(crange[0], crange[1]),
-							showscale: needsScale(helpers.showTrace.bind(this)(d._id)),
-							reversescale: this.state.reverseC,
-							colorbar: {
-								title: helpers.generateAxisTitle.bind(this)(this.state.cKey),
-								titleside: 'right',
-								tickmode: this.state.cKey === 'timestamp' ? 'array' : 'auto',
-								ticktext: colortics[0],
-								tickvals: colortics[1]
-							}
-						},
-						name: d._id,
-						visible: this.state.counterTraces.includes(d._id) ? !this.state.showAll : this.state.showAll
-					}
-				} else {
-					return {}
-				}
-			})
+    // generate data and layout
+    this.data = this.state.data.map((d,i) => {
+        if(d.hasOwnProperty(this.state.xKey) && d.hasOwnProperty(this.state.yKey) && (d.hasOwnProperty(this.state.zKey) || this.state.zKey === '[2D plot]') && d.hasOwnProperty(this.state.cKey)){
+            
+            // filter off any points that have null for color value, don't plot these.
+            let x = d[this.state.xKey].filter((e,j) => {return d[this.state.cKey][j] !== null})
+            let y = d[this.state.yKey].filter((e,j) => {return d[this.state.cKey][j] !== null})
+            let t = d['timestamp'].filter((e,j) => {return d[this.state.cKey][j] !== null}) // timestamp gets used to step through valid points later, keep it synced with the filtering 
+            let z = []
+            if(this.state.zKey !== '[2D plot]'){
+                z = d[this.state.zKey].filter((e,j) => {return d[this.state.cKey][j] !== null})
+            }
+            let c = d[this.state.cKey].filter(x => x!==null)
+            let filteredData = {...d}
+            filteredData[this.state.xKey] = x
+            filteredData[this.state.yKey] = y
+            filteredData[this.state.zKey] = z
+            filteredData[this.state.cKey] = c
+            filteredData['timestamp'] = t
+            return {
+                x: filteredData[this.state.xKey],
+                y: filteredData[this.state.yKey],
+                z: filteredData[this.state.zKey],
+                text: this.genTooltip.bind(this)(filteredData),
+                hoverinfo: 'text',
+                type: this.state.zKey === '[2D plot]' ? 'scattergl' : 'scatter3d',
+                connectgaps: true,
+                mode: this.state.connectingLines ? 'markers+lines' : 'markers',
+                line: {
+                    color: 'grey'
+                },
+                marker: {
+                    size: markerSize,
+                    color: filteredData[this.state.cKey],
+                    colorscale: this.state.cscale === 'Thermal' ? [[0,'rgb(3, 35, 51)'], [0.09,'rgb(13, 48, 100)'], [0.18,'rgb(53, 50, 155)'], [0.27,'rgb(93, 62, 153)'], [0.36,'rgb(126, 77, 143)'], [0.45,'rgb(158, 89, 135)'], [0.54,'rgb(193, 100, 121)'], [0.63,'rgb(225, 113, 97)'], [0.72,'rgb(246, 139, 69)'], [0.81,'rgb(251, 173, 60)'], [0.90,'rgb(246, 211, 70)'], [1,'rgb(231, 250, 90)']] : this.state.cscale,
+                    cmin: Math.min(crange[0], crange[1]),
+                    cmax: Math.max(crange[0], crange[1]),
+                    showscale: needsScale(helpers.showTrace.bind(this)(d._id)),
+                    reversescale: this.state.reverseC,
+                    colorbar: {
+                        title: helpers.generateAxisTitle.bind(this)(this.state.cKey),
+                        titleside: 'right',
+                        tickmode: this.state.cKey === 'timestamp' ? 'array' : 'auto',
+                        ticktext: colortics[0],
+                        tickvals: colortics[1]
+                    }
+                },
+                name: d._id,
+                visible: this.state.counterTraces.includes(d._id) ? !this.state.showAll : this.state.showAll
+            }
+        } else {
+            return {}
+        }
+    })
 
-			this.layout = {
-				datarevision: Math.random(),
-				autosize: true, 
-				showlegend: false,
-				font: {
-					size: 20
-				},
-				xaxis: {
-					title: helpers.generateAxisTitle.bind(this)(this.state.xKey),
-					range: xrange,
-					type: this.state.xKey === 'timestamp' ? 'date' : '-'
-				},
-				yaxis: {
-					title: helpers.generateAxisTitle.bind(this)(this.state.yKey),
-					range: yrange,
-					type: this.state.yKey === 'timestamp' ? 'date' : '-',
-				},
-				margin: {t: 30},
-				scene: {
-					xaxis:{
-						title: helpers.generateAxisTitle.bind(this)(this.state.xKey),
-						range: xrange,
-						type: this.state.xKey === 'timestamp' ? 'date' : '-'
-					},
-					yaxis:{
-						title: helpers.generateAxisTitle.bind(this)(this.state.yKey),
-						range: yrange,
-						type: this.state.yKey === 'timestamp' ? 'date' : '-'
-					},
-					zaxis:{
-						title: helpers.generateAxisTitle.bind(this)(this.state.zKey),
-						range: zrange,
-						type: this.state.zKey === 'timestamp' ? 'date' : '-'
-					}
-				}
-			}
-			if(this.statusReporting.current){
-				helpers.manageStatus.bind(this)('ready')
-			}
-		}
-	}
+    this.layout = {
+        datarevision: Math.random(),
+        autosize: true, 
+        showlegend: false,
+        font: {
+            size: 20
+        },
+        xaxis: {
+            title: helpers.generateAxisTitle.bind(this)(this.state.xKey),
+            range: xrange,
+            type: this.state.xKey === 'timestamp' ? 'date' : '-'
+        },
+        yaxis: {
+            title: helpers.generateAxisTitle.bind(this)(this.state.yKey),
+            range: yrange,
+            type: this.state.yKey === 'timestamp' ? 'date' : '-',
+        },
+        margin: {t: 30},
+        scene: {
+            xaxis:{
+                title: helpers.generateAxisTitle.bind(this)(this.state.xKey),
+                range: xrange,
+                type: this.state.xKey === 'timestamp' ? 'date' : '-'
+            },
+            yaxis:{
+                title: helpers.generateAxisTitle.bind(this)(this.state.yKey),
+                range: yrange,
+                type: this.state.yKey === 'timestamp' ? 'date' : '-'
+            },
+            zaxis:{
+                title: helpers.generateAxisTitle.bind(this)(this.state.zKey),
+                range: zrange,
+                type: this.state.zKey === 'timestamp' ? 'date' : '-'
+            }
+        }
+    }
+
+    this.setState({
+        phase: 'idle',
+        suppressBlur: false
+    })
+
+		
+}
 
 helpers.plotHTML = function(){
 	return(
@@ -1001,13 +1110,20 @@ helpers.plotHTML = function(){
 								</div>
 	      						<Autosuggest
 							      	id='xKeyAS'
+                                    ref={this.xKeyRef}
 							        suggestions={this.state.xKeySuggestions}
 							        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'xKeySuggestions')}
 							        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'xKeySuggestions')}
-							        shouldRenderSuggestions={x=>true}
 							        getSuggestionValue={helpers.getSuggestionValue}
 							        renderSuggestion={helpers.renderSuggestion.bind(this, 'xKey')}
-							        inputProps={{placeholder: 'x-axis', value: this.state.xKey, onChange: helpers.onPlotAutosuggestChange.bind(this, 'Check value of x axis variable', 'xKey', true), id: 'xKey'}}
+							        inputProps={{
+                                        placeholder: 'x-axis', 
+                                        value: this.state.xKey,
+                                        onKeyPress: helpers.changeAutoSuggestPlots.bind(this, 'xKey', this.state, true),  
+                                        onBlur: helpers.changeAutoSuggestPlots.bind(this, 'xKey', this.state, true), 
+                                        onChange: helpers.inputAutoSuggestPlots.bind(this, 'xKey', this.xKeyRef, true), 
+                                        id: 'xKey'
+                                    }}
 							        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 	      						/>
 	      						<div className='row'>
@@ -1021,11 +1137,21 @@ helpers.plotHTML = function(){
 											placeholder="Auto" 
 											value={this.state.xmin} 
 											onChange={e => {
-												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
-												this.setState({xmin:e.target.value})}
-											} 
-											onBlur={e => {this.setState({xmin:e.target.defaultValue, refreshData: true})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({xmin:e.target.defaultValue, refreshData: true})}}}
+												this.setState({
+                                                    xmin: e.target.value,
+                                                    phase: 'awaitingUserInput'
+                                                })}
+											}
+                                            onBlur={e => {
+                                                if(!this.state.suppressBlur ){
+                                                    helpers.changePlotAxisLimits.bind(this)('xmin', 'xKey', e)
+                                                }
+                                            }}
+											onKeyPress={e => {
+                                                if(e.key==='Enter'){
+                                                    helpers.changePlotAxisLimits.bind(this)('xmin', 'xKey', e)
+                                                }
+                                            }}
 											aria-label="xmin" 
 											aria-describedby="basic-addon1"/>
 									</div>
@@ -1039,11 +1165,21 @@ helpers.plotHTML = function(){
 											placeholder="Auto" 
 											value={this.state.xmax} 
 											onChange={e => {
-												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
-												this.setState({xmax:e.target.value})}
-											} 
-											onBlur={e => {this.setState({xmax:e.target.defaultValue, refreshData: true})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({xmax:e.target.defaultValue, refreshData: true})}}}
+												this.setState({
+                                                    xmax: e.target.value,
+                                                    phase: 'awaitingUserInput'
+                                                })}
+											}
+                                            onBlur={e => {
+                                                if(!this.state.suppressBlur ){
+                                                    helpers.changePlotAxisLimits.bind(this)('xmax', 'xKey', e)
+                                                }
+                                            }}
+											onKeyPress={e => {
+                                                if(e.key==='Enter' ){
+                                                    helpers.changePlotAxisLimits.bind(this)('xmax', 'xKey', e)
+                                                }
+                                            }}
 											aria-label="xmax" 
 											aria-describedby="basic-addon1"/>
 									</div>
@@ -1072,10 +1208,16 @@ helpers.plotHTML = function(){
 							        suggestions={this.state.yKeySuggestions}
 							        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'yKeySuggestions')}
 							        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'yKeySuggestions')}
-							        shouldRenderSuggestions={x=>true}
 							        getSuggestionValue={helpers.getSuggestionValue}
 							        renderSuggestion={helpers.renderSuggestion.bind(this, 'yKey')}
-							        inputProps={{placeholder: 'y-axis', value: this.state.yKey, onChange: helpers.onPlotAutosuggestChange.bind(this, 'Check value of y axis variable', 'yKey', true), id: 'yKey'}}
+							        inputProps={{
+                                        placeholder: 'y-axis', 
+                                        value: this.state.yKey, 
+                                        onKeyPress: helpers.changeAutoSuggestPlots.bind(this, 'yKey', this.state, true),  
+                                        onBlur: helpers.changeAutoSuggestPlots.bind(this, 'yKey', this.state, true), 
+                                        onChange: helpers.inputAutoSuggestPlots.bind(this, 'yKey', this.xKeyRef, true),  
+                                        id: 'yKey'
+                                    }}
 							        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 	      						/>
 	      						<div className='row'>
@@ -1089,11 +1231,21 @@ helpers.plotHTML = function(){
 											placeholder="Auto" 
 											value={this.state.ymin} 
 											onChange={e => {
-												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
-												this.setState({ymin:e.target.value})}
-											} 
-											onBlur={e => {this.setState({ymin:e.target.defaultValue, refreshData: true})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({ymin:e.target.defaultValue, refreshData: true})}}}
+												this.setState({
+                                                    ymin: e.target.value,
+                                                    phase: 'awaitingUserInput'
+                                                })}
+											}
+                                            onBlur={e => {
+                                                if(!this.state.suppressBlur ){
+                                                    helpers.changePlotAxisLimits.bind(this)('ymin', 'yKey', e)
+                                                }
+                                            }}
+											onKeyPress={e => {
+                                                if(e.key==='Enter'){
+                                                    helpers.changePlotAxisLimits.bind(this)('ymin', 'yKey', e)
+                                                }
+                                            }}
 											aria-label="ymin" 
 											aria-describedby="basic-addon1"/>
 									</div>
@@ -1107,11 +1259,21 @@ helpers.plotHTML = function(){
 											placeholder="Auto" 
 											value={this.state.ymax} 
 											onChange={e => {
-												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
-												this.setState({ymax:e.target.value})}
-											} 
-											onBlur={e => {this.setState({ymax:e.target.defaultValue, refreshData: true})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({ymax:e.target.defaultValue, refreshData: true})}}}
+												this.setState({
+                                                    ymax: e.target.value,
+                                                    phase: 'awaitingUserInput'
+                                                })}
+											}
+                                            onBlur={e => {
+                                                if(!this.state.suppressBlur ){
+                                                    helpers.changePlotAxisLimits.bind(this)('ymax', 'yKey', e)
+                                                }
+                                            }}
+											onKeyPress={e => {
+                                                if(e.key==='Enter'){
+                                                    helpers.changePlotAxisLimits.bind(this)('ymax', 'yKey', e)
+                                                }
+                                            }}
 											aria-label="ymax" 
 											aria-describedby="basic-addon1"/>
 									</div>
@@ -1140,10 +1302,16 @@ helpers.plotHTML = function(){
 							        suggestions={this.state.cKeySuggestions}
 							        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'cKeySuggestions')}
 							        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'cKeySuggestions')}
-							        shouldRenderSuggestions={x=>true}
 							        getSuggestionValue={helpers.getSuggestionValue}
 							        renderSuggestion={helpers.renderSuggestion.bind(this, 'cKey')}
-							        inputProps={{placeholder: 'color axis', value: this.state.cKey, onChange: helpers.onPlotAutosuggestChange.bind(this, 'Check value of color axis variable', 'cKey', true), id: 'cKey'}}
+							        inputProps={{
+                                        placeholder: 'color axis', 
+                                        value: this.state.cKey, 
+                                        onKeyPress: helpers.changeAutoSuggestPlots.bind(this, 'cKey', this.state, true),  
+                                        onBlur: helpers.changeAutoSuggestPlots.bind(this, 'cKey', this.state, true), 
+                                        onChange: helpers.inputAutoSuggestPlots.bind(this, 'cKey', this.xKeyRef, true), 
+                                        id: 'cKey'
+                                    }}
 							        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 	      						/>
 	      						<div className='row'>
@@ -1157,11 +1325,21 @@ helpers.plotHTML = function(){
 											placeholder="Auto" 
 											value={this.state.cmin} 
 											onChange={e => {
-												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
-												this.setState({cmin:e.target.value})}
-											}  
-											onBlur={e => {this.setState({cmin:e.target.defaultValue, refreshData: true})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({cmin:e.target.defaultValue, refreshData: true})}}}
+												this.setState({
+                                                    cmin: e.target.value,
+                                                    phase: 'awaitingUserInput'
+                                                })}
+											}
+                                            onBlur={e => {
+                                                if(!this.state.suppressBlur ){
+                                                    helpers.changePlotAxisLimits.bind(this)('cmin', 'cKey', e)
+                                                }
+                                            }}
+											onKeyPress={e => {
+                                                if(e.key==='Enter'){
+                                                    helpers.changePlotAxisLimits.bind(this)('cmin', 'cKey', e)
+                                                }
+                                            }}
 											aria-label="cmin" 
 											aria-describedby="basic-addon1"/>
 									</div>
@@ -1174,12 +1352,22 @@ helpers.plotHTML = function(){
 											className="form-control minmax" 
 											placeholder="Auto" 
 											value={this.state.cmax} 
-											onChange={e => {
-												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
-												this.setState({cmax:e.target.value})}
-											} 
-											onBlur={e => {this.setState({cmax:e.target.defaultValue, refreshData: true})}}
-											onKeyPress={e => {if(e.key==='Enter'){this.setState({cmax:e.target.defaultValue, refreshData: true})}}}
+                                            onChange={e => {
+												this.setState({
+                                                    cmax: e.target.value,
+                                                    phase: 'awaitingUserInput'
+                                                })}
+											}
+                                            onBlur={e => {
+                                                if(!this.state.suppressBlur ){
+                                                    helpers.changePlotAxisLimits.bind(this)('cmax', 'cKey', e)
+                                                }
+                                            }}
+											onKeyPress={e => {
+                                                if(e.key==='Enter'){
+                                                    helpers.changePlotAxisLimits.bind(this)('cmax', 'cKey', e)
+                                                }
+                                            }}
 											aria-label="cmax" 
 											aria-describedby="basic-addon1"/>
 									</div>
@@ -1203,10 +1391,15 @@ helpers.plotHTML = function(){
 							        suggestions={this.state.cscaleSuggestions}
 							        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'cscaleSuggestions')}
 							        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'cscaleSuggestions')}
-							        shouldRenderSuggestions={x=>true}
 							        getSuggestionValue={helpers.getSuggestionValue}
 							        renderSuggestion={helpers.renderSuggestion.bind(this, 'cscale')}
-							        inputProps={{placeholder: 'color scale', value: this.state.cscale, onChange: helpers.onPlotAutosuggestChange.bind(this, 'Check value of color scale variable', 'cscale', false), id: 'cscale'}}
+							        inputProps={{
+                                        placeholder: 'color scale', 
+                                        value: this.state.cscale, 
+                                        onKeyPress: helpers.changeAutoSuggestPlots.bind(this, 'cscale', this.state, true),  
+                                        onBlur: helpers.changeAutoSuggestPlots.bind(this, 'cscale', this.state, true), 
+                                        onChange: helpers.inputAutoSuggestPlots.bind(this, 'cscale', this.xKeyRef, true), 
+                                        id: 'cscale'}}
 							        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 	      						/>
 							</div>
@@ -1222,10 +1415,16 @@ helpers.plotHTML = function(){
 							        suggestions={this.state.zKeySuggestions}
 							        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'zKeySuggestions')}
 							        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'zKeySuggestions')}
-							        shouldRenderSuggestions={x=>true}
 							        getSuggestionValue={helpers.getSuggestionValue}
 							        renderSuggestion={helpers.renderSuggestion.bind(this, 'zKey')}
-							        inputProps={{placeholder: 'z-axis', value: this.state.zKey, onChange: helpers.onPlotAutosuggestChange.bind(this, 'Check value of z axis variable', 'zKey', true), id: 'zKey'}}
+							        inputProps={{
+                                        placeholder: 'z-axis', 
+                                        value: this.state.zKey, 
+                                        onKeyPress: helpers.changeAutoSuggestPlots.bind(this, 'zKey', this.state, true),  
+                                        onBlur: helpers.changeAutoSuggestPlots.bind(this, 'zKey', this.state, true), 
+                                        onChange: helpers.inputAutoSuggestPlots.bind(this, 'zKey', this.xKeyRef, true), 
+                                        id: 'zKey'
+                                    }}
 							        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 	      						/>
 								<div className={this.state.zKey === '[2D plot]' ? "input-group mb-3 hidden": "input-group mb-3"} style={{'marginTop':'1em'}}>
@@ -1239,12 +1438,22 @@ helpers.plotHTML = function(){
 												className="form-control minmax" 
 												placeholder="Auto" 
 												value={this.state.zmin} 
-												onChange={e => {
-													helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
-													this.setState({zmin:e.target.value})}
-												} 
-												onBlur={e => {this.setState({zmin:e.target.defaultValue, refreshData: true})}}
-												onKeyPress={e => {if(e.key==='Enter'){this.setState({zmin:e.target.defaultValue, refreshData: true})}}}
+                                                onChange={e => {
+                                                    this.setState({
+                                                        zmin: e.target.value,
+                                                        phase: 'awaitingUserInput'
+                                                    })}
+                                                }
+                                                onBlur={e => {
+                                                    if(!this.state.suppressBlur ){
+                                                        helpers.changePlotAxisLimits.bind(this)('zmin', 'zKey', e)
+                                                    }
+                                                }}
+                                                onKeyPress={e => {
+                                                    if(e.key==='Enter'){
+                                                        helpers.changePlotAxisLimits.bind(this)('zmin', 'zKey', e)
+                                                    }
+                                                }}
 												aria-label="zmin" 
 												aria-describedby="basic-addon1"/>
 										</div>
@@ -1257,12 +1466,22 @@ helpers.plotHTML = function(){
 												className="form-control minmax" 
 												placeholder="Auto" 
 												value={this.state.zmax} 
-												onChange={e => {
-													helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
-													this.setState({zmax:e.target.value})}
-												}  
-												onBlur={e => {this.setState({zmax:e.target.defaultValue, refreshData: true})}}
-												onKeyPress={e => {if(e.key==='Enter'){this.setState({zmax:e.target.defaultValue, refreshData: true})}}}
+                                                onChange={e => {
+                                                    this.setState({
+                                                        zmax: e.target.value,
+                                                        phase: 'awaitingUserInput'
+                                                    })}
+                                                }
+                                                onBlur={e => {
+                                                    if(!this.state.suppressBlur ){
+                                                        helpers.changePlotAxisLimits.bind(this)('zmax', 'zKey', e)
+                                                    }
+                                                }}
+                                                onKeyPress={e => {
+                                                    if(e.key==='Enter'){
+                                                        helpers.changePlotAxisLimits.bind(this)('zmax', 'zKey', e)
+                                                    }
+                                                }}
 												aria-label="zmax" 
 												aria-describedby="basic-addon1"/>
 										</div>
@@ -1297,7 +1516,14 @@ helpers.plotHTML = function(){
 									</div>
 								</div>
 								<div className="form-floating mb-3" style={{'marginTop': '0.5em'}}>
-									<input type="password" className="form-control" id="apiKey" placeholder="" value={this.state.apiKey} onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
+                                    <input 
+                                        type="password" 
+                                        className="form-control" 
+                                        id="apiKey" 
+                                        value={this.state.apiKey} 
+                                        placeholder="" 
+                                        onInput={helpers.changeAPIkey.bind(this)}
+                                    ></input>
 									<label htmlFor="apiKey">API Key</label>
 									<div id="apiKeyHelpBlock" className="form-text">
 					  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
@@ -1362,6 +1588,8 @@ helpers.initPlottingPage = function(customParams, apiroot){
 		connectingLines: q.has('connectingLines') ? q.get('connectingLines') === 'true' : false,
 		refreshData: true,
 		centerlon: q.has('centerlon') ? q.get('centerlon') : 0,
+        phase: 'refreshData',
+        suppressBlur: false,
 	}
 
 	this.apiPrefix = apiroot
@@ -1384,6 +1612,7 @@ helpers.initPlottingPage = function(customParams, apiroot){
 		'showAll', 'counterTraces'
 	]
 	this.formRef = React.createRef()
+    this.xKeyRef = React.createRef()
 
 	for(let i=0; i<customParams.length; i++){
 		this.state[customParams[i]] = q.has(customParams[i]) ? q.get(customParams[i]) : ''
@@ -1393,9 +1622,7 @@ helpers.initPlottingPage = function(customParams, apiroot){
 }
 
 helpers.downloadData = function(defaultX, defaultY, defaultZ, defaultC, mergePoints){
-	if(this.statusReporting.current){
-		helpers.manageStatus.bind(this)('downloading')
-	}
+    // to bind in to downloadData for plotting pages
 	Promise.all(this.generateURLs().map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
 		Promise.all(responses.map(res => res.json())).then(data => {
 			for(let i=0; i<data.length; i++){
@@ -1454,8 +1681,6 @@ helpers.downloadData = function(defaultX, defaultY, defaultZ, defaultC, mergePoi
 
 					this.prepCSV(data, meta)
 
-                    console.log(p)
-
 					this.setState({
 						data:p, 
 						variables: vars, 
@@ -1464,7 +1689,8 @@ helpers.downloadData = function(defaultX, defaultY, defaultZ, defaultC, mergePoi
 						xKey: this.state.xKey ? this.state.xKey :  defaultX,
 						yKey: this.state.yKey ? this.state.yKey :  defaultY,
 						zKey: this.state.zKey ? this.state.zKey :  defaultZ,
-						cKey: this.state.cKey ? this.state.cKey :  defaultC
+						cKey: this.state.cKey ? this.state.cKey :  defaultC,
+                        phase: 'remapData'
 					})
 				})
 			})
@@ -1488,10 +1714,10 @@ helpers.mungeTime = function(q, nDays, defaultEnd){
   if(q.has('endDate') && q.has('startDate')){
   	let t0 = new Date(q.get('startDate'))
   	let t1 = new Date(q.get('endDate'))
-  	if(t1.getTime() - t0.getTime() < (nDays * 24 * 60 * 60 * 1000)){
+  	if(t1.getTime() - t0.getTime() <= (nDays * 24 * 60 * 60 * 1000)){
   		this.state.startDate = q.get('startDate')
     	this.state.endDate = q.get('endDate')
-  	} 
+  	}
   }
 }
 

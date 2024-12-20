@@ -2,7 +2,6 @@ import React from 'react';
 import '../index.css';
 import helpers from'./helpers'
 
-
 class ArgoPlots extends React.Component {
 
 	constructor(props) {
@@ -25,6 +24,36 @@ class ArgoPlots extends React.Component {
 		}
 
 		helpers.downloadData.bind(this)('temperature', 'pressure', '[2D plot]', 'timestamp')
+	}
+
+    componentDidUpdate(prevProps, prevState, snapshot){
+    	helpers.phaseManager.bind(this)(prevProps, prevState, snapshot)
+    }
+
+    downloadData(){
+        helpers.downloadData.bind(this)('temperature', 'pressure', '[2D plot]', 'timestamp')
+    }
+
+    replot(){
+        helpers.prepPlotlyState.bind(this)(6)
+    }
+
+	generateURLs(){
+		// return an array of API URLs to be fetched based on current state variables.
+
+		let urls = []
+
+		if(this.state.argoPlatform){
+			urls = urls.concat(this.apiPrefix + 'argo/?data=all&platform=' + this.state.argoPlatform)
+		} else if(this.state.polygon && this.state.startDate && this.state.endDate){
+			urls = urls.concat(this.apiPrefix + 'argo/?data=all&startDate=' + this.state.startDate + '&endDate=' + this.state.endDate + '&polygon=' + this.state.polygon)
+		}
+
+		return urls
+	}
+
+	generateMetadataURLs(metakeys){
+		return metakeys.map(x => this.apiPrefix + 'argo/meta?id=' + x)
 	}
 
 	prepCSV(data, meta){
@@ -72,35 +101,6 @@ class ArgoPlots extends React.Component {
 		this.csv += rows.map(r => JSON.stringify(r).replaceAll('"', '').replaceAll('[', '').replaceAll(']', '')).join('\n')
 		this.csv = new Blob([this.csv], {type: 'text/csv'})
 		this.csv = window.URL.createObjectURL(this.csv)
-	}
-
-    componentDidUpdate(prevProps, prevState, snapshot){
-    	if(prevState && this.state.apiKey !== prevState.apiKey){
-    		helpers.downloadData.bind(this)('temperature', 'pressure', '[2D plot]', 'timestamp')	
-    	} else {
-	    	if(this.state.refreshData){
-		    	this.setState({refreshData: false})
-	    	}
-	    	helpers.setQueryString.bind(this)()
-	    }
-    }
-
-	generateURLs(){
-		// return an array of API URLs to be fetched based on current state variables.
-
-		let urls = []
-
-		if(this.state.argoPlatform){
-			urls = urls.concat(this.apiPrefix + 'argo/?data=all&platform=' + this.state.argoPlatform)
-		} else if(this.state.polygon && this.state.startDate && this.state.endDate){
-			urls = urls.concat(this.apiPrefix + 'argo/?data=all&startDate=' + this.state.startDate + '&endDate=' + this.state.endDate + '&polygon=' + this.state.polygon)
-		}
-		console.log(urls)
-		return urls
-	}
-
-	generateMetadataURLs(metakeys){
-		return metakeys.map(x => this.apiPrefix + 'argo/meta?id=' + x)
 	}
 
 	genTooltip(data){
@@ -154,13 +154,8 @@ class ArgoPlots extends React.Component {
 		return tooltips
 	}
 
-	toggleCoupling(s){
-    	// if changing a toggle for this page needs to trigger a side effect on state, do so here.
-    	return s
-    }
-
 	render(){
-		helpers.prepPlotlyState.bind(this)(6)
+        console.log(this.state)
 
 		let linkouts = <></>
 		if(this.state.argoPlatform){

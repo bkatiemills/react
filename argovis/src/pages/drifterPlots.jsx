@@ -22,20 +22,16 @@ class DrifterPlots extends React.Component {
 		helpers.downloadData.bind(this)('sst', 'sst1', '[2D plot]', 'timestamp', true)
 	}
 
-	prepCSV(data, meta){
-		// no csv required for drifter
-		this.csv = null
-	}
-
     componentDidUpdate(prevProps, prevState, snapshot){
-    	if(prevState && this.state.apiKey !== prevState.apiKey){
-    		helpers.downloadData.bind(this)('sst', 'sst1', '[2D plot]', 'timestamp', true)	
-    	} else {
-	    	if(this.state.refreshData){
-		    	this.setState({refreshData: false})
-	    	}
-	    	helpers.setQueryString.bind(this)()
-	    }
+    	helpers.phaseManager.bind(this)(prevProps, prevState, snapshot)
+    }
+
+    downloadData(){
+        helpers.downloadData.bind(this)('temperature', 'pressure', '[2D plot]', 'timestamp')
+    }
+
+    replot(){
+        helpers.prepPlotlyState.bind(this)(6)
     }
 
 	generateURLs(){
@@ -60,17 +56,17 @@ class DrifterPlots extends React.Component {
 		return metakeys.map(x => this.apiPrefix + 'drifters/meta?id=' + x)
 	}
 
+	prepCSV(data, meta){
+		// no csv required for drifter
+		this.csv = null
+	}
+
 	genTooltip(data){
 		return helpers.genericTooltip.bind(this)(data)
 	}
 
-	toggleCoupling(s){
-    	// if changing a toggle for this page needs to trigger a side effect on state, do so here.
-    	return s
-    }
-
 	render(){
-		helpers.prepPlotlyState.bind(this)(6)
+        console.log(this.state)
 
 		return(
 			<>

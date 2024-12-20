@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapContainer, TileLayer, Polygon, FeatureGroup, Popup} from 'react-leaflet'
+import { MapContainer, TileLayer, Polygon, FeatureGroup, Popup, CircleMarker} from 'react-leaflet'
 import { EditControl } from "react-leaflet-draw";
 import Autosuggest from 'react-autosuggest';
 import '../index.css';
@@ -31,13 +31,15 @@ class DriftersExplore extends React.Component {
 			platformSuggestions: [],
 			wmo: q.has('wmo') ? q.get('wmo') : '',
 			platform: q.has('platform') ? q.get('platform') : '',
-			refreshData: false,
 			points: [],
 			polygon: q.has('polygon') ? JSON.parse(q.get('polygon')) : this.defaultPolygon,
 			interpolated_polygon: q.has('polygon') ? helpers.insertPointsInPolygon(JSON.parse(q.get('polygon'))) : helpers.insertPointsInPolygon(this.defaultPolygon),
 			urls: [],
 			centerlon: q.has('centerlon') ? parseFloat(q.get('centerlon')) : -70,
-			mapkey: Math.random()
+			mapkey: Math.random(),
+            phase: 'refreshData',
+            data: [[]],
+            suppressBlur: false,
 		}
 		this.state.maxDayspan = helpers.calculateDayspan.bind(this)(this.state)
 
@@ -56,6 +58,10 @@ class DriftersExplore extends React.Component {
         this.dataset = 'drifter'
         this.customQueryParams =  ['startDate', 'endDate', 'polygon', 'wmo', 'platform', 'centerlon']
 
+        // get initial data
+        this.state.urls = this.generateURLs(this.state)
+        this.downloadData()
+
         // populate vocabularies, and trigger first render
         let vocabURLs = [this.apiPrefix + 'drifters/vocabulary?parameter=wmo', this.apiPrefix + 'drifters/vocabulary?parameter=platform']
 		Promise.all(vocabURLs.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
@@ -65,48 +71,86 @@ class DriftersExplore extends React.Component {
 				} else {
 					this.vocab['wmo'] = data[0].map(x => String(x))
 					this.vocab['platform'] = data[1]
-					this.setState({refreshData:true})
 				}
 			})
 		})
 	}
 
     componentDidUpdate(prevProps, prevState, snapshot){
-    	helpers.componentDidUpdate.bind(this)()
+    	helpers.phaseManager.bind(this)(prevProps, prevState, snapshot)
     }
 
-	refreshMap(state){
-		helpers.refreshMap.bind(this)(state)
-	}
+    downloadData(){
+        Promise.all(this.state.urls.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+            Promise.all(responses.map(res => res.json())).then(data => {
+                for(let i=0; i<data.length; i++){
+                    let bail = helpers.handleHTTPcodes.bind(this)(data[i].code)
+                    if(bail){
+                        return
+                    }
+                }
+
+                this.setState({
+                    phase: 'remapData',
+                    data: data
+                })
+
+            })
+        })
+    }
+
+    replot(){
+        let points = []
+
+        if(!(JSON.stringify(this.state.data) === '[[]]' || JSON.stringify(this.state.data) === '[]' || this.state.data.hasOwnProperty('code') || this.state.data[0].hasOwnProperty('code'))){
+            for(let i=0; i<this.state.data.length; i++){
+                let newpoints = this.state.data[i].map(point => {return(
+                    <CircleMarker key={point[0]+Math.random()} center={[point[2], helpers.mutateLongitude(point[1], parseFloat(this.state.centerlon)) ]} radius={2} color={this.chooseColor(point)}>
+                        {this.genTooltip.bind(this)(point)}
+                    </CircleMarker>
+                  )})
+                points = points.concat(newpoints)
+            }
+        }
+
+        this.setState({ 
+            points: points, 
+            phase: 'idle',
+            suppressBlur: false,
+        })
+    }
+
+    generateURLs(params){
+        let wmo = params.hasOwnProperty('wmo') ? params.wmo : this.state.wmo
+        let platform = params.hasOwnProperty('platform') ? params.platform : this.state.platform
+        let startDate = params.hasOwnProperty('startDate') ? params.startDate : this.state.startDate
+        let endDate = params.hasOwnProperty('endDate') ? params.endDate : this.state.endDate
+        let polygon = params.hasOwnProperty('polygon') ? params.polygon : this.state.polygon
+        let depthRequired = params.hasOwnProperty('depthRequired') ? params.depthRequired : this.state.depthRequired
+
+    	if(wmo !== ''){
+    		return [this.apiPrefix +'drifters?compression=minimal&wmo=' + wmo]
+    	} else if (platform !== ''){
+    		return [this.apiPrefix +'drifters?compression=minimal&platform=' + platform]
+    	} else {
+    		return [helpers.generateTemporoSpatialURL.bind(this)(this.apiPrefix, 'drifters', startDate, endDate, polygon, depthRequired)]	
+    	}
+    }
 
     lookingForEntity(state){
     	// return true if any token, valid or not, is specified for any entity query string parameter
     	return Boolean(state.wmo || state.platform)
     }
 
-    generateURLs(state){
-    	if(state.wmo !== ''){
-    		return [this.apiPrefix +'drifters?compression=minimal&wmo=' + state.wmo]
-    	} else if (state.platform !== ''){
-    		return [this.apiPrefix +'drifters?compression=minimal&platform=' + state.platform]
-    	} else {
-    		return [helpers.generateTemporoSpatialURL.bind(this)(this.apiPrefix, 'drifters', state)]
-    	}
-    }	
-
-	mapmarkers(points, state){
-		return helpers.circlefy.bind(this)(points, state)
-	}
-
     chooseColor(point){
     	return 'black'
     }
 
-    genTooltip(point, state){
+    genTooltip(point){
     	// given an array <point> corresponding to a single point returned by an API data route with compression=minimal,
     	// return the jsx for an appropriate tooltip for this point.
 
-    	let regionLink = helpers.genRegionLink(state.polygon, state.startDate, state.endDate, state.centerlon, 'drifters')
+    	let regionLink = helpers.genRegionLink(this.state.polygon, this.state.startDate, this.state.endDate, this.state.centerlon, 'drifters')
 
     	return(
 		    <Popup>
@@ -123,11 +167,6 @@ class DriftersExplore extends React.Component {
     dateRangeMultiplyer(s){
     	// allowed date range will be multiplied by this much, as a function of the mutated state s
     	return 1
-    }
-
-    toggleCoupling(s){
-    	// if changing a toggle for this page needs to trigger a side effect on state, do so here.
-    	return s
     }
 
 	render(){
@@ -156,13 +195,21 @@ class DriftersExplore extends React.Component {
 								</h5>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">
-										<input type="password" className="form-control" id="apiKey" value={this.state.apiKey} placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
+										<input 
+                                            type="password" 
+                                            className="form-control" 
+                                            id="apiKey" 
+                                            value={this.state.apiKey} 
+                                            placeholder="" 
+                                            onInput={helpers.changeAPIkey.bind(this)}
+                                        ></input>
 										<label htmlFor="apiKey">API Key</label>
 										<div id="apiKeyHelpBlock" className="form-text">
 						  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
 										</div>
 									</div>
-									<h6>Time Range</h6>
+
+                                    <h6>Time range</h6>
 									<div className="form-floating mb-3">
 										<input 
 											type="date" 
@@ -171,9 +218,17 @@ class DriftersExplore extends React.Component {
 											id="startDate" 
 											value={this.state.startDate} 
 											placeholder="" 
-											onChange={v => helpers.setDate.bind(this)('startDate', v.target.valueAsNumber, this.state.maxDayspan, false, true)}
-											onBlur={e => helpers.setDate.bind(this)('startDate', e.target.valueAsNumber, this.state.maxDayspan, false, false)}
-											onKeyPress={e => {if(e.key==='Enter'){helpers.setDate.bind(this)('startDate', e.target.valueAsNumber, this.state.maxDayspan, false, false)}}}
+                                            onChange={e => {this.setState({startDate:e.target.value, phase: 'awaitingUserInput'})}} 
+                                            onBlur={e => {
+                                                if(!this.state.suppressBlur){
+                                                    helpers.changeDates.bind(this)('startDate', e)
+                                                }
+                                            }}
+                                            onKeyPress={e => {
+                                                if(e.key==='Enter'){
+                                                    helpers.changeDates.bind(this)('startDate', e)
+                                                }
+                                            }}
 										/>
 										<label htmlFor="startDate">Start Date</label>
 									</div>
@@ -182,12 +237,20 @@ class DriftersExplore extends React.Component {
 											type="date" 
 											disabled={this.state.observingEntity} 
 											className="form-control" 
-											id="startDate" 
+											id="endDate" 
 											value={this.state.endDate} 
 											placeholder="" 
-											onChange={v => helpers.setDate.bind(this)('endDate', v.target.valueAsNumber, this.state.maxDayspan, false, true)}
-											onBlur={e => helpers.setDate.bind(this)('endDate', e.target.valueAsNumber, this.state.maxDayspan, false, false)}
-											onKeyPress={e => {if(e.key==='Enter'){helpers.setDate.bind(this)('endDate', e.target.valueAsNumber, this.state.maxDayspan, false, false)}}}
+                                            onChange={e => {this.setState({endDate:e.target.value, phase: 'awaitingUserInput'})}} 
+                                            onBlur={e => {
+                                                if(!this.state.suppressBlur){
+                                                    helpers.changeDates.bind(this)('endDate', e)
+                                                }
+                                            }}
+                                            onKeyPress={e => {
+                                                if(e.key==='Enter')
+                                                    {helpers.changeDates.bind(this)('endDate', e)
+                                                }
+                                            }}
 										/>
 										<label htmlFor="endDate">End Date</label>
 									</div>
@@ -196,45 +259,58 @@ class DriftersExplore extends React.Component {
 									</div>
 								</div>
 
-								<h6>Map Center Longitude</h6>
-									<div className="form-floating mb-3">
-										<input 
-											id="centerlon"
-											type="text"
-											disabled={this.state.observingEntity} 
-											className="form-control" 
-											placeholder="0" 
-											value={this.state.centerlon} 
-											onChange={e => {
-												helpers.manageStatus.bind(this)('actionRequired', 'Hit return or click outside the current input to update.')
-												this.setState({centerlon:e.target.value})}
-											} 
-											onBlur={e => {
-												this.setState({centerlon: helpers.manageCenterlon(e.target.defaultValue), mapkey: Math.random(), refreshData: true})
-											}}
-											onKeyPress={e => {
-												if(e.key==='Enter'){
-													this.setState({centerlon: helpers.manageCenterlon(e.target.defaultValue), mapkey: Math.random(), refreshData: true})
-												}
-											}}
-											aria-label="centerlon" 
-											aria-describedby="basic-addon1"/>
-										<label htmlFor="depth">Center longitude on [-180,180]</label>
-									</div>
+                                <h6>Map Center Longitude</h6>
+                                <div className="form-floating mb-3">
+                                    <input 
+                                        id="centerlon"
+                                        type="text"
+                                        disabled={this.state.observingEntity} 
+                                        className="form-control" 
+                                        placeholder="0" 
+                                        value={this.state.centerlon} 
+                                        onChange={e => {this.setState({centerlon:e.target.value, phase: 'awaitingUserInput'})}} 
+                                        onBlur={e => {
+                                            this.setState({
+                                                centerlon: helpers.manageCenterlon(e.target.value), 
+                                                mapkey: Math.random(), 
+                                                phase: 'remapData'
+                                            })
+                                        }}
+                                        onKeyPress={e => {
+                                            if(e.key==='Enter'){
+                                                this.setState({
+                                                    centerlon: helpers.manageCenterlon(e.target.value), 
+                                                    mapkey: Math.random(), 
+                                                    phase: 'remapData',
+                                                    suppressBlur: true
+                                                })
+                                            }
+                                        }}
+                                        aria-label="centerlon" 
+                                        aria-describedby="basic-addon1"/>
+                                    <label htmlFor="depth">Center longitude on [-180,180]</label>
+                                </div>
 
 								<div className='verticalGroup'>
 									<h6>Object Filters</h6>
 									<div className="form-floating mb-3">
 			      						<Autosuggest
 									      	id='wmoAS'
-									      	key='wmo'
 									      	ref={this.wmoRef}
 									        suggestions={this.state.wmoSuggestions}
 									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'wmoSuggestions')}
 									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'wmoSuggestions')}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'wmo')}
-									        inputProps={{placeholder: 'WMO ID', value: this.state.wmo, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of WMO ID', 'wmo', this.wmoRef), id: 'wmo', disabled: Boolean(this.state.platform)}}
+									        inputProps={{
+                                                placeholder: 'WMO ID', 
+                                                value: this.state.wmo, 
+                                                onKeyPress: helpers.changeAutoSuggest.bind(this, 'wmo', this.vocab.wmo, this.state),  
+                                                onBlur: helpers.changeAutoSuggest.bind(this, 'wmo', this.vocab.wmo, this.state), 
+                                                onChange: helpers.inputAutoSuggest.bind(this, 'wmo', this.vocab.wmo, this.wmoRef),
+                                                id: 'wmo', 
+                                                disabled: Boolean(this.state.platform)
+                                            }}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 									</div>
@@ -242,14 +318,21 @@ class DriftersExplore extends React.Component {
 									<div className="form-floating mb-3">
 			      						<Autosuggest
 									      	id='platformAS'
-									      	key='platform'
 									      	ref={this.platformRef}
 									        suggestions={this.state.platformSuggestions}
 									        onSuggestionsFetchRequested={helpers.onSuggestionsFetchRequested.bind(this, 'platformSuggestions')}
 									        onSuggestionsClearRequested={helpers.onSuggestionsClearRequested.bind(this, 'platformSuggestions')}
 									        getSuggestionValue={helpers.getSuggestionValue}
 									        renderSuggestion={helpers.renderSuggestion.bind(this, 'platform')}
-									        inputProps={{placeholder: 'Platform ID', value: this.state.platform, onChange: helpers.onAutosuggestChange.bind(this, 'Check value of Platform ID', 'platform', this.platformRef), id: 'platform',  disabled: Boolean(this.state.wmo)}}
+									        inputProps={{
+                                                placeholder: 'Platform ID', 
+                                                value: this.state.platform, 
+                                                onKeyPress: helpers.changeAutoSuggest.bind(this, 'platform', this.vocab.platform, this.state),  
+                                                onBlur: helpers.changeAutoSuggest.bind(this, 'platform', this.vocab.platform, this.state), 
+                                                onChange: helpers.inputAutoSuggest.bind(this, 'platform', this.vocab.platform, this.platformRef), 
+                                                id: 'platform',  
+                                                disabled: Boolean(this.state.wmo)
+                                            }}
 									        theme={{input: 'form-control', suggestionsList: 'list-group', suggestion: 'list-group-item'}}
 			      						/>
 									</div>
@@ -289,7 +372,7 @@ class DriftersExplore extends React.Component {
 									edit: false
 								}}
 								/>
-								<Polygon key={Math.random()} positions={this.state.interpolated_polygon.map(x => [x[1],helpers.mutateLongitude(x[0], this.state.centerlon)])} fillOpacity={0}></Polygon>
+								{this.state.wmo === '' && this.state.platform === '' && <Polygon key={Math.random()} positions={this.state.interpolated_polygon.map(x => [x[1],helpers.mutateLongitude(x[0], this.state.centerlon)])} fillOpacity={0}></Polygon>}
 							</FeatureGroup>
 							{this.state.points}
 						</MapContainer>
