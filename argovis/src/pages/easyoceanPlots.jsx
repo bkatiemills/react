@@ -676,13 +676,6 @@ class EasyoceanPlots extends React.Component {
         })
     }
 
-    changeAPIkey = (event) => {
-        this.setState({
-            apiKey: event.target.value,
-            phase: 'idle'
-        })
-    }
-
     changePlotBounds = (event) => {
 
         let num = parseFloat(event.target.value)
@@ -955,7 +948,14 @@ class EasyoceanPlots extends React.Component {
                                 <h5 style={{marginTop:'1em'}}>Global Options</h5>
                                 <div className="form-floating mb-3">
                                     <div className="form-floating mb-3" style={{'marginTop': '0.5em'}}>
-                                        <input type="password" className="form-control" id="apiKey" placeholder="" value={this.state.apiKey} onInput={this.changeAPIkey}></input>
+                                        <input 
+                                            type="password" 
+                                            className="form-control" 
+                                            id="apiKey" 
+                                            value={this.state.apiKey} 
+                                            placeholder="" 
+                                            onInput={helpers.changeAPIkey.bind(this)}
+                                        ></input>
                                         <label htmlFor="apiKey">API Key</label>
                                         <div id="apiKeyHelpBlock" className="form-text">
                                             <a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>

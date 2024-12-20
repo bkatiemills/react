@@ -282,7 +282,14 @@ class Forecast extends React.Component {
 								</h5>
 								<div className='verticalGroup'>
 									<div className="form-floating mb-3">
-										<input type="password" className="form-control" id="apiKey" value={this.state.apiKey} placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
+                                        <input 
+                                            type="password" 
+                                            className="form-control" 
+                                            id="apiKey" 
+                                            value={this.state.apiKey} 
+                                            placeholder="" 
+                                            onInput={helpers.changeAPIkey.bind(this)}
+                                        ></input>
 										<label htmlFor="apiKey">API Key</label>
 										<div id="apiKeyHelpBlock" className="form-text">
 						  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>

@@ -964,7 +964,14 @@ class Grids extends React.Component {
 								</h5>
 								<small><a target="_blank" rel="noreferrer" href={this.reflink}>Original Data Reference</a></small>
 								<div className="form-floating mb-3" style={{'marginTop': '0.5em'}}>
-									<input type="password" className="form-control" id="apiKey" value={this.state.apiKey} placeholder="" onInput={(v) => helpers.setToken.bind(this)('apiKey', v.target.value, null, true)}></input>
+										<input 
+                                            type="password" 
+                                            className="form-control" 
+                                            id="apiKey" 
+                                            value={this.state.apiKey} 
+                                            placeholder="" 
+                                            onInput={helpers.changeAPIkey.bind(this)}
+                                        ></input>
 									<label htmlFor="apiKey">API Key</label>
 									<div id="apiKeyHelpBlock" className="form-text">
 					  					<a target="_blank" rel="noreferrer" href='https://argovis-keygen.colorado.edu/'>Get a free API key</a>
