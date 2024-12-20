@@ -900,7 +900,7 @@ helpers.resetAxes = function(event){
 
 helpers.resetAllAxes = function(event){
 	let s = {...this.state}
-	s.refreshData = true
+	s.phase = 'remapData'
 	let resets = ['xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax', 'cmin', 'cmax']
 	for(let i=0; i<resets.length; i++){
 		s[resets[i]] = ''

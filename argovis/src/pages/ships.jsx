@@ -209,27 +209,10 @@ class ShipsExplore extends React.Component {
         this.setState(s)
     }  
 
-
-
-
-
-
-
-
- 
-
-	refreshMap(state){
-		helpers.refreshMap.bind(this)(state)
-	}
-
     lookingForEntity(state){
     	// return true if any token, valid or not, is specified for any entity query string parameter
     	return Boolean(state.woceline || state.cruise)
     }
-
-	mapmarkers(points, state){
-		return helpers.circlefy.bind(this)(points, state)
-	}
 
     chooseColor(point){
     	if(point[4].includes('cchdo_woce')){
@@ -274,11 +257,6 @@ class ShipsExplore extends React.Component {
     dateRangeMultiplyer(s){
     	// allowed date range will be multiplied by this much, as a function of the mutated state s
     	return 1
-    }
-
-    toggleCoupling(s){
-    	// if changing a toggle for this page needs to trigger a side effect on state, do so here.
-    	return s
     }
 
 	render(){

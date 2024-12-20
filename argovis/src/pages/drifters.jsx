@@ -137,29 +137,10 @@ class DriftersExplore extends React.Component {
     	}
     }
 
-
-
-
-
-
-
-
-
-
-	refreshMap(state){
-		helpers.refreshMap.bind(this)(state)
-	}
-
     lookingForEntity(state){
     	// return true if any token, valid or not, is specified for any entity query string parameter
     	return Boolean(state.wmo || state.platform)
     }
-
-	
-
-	mapmarkers(points, state){
-		return helpers.circlefy.bind(this)(points, state)
-	}
 
     chooseColor(point){
     	return 'black'
@@ -186,11 +167,6 @@ class DriftersExplore extends React.Component {
     dateRangeMultiplyer(s){
     	// allowed date range will be multiplied by this much, as a function of the mutated state s
     	return 1
-    }
-
-    toggleCoupling(s){
-    	// if changing a toggle for this page needs to trigger a side effect on state, do so here.
-    	return s
     }
 
 	render(){

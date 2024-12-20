@@ -524,24 +524,6 @@ class Grids extends React.Component {
       this.downloadData()
     }
 
-	// componentDidMount() {
-	// 	this.fetchData();
-	// }
-	
-	// fetchData() {
-	// 	fetch('https://argovis-api.colorado.edu/grids/meta?id=glodapv2.2016b')
-	// 	.then((response) => {
-	// 		if (!response.ok) {
-	// 			throw new Error(`HTTP error! Status: ${response.status}`);
-	// 		}
-	// 		return response.json();
-	// 	})
-	// 	.then((jsonData) => {
-	// 		this.demo = jsonData[0]['data_info']
-	// 		console.log(this.demo)
-	// 	});
-	// }
-
     componentDidUpdate(prevProps, prevState, snapshot){
     	helpers.phaseManager.bind(this)(prevProps, prevState, snapshot)
     }
@@ -882,16 +864,6 @@ class Grids extends React.Component {
 		} else {
 			return unit
 		}
-	}
-
-
-	manageInput(number){
-		// if(number === '-' || number[number.length-1] === '.' || number === ''){
-		// 	return number
-		// } else {
-		// 	return Math.round(1000*number)/1000
-		// }
-		return number
 	}
 
     genTooltip(point){
