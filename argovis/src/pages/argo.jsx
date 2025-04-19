@@ -6,6 +6,9 @@ import '../index.css';
 import helpers from'./helpers'
 import Tooltip from 'react-bootstrap/Tooltip';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
+import * as L from 'leaflet';
+import 'proj4leaflet';
+import proj4 from 'proj4';
 
 
 class ArgoExplore extends React.Component {
@@ -91,6 +94,29 @@ class ArgoExplore extends React.Component {
 			})
 		})
 
+        ////  projection hacks //////////////////////////////////
+        const MAX_ZOOM = 16;
+        const TILE_SIZE = 512;
+        const extent = Math.sqrt(2) * 6371007.2;
+        const resolutions = Array(MAX_ZOOM + 1) 
+          .fill() 
+          .map((_, i) => extent / TILE_SIZE / Math.pow(2, i - 1));
+
+        this.crs = new L.Proj.CRS(
+          "EPSG:3575", 
+          "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs", 
+          { 
+            origin: [-extent, extent], 
+            bounds: L.bounds(
+              L.point(-extent, extent), 
+              L.point(extent, -extent)
+            ), 
+            resolutions: resolutions 
+          });
+          
+        this.ARCTIC_TILES_URL = "https://tile.gbif.org/3575/omt/{z}/{x}/{y}@4x.png?style=osm-bright-en";
+        //////////////////////////////////////////////////////////
+
 	}
 
     componentDidUpdate(prevProps, prevState, snapshot){
@@ -121,7 +147,8 @@ class ArgoExplore extends React.Component {
 
         if(!(JSON.stringify(this.state.data) === '[[]]' || JSON.stringify(this.state.data) === '[]' || this.state.data.hasOwnProperty('code') || this.state.data[0].hasOwnProperty('code'))){
             for(let i=0; i<this.state.data.length; i++){
-                let newpoints = this.state.data[i].map(point => {return(
+                let newpoints = this.state.data[i].map(point => {
+                    return(
                     <CircleMarker key={point[0]+Math.random()} center={[point[2], helpers.mutateLongitude(point[1], parseFloat(this.state.centerlon)) ]} radius={2} color={this.chooseColor(point)}>
                         {this.genTooltip.bind(this)(point)}
                     </CircleMarker>
@@ -437,10 +464,9 @@ class ArgoExplore extends React.Component {
 
 					{/*leaflet map*/}
 					<div className='col-lg-9'>
-						<MapContainer key={this.state.mapkey} center={[25, parseFloat(this.state.centerlon)]} maxBounds={[[-90,this.state.centerlon-180],[90,this.state.centerlon+180]]} zoomSnap={0.01} zoomDelta={1} zoom={2.05} minZoom={2.05} scrollWheelZoom={true}>
+						<MapContainer crs={this.crs} center={[90, 0]} key={this.state.mapkey}  zoom={1}>
 							<TileLayer
-							attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-							url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+							url={this.ARCTIC_TILES_URL}
 							/>
 							<FeatureGroup ref={this.fgRef}>
 								<EditControl
