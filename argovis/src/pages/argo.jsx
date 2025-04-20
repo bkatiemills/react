@@ -149,6 +149,7 @@ class ArgoExplore extends React.Component {
         if(!(JSON.stringify(this.state.data) === '[[]]' || JSON.stringify(this.state.data) === '[]' || this.state.data.hasOwnProperty('code') || this.state.data[0].hasOwnProperty('code'))){
             for(let i=0; i<this.state.data.length; i++){
                 let newpoints = this.state.data[i].map(point => {
+                    if(point[2]<0){return null}
                     return(
                     <CircleMarker key={point[0]+Math.random()} center={[point[2], helpers.mutateLongitude(point[1], parseFloat(this.state.centerlon)) ]} radius={2} color={this.chooseColor(point)}>
                         {this.genTooltip.bind(this)(point)}
@@ -465,7 +466,7 @@ class ArgoExplore extends React.Component {
 
 					{/*leaflet map*/}
 					<div className='col-lg-9'>
-						<MapContainer crs={this.crs} center={[90, 0]} key={this.state.mapkey} zoom={1}>
+						<MapContainer crs={this.crs} center={[90, 0]} key={this.state.mapkey} zoom={1} >
 							<TileLayer
 							url={this.ARCTIC_TILES_URL}
                             tileSize={512}
