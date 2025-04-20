@@ -104,17 +104,18 @@ class ArgoExplore extends React.Component {
 
         this.crs = new L.Proj.CRS(
           "EPSG:3575", 
-          "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs", 
+          "+proj=laea +lat_0=90 +lon_0=10 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs", 
           { 
             origin: [-extent, extent], 
             bounds: L.bounds(
               L.point(-extent, extent), 
               L.point(extent, -extent)
             ), 
-            resolutions: resolutions 
+            resolutions: resolutions,
+            tileSize: 512
           });
           
-        this.ARCTIC_TILES_URL = "https://tile.gbif.org/3575/omt/{z}/{x}/{y}@4x.png?style=osm-bright-en";
+        this.ARCTIC_TILES_URL = "https://tile.gbif.org/3575/omt/{z}/{x}/{y}@4x.png?style=osm-bright";
         //////////////////////////////////////////////////////////
 
 	}
@@ -464,9 +465,10 @@ class ArgoExplore extends React.Component {
 
 					{/*leaflet map*/}
 					<div className='col-lg-9'>
-						<MapContainer crs={this.crs} center={[90, 0]} key={this.state.mapkey}  zoom={1}>
+						<MapContainer crs={this.crs} center={[90, 0]} key={this.state.mapkey} zoom={1}>
 							<TileLayer
 							url={this.ARCTIC_TILES_URL}
+                            tileSize={512}
 							/>
 							<FeatureGroup ref={this.fgRef}>
 								<EditControl
