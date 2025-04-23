@@ -110,45 +110,51 @@ class ArgoPlots extends React.Component {
 		}
 		let tooltips = []
 		for(let i=0; i<data.timestamp.length; i++){
-			let text = ''
-			text += 'Profile ' + data['_id'] + '<br><br>'
-			text += 'Longitude / Latitude: ' + helpers.mungePrecision(data['longitude'][i]) + ' / ' + helpers.mungePrecision(data['latitude'][i]) + '<br>'
-			text += 'Timestamp: ' + new Date(data['timestamp'][i]) + '<br>'
-			text += 'Pressure: ' + helpers.mungePrecision(data['pressure'][i]) + ' dbar<br><br>'
+			let text = []
+			text.push('Profile ' + data['_id'] + '<br>')
+			text.push('Longitude / Latitude: ' + helpers.mungePrecision(data['longitude'][i]) + ' / ' + helpers.mungePrecision(data['latitude'][i]))
+			text.push('Timestamp: ' + new Date(data['timestamp'][i]))
+			text.push('Pressure: ' + helpers.mungePrecision(data['pressure'][i]) + ' dbar<br>')
 			let defaultItems = ['longitude', 'latitude', 'timestamp', 'pressure']
 			if(!defaultItems.includes(this.state.xKey)){
 				if(data.hasOwnProperty(this.state.xKey)){
-					text += this.state.xKey + ': ' + helpers.mungePrecision(data[this.state.xKey][i]) + ' ' + this.units[this.state.xKey] + '<br>'
+                    let units = this.units[this.state.xKey] ? this.units[this.state.xKey] : ''
+					text.push(this.state.xKey + ': ' + helpers.mungePrecision(data[this.state.xKey][i]) + ' ' + units)
 				}
 				if(data.hasOwnProperty(this.state.xKey + '_argoqc')){
-					text += this.state.xKey +'_argoqc: ' + data[this.state.xKey+'_argoqc'][i] + '<br>'
+					text.push(this.state.xKey +'_argoqc: ' + data[this.state.xKey+'_argoqc'][i])
 				}
 			}
 			if(!defaultItems.includes(this.state.yKey)){
 				if(data.hasOwnProperty(this.state.yKey)){
-					text += this.state.yKey + ': ' + helpers.mungePrecision(data[this.state.yKey][i]) + ' ' + this.units[this.state.yKey] + '<br>'
+                    let units = this.units[this.state.yKey] ? this.units[this.state.yKey] : ''
+					text.push(this.state.yKey + ': ' + helpers.mungePrecision(data[this.state.yKey][i]) + ' ' + units)
 				}
 				if(data.hasOwnProperty(this.state.yKey + '_argoqc')){
-					text += this.state.yKey +'_argoqc: ' + data[this.state.yKey+'_argoqc'][i] + '<br>'
+					text.push(this.state.yKey +'_argoqc: ' + data[this.state.yKey+'_argoqc'][i])
 				}
 			}
 			if(!defaultItems.includes(this.state.zKey) && this.state.zKey !== '[2D plot]'){
 				if(data.hasOwnProperty(this.state.zKey)){
-					text += this.state.zKey + ': ' + helpers.mungePrecision(data[this.state.zKey][i]) + ' ' + this.units[this.state.zKey] + '<br>'
+                    let units = this.units[this.state.zKey] ? this.units[this.state.zKey] : ''
+					text.push(this.state.zKey + ': ' + helpers.mungePrecision(data[this.state.zKey][i]) + ' ' + units)
 				}
 				if(data.hasOwnProperty(this.state.zKey + '_argoqc')){
-					text += this.state.zKey +'_argoqc: ' + data[this.state.zKey+'_argoqc'][i] + '<br>'
+					text.push(this.state.zKey +'_argoqc: ' + data[this.state.zKey+'_argoqc'][i])
 				}
 			}
 			if(!defaultItems.includes(this.state.cKey)){
 				if(data.hasOwnProperty(this.state.cKey)){
-					text += this.state.cKey + ': ' + helpers.mungePrecision(data[this.state.cKey][i]) + ' ' + this.units[this.state.cKey] + '<br>'
+                    let units = this.units[this.state.cKey] ? this.units[this.state.cKey] : ''
+					text.push(this.state.cKey + ': ' + helpers.mungePrecision(data[this.state.cKey][i]) + ' ' + units)
 				}
 				if(data.hasOwnProperty(this.state.cKey + '_argoqc')){
-					text += this.state.cKey +'_argoqc: ' + data[this.state.cKey+'_argoqc'][i]
+					text.push(this.state.cKey +'_argoqc: ' + data[this.state.cKey+'_argoqc'][i])
 				}
 			}
-			tooltips.push(text)
+            text = text.map(s => s.trim())
+            text = [...new Set(text)]
+			tooltips.push(text.join('<br>'))
 		}
 
 		return tooltips
