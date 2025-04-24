@@ -883,11 +883,8 @@ helpers.toggleAll = function(){
 }
 
 helpers.generateAxisTitle = function(key){
-	if(this.units.hasOwnProperty(key)){
-		return key + ' [' + this.units[key] +']'
-	} else {
-		return key
-	}
+    let units = this.units[key] ? ' ['+this.units[key]+']' : ''
+    return key + units
 }
 
 helpers.resetAxes = function(event){
@@ -916,32 +913,38 @@ helpers.genericTooltip = function(data){
 	}
 	let tooltips = []
 	for(let i=0; i<data.timestamp.length; i++){
-		let text = ''
-		text += 'Record ID ' + data['_id'][i] + '<br><br>'
-		text += 'Longitude / Latitude: ' + helpers.mungePrecision(data['longitude'][i]) + ' / ' + helpers.mungePrecision(data['latitude'][i]) + '<br>'
-		text += 'Timestamp: ' + new Date(data['timestamp'][i]) + '<br><br>'
+		let text = []
+		text.push('Record ID ' + data['_id'][i] + '<br>')
+		text.push('Longitude / Latitude: ' + helpers.mungePrecision(data['longitude'][i]) + ' / ' + helpers.mungePrecision(data['latitude'][i]))
+		text.push('Timestamp: ' + new Date(data['timestamp'][i]) + '<br>')
 		let defaultItems = ['longitude', 'latitude', 'timestamp', 'pressure']
 		if(!defaultItems.includes(this.state.xKey)){
 			if(data.hasOwnProperty(this.state.xKey)){
-				text += this.state.xKey + ': ' + helpers.mungePrecision(data[this.state.xKey][i]) + ' ' + this.units[this.state.xKey] + '<br>'
+                let units = this.units[this.state.xKey] ? this.units[this.state.xKey] : ''
+				text.push(this.state.xKey + ': ' + helpers.mungePrecision(data[this.state.xKey][i]) + ' ' + units)
 			}
 		}
 		if(!defaultItems.includes(this.state.yKey)){
 			if(data.hasOwnProperty(this.state.yKey)){
-				text += this.state.yKey + ': ' + helpers.mungePrecision(data[this.state.yKey][i]) + ' ' + this.units[this.state.yKey] + '<br>'
+                let units = this.units[this.state.yKey] ? this.units[this.state.yKey] : ''
+				text.push(this.state.yKey + ': ' + helpers.mungePrecision(data[this.state.yKey][i]) + ' ' + units)
 			}
 		}
 		if(!defaultItems.includes(this.state.zKey) && this.state.zKey !== '[2D plot]'){
 			if(data.hasOwnProperty(this.state.zKey)){
-				text += this.state.zKey + ': ' + helpers.mungePrecision(data[this.state.zKey][i]) + ' ' + this.units[this.state.zKey] + '<br>'
+                let units = this.units[this.state.zKey] ? this.units[this.state.zKey] : ''
+				text.push(this.state.zKey + ': ' + helpers.mungePrecision(data[this.state.zKey][i]) + ' ' + units)
 			}
 		}
 		if(!defaultItems.includes(this.state.cKey)){
 			if(data.hasOwnProperty(this.state.cKey)){
-				text += this.state.cKey + ': ' + helpers.mungePrecision(data[this.state.cKey][i]) + ' ' + this.units[this.state.cKey] + '<br>'
+                let units = this.units[this.state.cKey] ? this.units[this.state.cKey] : ''
+				text.push(this.state.cKey + ': ' + helpers.mungePrecision(data[this.state.cKey][i]) + ' ' + units)
 			}
 		}
-		tooltips.push(text)
+		text = text.map(s => s.trim())
+        text = [...new Set(text)]
+		tooltips.push(text.join('<br>'))
 	}
 
 	return tooltips
