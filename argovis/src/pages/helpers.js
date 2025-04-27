@@ -3,6 +3,9 @@ import { MapContainer, TileLayer, CircleMarker} from 'react-leaflet';
 import GeometryUtil from "leaflet-geometryutil";
 import Autosuggest from 'react-autosuggest';
 import Plot from 'react-plotly.js';
+import * as L from 'leaflet';
+import 'proj4leaflet';
+import proj4 from 'proj4';
 
 let helpers = {}
 
@@ -1803,6 +1806,80 @@ helpers.genRegionLink = function(polygon, sDate, eDate, centerlon, dataset){
   }
 
   return regionLink
+}
+
+helpers.defineProjection = function(proj){
+
+    let TILE_SIZE = {
+        'mercator': 256,
+        'arctic': 512,
+        'antarctic': 512
+    }[proj]
+
+    let crs = null
+    if(proj == 'mercator'){
+        crs = L.CRS.EPSG3857;
+    } else {
+        const MAX_ZOOM = 16;
+        const extent = {
+            'arctic': Math.sqrt(2)*6371007.2, 
+            'antarctic':12367396.2185
+        }[proj];
+        const epsg = {
+            'arctic': 'EPSG:3575', 
+            'antarctic': 'EPSG:3032'
+        }[proj];
+        const proj4 = {
+            'arctic': "+proj=laea +lat_0=90 +lon_0=10 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs", 
+            'antarctic': "+proj=stere +lat_0=-90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
+        }[proj];
+        const resolutions = Array(MAX_ZOOM + 1) 
+          .fill() 
+          .map((_, i) => extent / TILE_SIZE / Math.pow(2, i - 1));
+
+        crs = new L.Proj.CRS(
+        epsg, 
+        proj4, 
+        { 
+            origin: [-extent, extent], 
+            bounds: L.bounds(
+            L.point(-extent, extent), 
+            L.point(extent, -extent)
+            ), 
+            resolutions: resolutions,
+            tileSize: TILE_SIZE
+        });
+    }
+      
+    const tiles = { 
+        'mercator': "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        'arctic': "https://tile.gbif.org/3575/omt/{z}/{x}/{y}@4x.png?style=osm-bright",
+        'antarctic': "https://tile.gbif.org/3031/omt/{z}/{x}/{y}@4x.png?style=osm-bright"
+    }[proj];
+
+    const center = {
+        'mercator': [25, parseFloat(this.state.centerlon)],
+        'arctic': [90, 0],
+        'antarctic': [-90, 0]
+    }[proj];
+
+    return{
+        projection: proj,
+        crs: crs,
+        tiles: tiles,
+        tile_size: TILE_SIZE,
+        mapcenter: center,
+        mapkey: Math.random()
+    }
+}
+
+helpers.setProjection = function(proj){
+    // set the projection for the map
+    let s = helpers.defineProjection.bind(this)(proj)
+    this.setState({
+        ...s,
+        phase: 'refreshData'
+    })
 }
 
 export default helpers

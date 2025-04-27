@@ -10,7 +10,6 @@ import * as L from 'leaflet';
 import 'proj4leaflet';
 import proj4 from 'proj4';
 
-
 class ArgoExplore extends React.Component {
 
 	constructor(props) {
@@ -48,8 +47,9 @@ class ArgoExplore extends React.Component {
 			nDeep: 0,
             phase: 'refreshData',
             suppressBlur: false,
+            projection: 'antarctic',
 		}
-
+        this.state = {...this.state, ...helpers.defineProjection.bind(this)(this.state.projection)}
 		this.state.maxDayspan = helpers.calculateDayspan.bind(this)(this.state)
 
 		helpers.mungeTime.bind(this)(q, this.state.maxDayspan)
@@ -94,29 +94,29 @@ class ArgoExplore extends React.Component {
 			})
 		})
 
-        ////  projection hacks //////////////////////////////////
-        const MAX_ZOOM = 16;
-        const TILE_SIZE = 512;
-        const extent = Math.sqrt(2) * 6371007.2;
-        const resolutions = Array(MAX_ZOOM + 1) 
-          .fill() 
-          .map((_, i) => extent / TILE_SIZE / Math.pow(2, i - 1));
+        // ////  projection hacks //////////////////////////////////
+        // const MAX_ZOOM = 16;
+        // const TILE_SIZE = 512;
+        // const extent = 12367396.2185;
+        // const resolutions = Array(MAX_ZOOM + 1) 
+        //   .fill() 
+        //   .map((_, i) => extent / TILE_SIZE / Math.pow(2, i - 1));
 
-        this.crs = new L.Proj.CRS(
-          "EPSG:3575", 
-          "+proj=laea +lat_0=90 +lon_0=10 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs", 
-          { 
-            origin: [-extent, extent], 
-            bounds: L.bounds(
-              L.point(-extent, extent), 
-              L.point(extent, -extent)
-            ), 
-            resolutions: resolutions,
-            tileSize: 512
-          });
+        // this.crs = new L.Proj.CRS(
+        //   "EPSG:3031", 
+        //   "+proj=stere +lat_0=-90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs", 
+        //   { 
+        //     origin: [-extent, extent], 
+        //     bounds: L.bounds(
+        //       L.point(-extent, extent), 
+        //       L.point(extent, -extent)
+        //     ), 
+        //     resolutions: resolutions,
+        //     tileSize: TILE_SIZE
+        //   });
           
-        this.ARCTIC_TILES_URL = "https://tile.gbif.org/3575/omt/{z}/{x}/{y}@4x.png?style=osm-bright";
-        //////////////////////////////////////////////////////////
+        // this.ARCTIC_TILES_URL = "https://tile.gbif.org/3031/omt/{z}/{x}/{y}@4x.png?style=osm-bright";
+        // //////////////////////////////////////////////////////////
 
 	}
 
@@ -149,7 +149,7 @@ class ArgoExplore extends React.Component {
         if(!(JSON.stringify(this.state.data) === '[[]]' || JSON.stringify(this.state.data) === '[]' || this.state.data.hasOwnProperty('code') || this.state.data[0].hasOwnProperty('code'))){
             for(let i=0; i<this.state.data.length; i++){
                 let newpoints = this.state.data[i].map(point => {
-                    if(point[2]<0){return null}
+                    if((point[2]>0 && this.state.projection=='antarctic') || (point[2]<0 && this.state.projection=='arctic')){return null}
                     return(
                     <CircleMarker key={point[0]+Math.random()} center={[point[2], helpers.mutateLongitude(point[1], parseFloat(this.state.centerlon)) ]} radius={2} color={this.chooseColor(point)}>
                         {this.genTooltip.bind(this)(point)}
@@ -453,6 +453,22 @@ class ArgoExplore extends React.Component {
 									<a className="btn btn-primary" href="/argo" role="button">Reset Map</a>
 								</div>
 
+                                <div className='verticalGroup'>
+                                    <h6>Projection (Beta)</h6>
+                                    <div className="form-check">
+										<input className="form-check-input" checked={this.state.projection == 'mercator'} onChange={(v) => helpers.setProjection.bind(this)('mercator')} type="radio" name='projectionGroup' label='mercator' id='mercator'></input>
+                                        <label className="form-check-label" htmlFor='mercator'>Mecator (EPSG:3857) </label>
+									</div>
+									<div className="form-check">
+										<input className="form-check-input" checked={this.state.projection == 'arctic'} onChange={(v) => helpers.setProjection.bind(this)('arctic')} type="radio" name='projectionGroup' label='arctic' id='arctic'></input>
+                                        <label className="form-check-label" htmlFor='arctic'>Arctic LAEA (EPSG:3575) </label>
+									</div>
+									<div className="form-check">
+										<input className="form-check-input" checked={this.state.projection == 'antarctic'} onChange={(v) => helpers.setProjection.bind(this)('antarctic')} type="radio" name='projectionGroup' label='antarctic' id='antarctic'></input>
+                                        <label className="form-check-label" htmlFor='antarctic'>Antarctic Stereographic (EPSG:3031) </label>
+									</div>
+                                </div>
+
 								<div className='verticalGroup'>
 									<h6>Database stats</h6>
 									<span>Number of core profiles: {this.state.nCore}</span><br/>
@@ -466,10 +482,11 @@ class ArgoExplore extends React.Component {
 
 					{/*leaflet map*/}
 					<div className='col-lg-9'>
-						<MapContainer crs={this.crs} center={[90, 0]} key={this.state.mapkey} zoom={1} >
+						<MapContainer crs={this.state.crs} center={this.state.mapcenter} key={this.state.mapkey} zoom={2} >
 							<TileLayer
-							url={this.ARCTIC_TILES_URL}
-                            tileSize={512}
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+							url={this.state.tiles}
+                            tileSize={this.state.tile_size}
 							/>
 							<FeatureGroup ref={this.fgRef}>
 								<EditControl
