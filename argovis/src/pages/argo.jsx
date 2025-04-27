@@ -24,6 +24,7 @@ class ArgoExplore extends React.Component {
 		this.minArea = 1000000
 		this.maxArea = 10000000
 		this.defaultDayspan = 10
+        this.defaultPolygon = []
 
 		// default state, pulling in query string specifications
 		this.state = {
@@ -47,7 +48,7 @@ class ArgoExplore extends React.Component {
 			nDeep: 0,
             phase: 'refreshData',
             suppressBlur: false,
-            projection: 'antarctic',
+            projection: q.has('projection') ? q.get('projection') : 'mercator',
 		}
         this.state = {...this.state, ...helpers.defineProjection.bind(this)(this.state.projection)}
 		this.state.maxDayspan = helpers.calculateDayspan.bind(this)(this.state)
@@ -71,7 +72,7 @@ class ArgoExplore extends React.Component {
         this.apiPrefix = 'https://argovis-api.colorado.edu/'
         this.vocab = {}
         this.dataset = 'argo'
-        this.customQueryParams = ['startDate', 'endDate', 'polygon', 'argocore', 'argobgc', 'argodeep', 'argoPlatform', 'depthRequired', 'centerlon']
+        this.customQueryParams = ['startDate', 'endDate', 'polygon', 'argocore', 'argobgc', 'argodeep', 'argoPlatform', 'depthRequired', 'centerlon', 'projection']
         
         // get initial data
         this.state.urls = this.generateURLs(this.state)
@@ -93,31 +94,6 @@ class ArgoExplore extends React.Component {
 				}
 			})
 		})
-
-        // ////  projection hacks //////////////////////////////////
-        // const MAX_ZOOM = 16;
-        // const TILE_SIZE = 512;
-        // const extent = 12367396.2185;
-        // const resolutions = Array(MAX_ZOOM + 1) 
-        //   .fill() 
-        //   .map((_, i) => extent / TILE_SIZE / Math.pow(2, i - 1));
-
-        // this.crs = new L.Proj.CRS(
-        //   "EPSG:3031", 
-        //   "+proj=stere +lat_0=-90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs", 
-        //   { 
-        //     origin: [-extent, extent], 
-        //     bounds: L.bounds(
-        //       L.point(-extent, extent), 
-        //       L.point(extent, -extent)
-        //     ), 
-        //     resolutions: resolutions,
-        //     tileSize: TILE_SIZE
-        //   });
-          
-        // this.ARCTIC_TILES_URL = "https://tile.gbif.org/3031/omt/{z}/{x}/{y}@4x.png?style=osm-bright";
-        // //////////////////////////////////////////////////////////
-
 	}
 
     componentDidUpdate(prevProps, prevState, snapshot){
@@ -379,38 +355,40 @@ class ArgoExplore extends React.Component {
 										<label htmlFor="depth">Require levels deeper than [m]:</label>
 									</div>
 
-									<h6>Map Center Longitude</h6>
-									<div className="form-floating mb-3">
-										<input 
-											id="centerlon"
-											type="text"
-											disabled={this.state.observingEntity} 
-											className="form-control" 
-											placeholder="0" 
-											value={this.state.centerlon} 
-                                            onChange={e => {this.setState({centerlon:e.target.value, phase: 'awaitingUserInput'})}} 
-											onBlur={e => {
-												this.setState({
-                                                    centerlon: helpers.manageCenterlon(e.target.value), 
-                                                    mapkey: Math.random(), 
-                                                    phase: 'remapData'
-                                                })
-											}}
-											onKeyPress={e => {
-												if(e.key==='Enter'){
-													this.setState({
+                                    <div style = {{display: this.state.projection == 'mercator'?'block':'none'}}>
+                                        <h6>Map Center Longitude</h6>
+                                        <div className="form-floating mb-3">
+                                            <input 
+                                                id="centerlon"
+                                                type="text"
+                                                disabled={this.state.observingEntity} 
+                                                className="form-control" 
+                                                placeholder="0" 
+                                                value={this.state.centerlon} 
+                                                onChange={e => {this.setState({centerlon:e.target.value, phase: 'awaitingUserInput'})}} 
+                                                onBlur={e => {
+                                                    this.setState({
                                                         centerlon: helpers.manageCenterlon(e.target.value), 
                                                         mapkey: Math.random(), 
-                                                        phase: 'remapData',
-                                                        suppressBlur: true
+                                                        phase: 'remapData'
                                                     })
-												}
-											}}
-											aria-label="centerlon" 
-											aria-describedby="basic-addon1"/>
-										<label htmlFor="depth">Center longitude on [-180,180]</label>
-									</div>
-								</div>
+                                                }}
+                                                onKeyPress={e => {
+                                                    if(e.key==='Enter'){
+                                                        this.setState({
+                                                            centerlon: helpers.manageCenterlon(e.target.value), 
+                                                            mapkey: Math.random(), 
+                                                            phase: 'remapData',
+                                                            suppressBlur: true
+                                                        })
+                                                    }
+                                                }}
+                                                aria-label="centerlon" 
+                                                aria-describedby="basic-addon1"/>
+                                            <label htmlFor="depth">Center longitude on [-180,180]</label>
+                                        </div>
+                                    </div>
+                                </div>
 
 								<div className='verticalGroup'>
 									<h6>Subsets</h6>
@@ -482,7 +460,7 @@ class ArgoExplore extends React.Component {
 
 					{/*leaflet map*/}
 					<div className='col-lg-9'>
-						<MapContainer crs={this.state.crs} center={this.state.mapcenter} key={this.state.mapkey} zoom={2} >
+						<MapContainer crs={this.state.crs} center={this.state.mapcenter} key={this.state.mapkey} maxBounds={this.state.maxBounds} zoom={this.state.defaultZoom} >
 							<TileLayer
                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 							url={this.state.tiles}

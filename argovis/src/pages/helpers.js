@@ -114,15 +114,21 @@ helpers.onPolyCreate = function(p){
     this.setState(s)
 }
 
-helpers.onPolyDelete = function(defaultPoly){
-
-    this.setState({
+helpers.polyDeleteState = function(defaultPoly){
+    return {
         polygon: defaultPoly, 
         interpolated_polygon: helpers.insertPointsInPolygon(defaultPoly), 
         maxDayspan: this.defaultDayspan, 
         urls: this.generateURLs({polygon: defaultPoly}),
-        phase: 'refreshData'
-    })
+        phase: 'refreshData'        
+    }
+}
+
+helpers.onPolyDelete = function(defaultPoly){
+
+    let s = helpers.polyDeleteState.bind(this)(defaultPoly)
+    this.setState(s)
+
 }
 
 helpers.fetchPolygon = function(coords){
@@ -1863,12 +1869,26 @@ helpers.defineProjection = function(proj){
         'antarctic': [-90, 0]
     }[proj];
 
+    const maxBounds = {
+        'mercator':[[-90,this.state.centerlon-180],[90,this.state.centerlon+180]],
+        'arctic':[[90,-180],[90,180]],
+        'antarctic':[[-90,-180],[-90,180]]
+    }[proj]
+
+    const defaultZoom = {
+        'mercator': 2,
+        'arctic': 1,
+        'antarctic': 1
+    }[proj]
+
     return{
         projection: proj,
         crs: crs,
         tiles: tiles,
         tile_size: TILE_SIZE,
         mapcenter: center,
+        maxBounds: maxBounds,
+        defaultZoom: defaultZoom,
         mapkey: Math.random()
     }
 }
@@ -1876,8 +1896,10 @@ helpers.defineProjection = function(proj){
 helpers.setProjection = function(proj){
     // set the projection for the map
     let s = helpers.defineProjection.bind(this)(proj)
+    let d = helpers.polyDeleteState.bind(this)(this.defaultPolygon) // force delete any polygon when changing projection
     this.setState({
         ...s,
+        ...d,
         phase: 'refreshData'
     })
 }
