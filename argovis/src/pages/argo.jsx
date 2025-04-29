@@ -6,9 +6,7 @@ import '../index.css';
 import helpers from'./helpers'
 import Tooltip from 'react-bootstrap/Tooltip';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
-import * as L from 'leaflet';
 import 'proj4leaflet';
-import proj4 from 'proj4';
 
 class ArgoExplore extends React.Component {
 
@@ -125,7 +123,7 @@ class ArgoExplore extends React.Component {
         if(!(JSON.stringify(this.state.data) === '[[]]' || JSON.stringify(this.state.data) === '[]' || this.state.data.hasOwnProperty('code') || this.state.data[0].hasOwnProperty('code'))){
             for(let i=0; i<this.state.data.length; i++){
                 let newpoints = this.state.data[i].map(point => {
-                    if((point[2]>0 && this.state.projection=='antarctic') || (point[2]<0 && this.state.projection=='arctic')){return null}
+                    if((point[2]>0 && this.state.projection==='antarctic') || (point[2]<0 && this.state.projection==='arctic')){return null}
                     return(
                     <CircleMarker key={point[0]+Math.random()} center={[point[2], helpers.mutateLongitude(point[1], parseFloat(this.state.centerlon)) ]} radius={2} color={this.chooseColor(point)}>
                         {this.genTooltip.bind(this)(point)}
@@ -355,7 +353,7 @@ class ArgoExplore extends React.Component {
 										<label htmlFor="depth">Require levels deeper than [m]:</label>
 									</div>
 
-                                    <div style = {{display: this.state.projection == 'mercator'?'block':'none'}}>
+                                    <div style = {{display: this.state.projection === 'mercator'?'block':'none'}}>
                                         <h6>Map Center Longitude</h6>
                                         <div className="form-floating mb-3">
                                             <input 
@@ -434,15 +432,15 @@ class ArgoExplore extends React.Component {
                                 <div className='verticalGroup'>
                                     <h6>Projection (Beta)</h6>
                                     <div className="form-check">
-										<input className="form-check-input" checked={this.state.projection == 'mercator'} onChange={(v) => helpers.setProjection.bind(this)('mercator')} type="radio" name='projectionGroup' label='mercator' id='mercator'></input>
+										<input className="form-check-input" checked={this.state.projection === 'mercator'} onChange={(v) => helpers.setProjection.bind(this)('mercator')} type="radio" name='projectionGroup' label='mercator' id='mercator'></input>
                                         <label className="form-check-label" htmlFor='mercator'>Mecator (EPSG:3857) </label>
 									</div>
 									<div className="form-check">
-										<input className="form-check-input" checked={this.state.projection == 'arctic'} onChange={(v) => helpers.setProjection.bind(this)('arctic')} type="radio" name='projectionGroup' label='arctic' id='arctic'></input>
+										<input className="form-check-input" checked={this.state.projection === 'arctic'} onChange={(v) => helpers.setProjection.bind(this)('arctic')} type="radio" name='projectionGroup' label='arctic' id='arctic'></input>
                                         <label className="form-check-label" htmlFor='arctic'>Arctic LAEA (EPSG:3575) </label>
 									</div>
 									<div className="form-check">
-										<input className="form-check-input" checked={this.state.projection == 'antarctic'} onChange={(v) => helpers.setProjection.bind(this)('antarctic')} type="radio" name='projectionGroup' label='antarctic' id='antarctic'></input>
+										<input className="form-check-input" checked={this.state.projection === 'antarctic'} onChange={(v) => helpers.setProjection.bind(this)('antarctic')} type="radio" name='projectionGroup' label='antarctic' id='antarctic'></input>
                                         <label className="form-check-label" htmlFor='antarctic'>Antarctic Stereographic (EPSG:3031) </label>
 									</div>
                                 </div>

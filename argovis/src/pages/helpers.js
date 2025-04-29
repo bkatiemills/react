@@ -5,7 +5,6 @@ import Autosuggest from 'react-autosuggest';
 import Plot from 'react-plotly.js';
 import * as L from 'leaflet';
 import 'proj4leaflet';
-import proj4 from 'proj4';
 
 let helpers = {}
 
@@ -1823,7 +1822,7 @@ helpers.defineProjection = function(proj){
     }[proj]
 
     let crs = null
-    if(proj == 'mercator'){
+    if(proj === 'mercator'){
         crs = L.CRS.EPSG3857;
     } else {
         const MAX_ZOOM = 16;
@@ -1878,7 +1877,7 @@ helpers.defineProjection = function(proj){
     const defaultZoom = {
         'mercator': 2,
         'arctic': 1,
-        'antarctic': 1
+        'antarctic': 1.5
     }[proj]
 
     return{
