@@ -1870,8 +1870,8 @@ helpers.defineProjection = function(proj){
 
     const maxBounds = {
         'mercator':[[-90,this.state.centerlon-180],[90,this.state.centerlon+180]],
-        'arctic':[[90,-180],[90,180]],
-        'antarctic':[[-90,-180],[-90,180]]
+        'arctic':[],
+        'antarctic':[]
     }[proj]
 
     const defaultZoom = {
