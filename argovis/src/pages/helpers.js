@@ -1822,8 +1822,10 @@ helpers.defineProjection = function(proj){
     }[proj]
 
     let crs = null
+    let minZoom = null
     if(proj === 'mercator'){
         crs = L.CRS.EPSG3857;
+        minZoom = 0;
     } else {
         const MAX_ZOOM = 16;
         const extent = {
@@ -1840,7 +1842,8 @@ helpers.defineProjection = function(proj){
         }[proj];
         const resolutions = Array(MAX_ZOOM + 1) 
           .fill() 
-          .map((_, i) => extent / TILE_SIZE / Math.pow(2, i - 1));
+          .map((_, i) => 2*extent / TILE_SIZE / Math.pow(2, i));
+        minZoom = helpers.findLowestZoom(resolutions, TILE_SIZE)
 
         crs = new L.Proj.CRS(
         epsg, 
@@ -1877,7 +1880,7 @@ helpers.defineProjection = function(proj){
     const defaultZoom = {
         'mercator': 2,
         'arctic': 1,
-        'antarctic': 1.5
+        'antarctic': 1
     }[proj]
 
     return{
@@ -1888,8 +1891,21 @@ helpers.defineProjection = function(proj){
         mapcenter: center,
         maxBounds: maxBounds,
         defaultZoom: defaultZoom,
+        minZoom: minZoom,
         mapkey: Math.random()
     }
+}
+
+helpers.findLowestZoom = function(resolutions, tilesize) {
+    // limit how far the user can zoom out; tiles should roughly cover the screen.
+    // zooming out too far causes crashes on larger monitors - mysterious but observable.
+
+    for (let z = 0; z < resolutions.length; z++) {
+        if(window.innerWidth < tilesize*Math.pow(2,z) && window.innerHeight < tilesize*Math.pow(2,z)){
+            return z
+        }
+    }
+    return resolutions.length - 1; // fallback to max zoom
 }
 
 helpers.setProjection = function(proj){

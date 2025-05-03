@@ -458,7 +458,7 @@ class ArgoExplore extends React.Component {
 
 					{/*leaflet map*/}
 					<div className='col-lg-9'>
-						<MapContainer crs={this.state.crs} center={this.state.mapcenter} key={this.state.mapkey} maxBounds={this.state.maxBounds} zoom={this.state.defaultZoom} >
+						<MapContainer crs={this.state.crs} center={this.state.mapcenter} key={this.state.mapkey} maxBounds={this.state.maxBounds} zoom={this.state.defaultZoom} minZoom={this.state.minZoom} >
 							<TileLayer
                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 							url={this.state.tiles}
