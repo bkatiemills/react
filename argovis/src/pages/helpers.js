@@ -89,8 +89,7 @@ helpers.onPolyCreate = function(p){
     // make a ring, insert extra points, and redraw the polygon
     let original_vertexes = p.layer.getLatLngs()[0].map(x => [x['lng'], x['lat']])
     original_vertexes.push(original_vertexes[0])
-    let vertexes = original_vertexes.slice(0, original_vertexes.length-1)
-    vertexes = helpers.insertPointsInPolygon(vertexes)
+    let vertexes = helpers.insertPointsInPolygon(original_vertexes)
     p.layer.setLatLngs(vertexes.map(x => ({'lng': x[0], 'lat': x[1]})))
    
     let s = {...this.state}
@@ -168,7 +167,6 @@ helpers.calculateDayspan = function(s){
 	}
 
 	let area = helpers.estimateArea(s.polygon)
-    console.log(9000, area, this.minArea, this.maxArea)
 	if(area >= this.maxArea){
 		return Math.min(this.minDays*this.dateRangeMultiplyer(s), this.maxDays)
 	} else if (area < this.minArea){
@@ -227,7 +225,7 @@ helpers.phaseManager = function(prevProps, prevState, snapshot){
         }, 1);
     } else if (this.state.phase === 'idle') {
         setTimeout(() => {
-            if(this.state.data.length === 0 || this.state.data.every(arr => arr.length === 0)){
+            if(this.state.data.length === 0 || this.state.data.some(arr => arr.length === 0)){
                 helpers.manageStatus.bind(this)('error', 'No data found for this search.')
             } else {
                 helpers.manageStatus.bind(this)('ready')
