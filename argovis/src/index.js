@@ -6,6 +6,7 @@ import ArgoAbout from "./pages/about"
 import Citations from "./pages/citations"
 import ArgovisExplore from "./pages/explore"
 import Grids from "./pages/grids"
+import Timeseries from "./pages/timeseries"
 import ArgoExplore from "./pages/argo"
 import TCExplore from "./pages/tc"
 import DriftersExplore from "./pages/drifters"
@@ -43,6 +44,7 @@ export default function App() {
           <Route path="drifters" element={<DriftersExplore />} />
           <Route path="ships" element={<ShipsExplore />} />
           <Route path="grids" element={<Grids />} />
+          <Route path="timeseries" element={<Timeseries />} />
           <Route path="forecast" element={<Forecast />} />
           <Route path="plots/argo" element={<ArgoPlots />} />
           <Route path="plots/tc" element={<TCPlots />} />

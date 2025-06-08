@@ -91,8 +91,7 @@ helpers.onPolyCreate = function(p){
     // make a ring, insert extra points, and redraw the polygon
     let original_vertexes = p.layer.getLatLngs()[0].map(x => [x['lng'], x['lat']])
     original_vertexes.push(original_vertexes[0])
-    let vertexes = original_vertexes.slice(0, original_vertexes.length-1)
-    vertexes = helpers.insertPointsInPolygon(vertexes)
+    let vertexes = helpers.insertPointsInPolygon(original_vertexes)
     p.layer.setLatLngs(vertexes.map(x => ({'lng': x[0], 'lat': x[1]})))
    
     let s = {...this.state}
@@ -176,7 +175,6 @@ helpers.calculateDayspan = function(s){
 	}
 
 	let area = helpers.estimateArea(s.polygon)
-    console.log(9000, area, this.minArea, this.maxArea)
 	if(area >= this.maxArea){
 		return Math.min(this.minDays*this.dateRangeMultiplyer(s), this.maxDays)
 	} else if (area < this.minArea){
@@ -446,6 +444,11 @@ helpers.handleHTTPcodes = function(code){
 		this.formRef.current.removeAttribute('disabled')
 		bail = true
 	}
+    if(code === 413){
+        helpers.manageStatus.bind(this)('error', 'Request too large; try reducing the polygon size.')
+        this.formRef.current.removeAttribute('disabled')
+        bail = true
+    }
 	if(code === 429){
 		helpers.manageStatus.bind(this)('error', 'Too many requests too fast; please wait a minute, and consider using an API key (link below).')
 		this.formRef.current.removeAttribute('disabled')

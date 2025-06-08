@@ -30,6 +30,9 @@ class ArgovisNav extends React.Component {
 							<Dropdown.Item className="dropdown-item" href="/grids?lattice=glodap&grid=Cant">GLODAPv2.2016b</Dropdown.Item>
 							<Dropdown.Item className="dropdown-item" href="/forecast">ARGONE float location forecasts</Dropdown.Item>
                             <Dropdown.Item className="dropdown-item" href="/plots/easyocean">Easy Ocean</Dropdown.Item>
+                            <Dropdown.Item className="dropdown-item" href="/timeseries?lattice=noaasst&grid=sst">NOAA OISSTv2 <span style={{'padding':'2px', 'marginLeft': '5px', 'color': 'white', 'backgroundColor': 'orange'}}>Beta</span></Dropdown.Item>
+                            <Dropdown.Item className="dropdown-item" href="/timeseries?lattice=ccmpwind&grid=ws">CCMP Wind <span style={{'padding':'2px', 'marginLeft': '5px', 'color': 'white', 'backgroundColor': 'orange'}}>Beta</span></Dropdown.Item>
+                            <Dropdown.Item className="dropdown-item" href="/timeseries?lattice=copernicussla&grid=sla">Copernicus SLA <span style={{'padding':'2px', 'marginLeft': '5px', 'color': 'white', 'backgroundColor': 'orange'}}>Beta</span></Dropdown.Item>
 						    </DropdownButton>
 						  </li>
 			      	<li className="nav-item">

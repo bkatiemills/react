@@ -478,7 +478,7 @@ class Grids extends React.Component {
 		'kg21': "2005-01-15",
 	  	'glodap': "1000-01-01"
 	  }[this.state.lattice]
-      this.state.subtimestep = q.has('subtimestep') ? q.get('subtimestep') : this.state.timestep
+      this.state.subtimestep = q.has('subtimestep') ? q.get('subtimestep') : ''
       this.state.units = this.chooseUnits(this.state.grid)
       this.state.levelunits = {
       	'rg09': 'dbar',
@@ -592,6 +592,14 @@ class Grids extends React.Component {
         }
         let min = this.state.user_defined_min ? this.inverseTransform(s.display_min, this.scales) : Math.min(...values)
         let max = this.state.user_defined_max ? this.inverseTransform(s.display_max, this.scales) : Math.max(...values)
+
+        // catch for when data vectors come up empty
+        if(min === Infinity || min === -Infinity || 
+            max === Infinity || max === -Infinity){
+             min = 0
+             max = 1
+         }
+
         s = this.setScale(min, max, s)
 
         this.setState({
@@ -610,7 +618,7 @@ class Grids extends React.Component {
         let grid = params.hasOwnProperty('grid') ? params.grid : this.state.grid
         let timestep = params.hasOwnProperty('timestep') ? params.timestep : this.state.timestep
         let levelindex = params.hasOwnProperty('levelindex') ? params.levelindex : this.state.levelindex
-        let subtimestep = params.hasOwnProperty('subtimestep') ? params.subtimestep : this.state.subtimestep
+        let subtimestep = params.hasOwnProperty('subtimestep') && params.subtimestep !== null ? params.subtimestep : this.state.subtimestep
         let sublevelindex = params.hasOwnProperty('sublevelindex') ? params.sublevelindex : this.state.sublevelindex
         let polygon = params.hasOwnProperty('polygon') ? params.polygon : this.state.polygon
         let subgrid = params.hasOwnProperty('subgrid') ? params.subgrid : this.state
@@ -727,16 +735,10 @@ class Grids extends React.Component {
     	let s = {...this.state}
 
     	s[index] = target.target.value
-        let timestep = index === 'timestep' ? target.target.value : null
-        let subtimestep = index === 'subtimestep' ? target.target.value : null
     	s.phase = 'refreshData'
 		s.user_defined_min = false
 		s.user_defined_max = false
-        let params = {
-            timestep: timestep,
-            subtimestep: subtimestep
-        }
-        s.urls = this.generateURLs(params)
+        s.urls = this.generateURLs(s)
     	
         this.setState(s)
     }
