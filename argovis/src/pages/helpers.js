@@ -225,7 +225,7 @@ helpers.phaseManager = function(prevProps, prevState, snapshot){
         }, 1);
     } else if (this.state.phase === 'idle') {
         setTimeout(() => {
-            if(this.state.data.length === 0 || this.state.data.some(arr => arr.length === 0)){
+            if(this.state.data.length === 0 || this.state.data.every(arr => arr.length === 0)){
                 helpers.manageStatus.bind(this)('error', 'No data found for this search.')
             } else {
                 helpers.manageStatus.bind(this)('ready')
@@ -436,6 +436,11 @@ helpers.handleHTTPcodes = function(code){
 		this.formRef.current.removeAttribute('disabled')
 		bail = true
 	}
+    if(code === 413){
+        helpers.manageStatus.bind(this)('error', 'Request too large; try reducing the polygon size.')
+        this.formRef.current.removeAttribute('disabled')
+        bail = true
+    }
 	if(code === 429){
 		helpers.manageStatus.bind(this)('error', 'Too many requests too fast; please wait a minute, and consider using an API key (link below).')
 		this.formRef.current.removeAttribute('disabled')
