@@ -17,7 +17,9 @@ RUN npm install --force react-leaflet \
 						leaflet-geometryutil \
 						react-bootstrap \
 						jest-canvas-mock \
-                        react-datetime
+                        react-datetime \
+                        proj4 \
+                        proj4leaflet
 COPY argovis/src src
 COPY argovis/public public
 COPY argovis/package.json package.json

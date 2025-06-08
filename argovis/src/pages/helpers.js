@@ -3,6 +3,8 @@ import { MapContainer, TileLayer, CircleMarker} from 'react-leaflet';
 import GeometryUtil from "leaflet-geometryutil";
 import Autosuggest from 'react-autosuggest';
 import Plot from 'react-plotly.js';
+import * as L from 'leaflet';
+import 'proj4leaflet';
 
 let helpers = {}
 
@@ -111,15 +113,21 @@ helpers.onPolyCreate = function(p){
     this.setState(s)
 }
 
-helpers.onPolyDelete = function(defaultPoly){
-
-    this.setState({
+helpers.polyDeleteState = function(defaultPoly){
+    return {
         polygon: defaultPoly, 
         interpolated_polygon: helpers.insertPointsInPolygon(defaultPoly), 
         maxDayspan: this.defaultDayspan, 
         urls: this.generateURLs({polygon: defaultPoly}),
-        phase: 'refreshData'
-    })
+        phase: 'refreshData'        
+    }
+}
+
+helpers.onPolyDelete = function(defaultPoly){
+
+    let s = helpers.polyDeleteState.bind(this)(defaultPoly)
+    this.setState(s)
+
 }
 
 helpers.fetchPolygon = function(coords){
@@ -1803,6 +1811,112 @@ helpers.genRegionLink = function(polygon, sDate, eDate, centerlon, dataset){
   }
 
   return regionLink
+}
+
+helpers.defineProjection = function(proj){
+
+    let TILE_SIZE = {
+        'mercator': 256,
+        'arctic': 512,
+        'antarctic': 512
+    }[proj]
+
+    let crs = null
+    let minZoom = null
+    if(proj === 'mercator'){
+        crs = L.CRS.EPSG3857;
+        minZoom = 0;
+    } else {
+        const MAX_ZOOM = 16;
+        const extent = {
+            'arctic': Math.sqrt(2)*6371007.2, 
+            'antarctic':12367396.2185
+        }[proj];
+        const epsg = {
+            'arctic': 'EPSG:3575', 
+            'antarctic': 'EPSG:3032'
+        }[proj];
+        const proj4 = {
+            'arctic': "+proj=laea +lat_0=90 +lon_0=10 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs", 
+            'antarctic': "+proj=stere +lat_0=-90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
+        }[proj];
+        const resolutions = Array(MAX_ZOOM + 1) 
+          .fill() 
+          .map((_, i) => 2*extent / TILE_SIZE / Math.pow(2, i));
+        minZoom = helpers.findLowestZoom(resolutions, TILE_SIZE)
+
+        crs = new L.Proj.CRS(
+        epsg, 
+        proj4, 
+        { 
+            origin: [-extent, extent], 
+            bounds: L.bounds(
+            L.point(-extent, extent), 
+            L.point(extent, -extent)
+            ), 
+            resolutions: resolutions,
+            tileSize: TILE_SIZE
+        });
+    }
+      
+    const tiles = { 
+        'mercator': "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        'arctic': "https://tile.gbif.org/3575/omt/{z}/{x}/{y}@4x.png?style=osm-bright",
+        'antarctic': "https://tile.gbif.org/3031/omt/{z}/{x}/{y}@4x.png?style=osm-bright"
+    }[proj];
+
+    const center = {
+        'mercator': [25, parseFloat(this.state.centerlon)],
+        'arctic': [90, 0],
+        'antarctic': [-90, 0]
+    }[proj];
+
+    const maxBounds = {
+        'mercator':[[-90,this.state.centerlon-180],[90,this.state.centerlon+180]],
+        'arctic':[],
+        'antarctic':[]
+    }[proj]
+
+    const defaultZoom = {
+        'mercator': 2,
+        'arctic': 1,
+        'antarctic': 1
+    }[proj]
+
+    return{
+        projection: proj,
+        crs: crs,
+        tiles: tiles,
+        tile_size: TILE_SIZE,
+        mapcenter: center,
+        maxBounds: maxBounds,
+        defaultZoom: defaultZoom,
+        minZoom: minZoom,
+        mapkey: Math.random()
+    }
+}
+
+helpers.findLowestZoom = function(resolutions, tilesize) {
+    // limit how far the user can zoom out; tiles should roughly cover the screen.
+    // zooming out too far causes crashes on larger monitors - mysterious but observable.
+
+    for (let z = 0; z < resolutions.length; z++) {
+        if(window.innerWidth < tilesize*Math.pow(2,z) && window.innerHeight < tilesize*Math.pow(2,z)){
+            return z
+        }
+    }
+    return resolutions.length - 1; // fallback to max zoom
+}
+
+helpers.setProjection = function(proj){
+    // set the projection for the map
+    let s = helpers.defineProjection.bind(this)(proj)
+    let d = helpers.polyDeleteState.bind(this)(this.defaultPolygon) // force delete any polygon when changing projection
+    this.setState({
+        ...s,
+        ...d,
+        phase: 'refreshData'
+    })
 }
 
 export default helpers
