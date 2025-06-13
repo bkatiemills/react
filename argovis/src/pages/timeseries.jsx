@@ -11,7 +11,7 @@ class Timeseries extends React.Component {
     constructor(props) {
       super(props);
 
-      this.defaultPolygon = [[-58.97755101407165,-42.186685470137],[-51.59056763732494,-41.99755920540033],[-51.50565978241981,-47.137023193932286],[-59.317182433692196,-47.59733587844376],[-58.97755101407165,-42.186685470137]]
+      this.defaultPolygon = [[-40,-40],[-40,-30],[-30,-30],[-30,-40],[-40,-40]]
       let q = new URLSearchParams(window.location.search) // parse out query string
       document.title = 'Argovis - Explore ' + q.get('lattice') + ' grid'
       this.state = {
