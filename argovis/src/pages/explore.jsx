@@ -200,27 +200,27 @@ class ArgovisExplore extends React.Component {
         let depthRequired = params.hasOwnProperty('depthRequired') ? params.depthRequired : this.state.depthRequired
         let woce = params.hasOwnProperty('woce') ? params.woce : this.state.woce
         let goship = params.hasOwnProperty('goship') ? params.goship : this.state.goship
-        let other = params.hasOwnProperty('other') ? params.other : this.state.other
+        let cchdoother = params.hasOwnProperty('cchdoother') ? params.cchdoother : this.state.cchdoother
 
         let url = helpers.generateTemporoSpatialURL.bind(this)(this.apiPrefix, 'cchdo', startDate, endDate, polygon, depthRequired)	
 
         // decide on source.source
         let source = []
-        if(!other && !woce && !goship){
+        if(!cchdoother && !woce && !goship){
             return []
-        }else if(other && woce && goship){
+        }else if(cchdoother && woce && goship){
             source = []
-        } else if(other && woce && !goship){
+        } else if(cchdoother && woce && !goship){
             source = ['~cchdo_woce,~cchdo_go-ship', 'cchdo_woce']
-        } else if(other && !woce && goship){
+        } else if(cchdoother && !woce && goship){
             source = ['~cchdo_woce,~cchdo_go-ship', 'cchdo_go-ship']
-        } else if(!other && woce && goship){
+        } else if(!cchdoother && woce && goship){
             source = ['cchdo_go-ship', 'cchdo_woce']
-        } else if(other && !woce && !goship){
+        } else if(cchdoother && !woce && !goship){
             source = ['~cchdo_go-ship,~cchdo_woce']
-        } else if(!other && woce && !goship){
+        } else if(!cchdoother && woce && !goship){
             source = ['cchdo_woce']
-        } else if(!other && !woce && goship){
+        } else if(!cchdoother && !woce && goship){
             source = ['cchdo_go-ship']
         }
 
@@ -588,8 +588,8 @@ class ArgovisExplore extends React.Component {
                                         <label className="form-check-label" htmlFor='goship'>Display GO-SHIP <span style={{'color':this.chooseColor([null,null,null,null,['cchdo_go-ship']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
                                     </div>
                                     <div className="form-check">
-                                        <input className="form-check-input" checked={this.state.other} onChange={(v) => this.toggle.bind(this)('other')} type="checkbox" id='other'></input>
-                                        <label className="form-check-label" htmlFor='other'>Display other ships <span style={{'color':this.chooseColor([null,null,null,null,['cchdo_x']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
+                                        <input className="form-check-input" checked={this.state.cchdoother} onChange={(v) => this.toggle.bind(this)('cchdoother')} type="checkbox" id='cchdoother'></input>
+                                        <label className="form-check-label" htmlFor='cchdoother'>Display other ships <span style={{'color':this.chooseColor([null,null,null,null,['cchdo_x']]), 'WebkitTextStroke': '1px black'}}>&#9679;</span></label>
                                     </div>
                                 </div>
 
