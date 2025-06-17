@@ -391,19 +391,20 @@ isLocationValid = () => {
                                 <p><i>Restrict your search to a specific time and place.</i></p>
                                 <div id='time_filters' className={datesValid ? 'row' : 'row invalid'}>
                                     <div className='col-4'>
+                                        <OverlayTrigger
+                                            placement="right"
+                                            overlay={
+                                                <Tooltip id="startDate-tooltip" className="wide-tooltip">
+                                                    The earliest timestamp to search for, GMT+0, boundary-inclusive. Format <span style={{"fontFamily":"monospace", "whiteSpace": "nowrap"}}>YYYY-MM-DD HH:mm:ss</span>
+                                                </Tooltip>
+                                            }
+                                            trigger="focus"
+                                        >
+                                            <span tabIndex="0" role="button" style={{ cursor: 'pointer' }}>
+                                                <i className="fa fa-question-circle" aria-hidden="true" />Start Date:
+                                            </span>
+                                        </OverlayTrigger>
                                         <label className="form-label">
-                                            <OverlayTrigger
-                                                placement="right"
-                                                overlay={
-                                                    <Tooltip id="startDate-tooltip" className="wide-tooltip">
-                                                        The earliest timestamp to search for, GMT+0, boundary-inclusive. Format <span style={{"fontFamily":"monospace", "whiteSpace": "nowrap"}}>YYYY-MM-DD HH:mm:ss</span>
-                                                    </Tooltip>
-                                                }
-                                                trigger="click"
-                                            >
-                                                <i className="fa fa-question-circle" aria-hidden="true"></i>
-                                            </OverlayTrigger>
-                                            Start Date:
                                             <Datetime
                                                 dateFormat="YYYY-MM-DD"
                                                 timeFormat="HH:mm:ss"
@@ -419,19 +420,20 @@ isLocationValid = () => {
                                         </label>
                                     </div>
                                     <div className='col-4'>
+                                        <OverlayTrigger
+                                            placement="right"
+                                            overlay={
+                                                <Tooltip id="endDate-tooltip" className="wide-tooltip">
+                                                    The latest timestamp to search for, GMT+0, boundary-exclusive. Format <span style={{"fontFamily":"monospace", "whiteSpace": "nowrap"}}>YYYY-MM-DD HH:mm:ss</span>
+                                                </Tooltip>
+                                            }
+                                            trigger="focus"
+                                        >
+                                            <span tabIndex="0" role="button" style={{ cursor: 'pointer' }}>
+                                                <i className="fa fa-question-circle" aria-hidden="true" />End Date:
+                                            </span>
+                                        </OverlayTrigger>
                                         <label className="form-label">
-                                            <OverlayTrigger
-                                                placement="right"
-                                                overlay={
-                                                    <Tooltip id="endDate-tooltip" className="wide-tooltip">
-                                                        The latest timestamp to search for, GMT+0, boundary-exclusive. Format <span style={{"fontFamily":"monospace", "whiteSpace": "nowrap"}}>YYYY-MM-DD HH:mm:ss</span>
-                                                    </Tooltip>
-                                                }
-                                                trigger="click"
-                                            >
-                                                <i className="fa fa-question-circle" aria-hidden="true"></i>
-                                            </OverlayTrigger>
-                                            End Date:
                                             <Datetime
                                                 dateFormat="YYYY-MM-DD"
                                                 timeFormat="HH:mm:ss"
@@ -451,19 +453,20 @@ isLocationValid = () => {
                                 <div id='space_filters' className={locationValid ? 'row' : 'row invalid'}>
                                     <p><i>Fill in at most one of polygon, box, or center and radius.</i></p>
                                     <div className='col-4'>
+                                        <OverlayTrigger
+                                            placement="right"
+                                            overlay={
+                                                <Tooltip id="polygon-tooltip" className="wide-tooltip">
+                                                    To limit your search results to an arbitrary polygon, enter the vertex coordinates of the polygon in the format: [[lon0,lat0],[lon1,lat1],...,[lonN,latN],[lon0,lat0]]. The first and last coordinates must be the same. Try drawing a polygon at <a href='https://argovis.colorado.edu' target="_blank" rel="noreferrer">argovis.colorado.edu</a> and copying it from the resulting URL if you need a visual aide.
+                                                </Tooltip>
+                                            }
+                                            trigger="focus"
+                                        >
+                                            <span tabIndex="0" role="button" style={{ cursor: 'pointer' }}>
+                                                <i className="fa fa-question-circle" aria-hidden="true" />Polygon:
+                                            </span>
+                                        </OverlayTrigger>
                                         <label className="form-label">
-                                            <OverlayTrigger
-                                                placement="right"
-                                                overlay={
-                                                    <Tooltip id="polygon-tooltip" className="wide-tooltip">
-                                                        To limit your search results to an arbitrary polygon, enter the vertex coordinates of the polygon in the format: [[lon0,lat0],[lon1,lat1],...,[lonN,latN],[lon0,lat0]]. The first and last coordinates must be the same. Try drawing a polygon at <a href='https://argovis.colorado.edu' target="_blank" rel="noreferrer">argovis.colorado.edu</a> and copying it from the resulting URL if you need a visual aide.
-                                                    </Tooltip>
-                                                }
-                                                trigger="click"
-                                            >
-                                            <i className="fa fa-question-circle" aria-hidden="true"></i>  
-                                            </OverlayTrigger>
-                                            Polygon:
                                             <input
                                                 type="text"
                                                 value={this.state.polygon}
@@ -476,19 +479,20 @@ isLocationValid = () => {
                                         {!polygonValid && !polygonTouched && <p className="validation-message">Invalid polygon. A valid polygon is an array of longitude, longitude pairs, for example: [[0,0],[0,1],[1,1],[1,0],[0,0]]. Notice the first and last vertexes match, per the geoJSON spec.</p>}
                                     </div>
                                     <div className='col-4'>
+                                        <OverlayTrigger
+                                            placement="right"
+                                            overlay={
+                                                <Tooltip id="box-tooltip" className="wide-tooltip">
+                                                    A box region to seach in, written as [[southwest lon,southwest lat],[northeast lon,northeast lat]].
+                                                </Tooltip>
+                                            }
+                                            trigger="focus"
+                                        >
+                                            <span tabIndex="0" role="button" style={{ cursor: 'pointer' }}>
+                                                <i className="fa fa-question-circle" aria-hidden="true" />Box:
+                                            </span>
+                                        </OverlayTrigger>
                                         <label className="form-label">
-                                            <OverlayTrigger
-                                                placement="right"
-                                                overlay={
-                                                    <Tooltip id="box-tooltip" className="wide-tooltip">
-                                                        A box region to seach in, written as [[southwest lon,southwest lat],[northeast lon,northeast lat]].
-                                                    </Tooltip>
-                                                }
-                                                trigger="click"
-                                            >
-                                                <i className="fa fa-question-circle" aria-hidden="true"></i>
-                                            </OverlayTrigger>
-                                            Box:
                                             <input
                                                 type="text"
                                                 value={this.state.box}
@@ -501,19 +505,20 @@ isLocationValid = () => {
                                         {!boxValid && !boxTouched && <p className="validation-message">Invalid box. A valid box is descrbed by its southwest corner followed by its northeast corner, set as longitude,latitude, for example: [[0,0],[10,10]].</p>}
                                     </div>
                                     <div className='col-4'>
+                                        <OverlayTrigger
+                                            placement="right"
+                                            overlay={
+                                                <Tooltip id="center-tooltip" className="wide-tooltip">
+                                                    Use with radius to search for profiles near this centerpoint, written as longitude,latitude.
+                                                </Tooltip>
+                                            }
+                                            trigger="focus"
+                                        >
+                                            <span tabIndex="0" role="button" style={{ cursor: 'pointer' }}>
+                                                <i className="fa fa-question-circle" aria-hidden="true" />Center:
+                                            </span>
+                                        </OverlayTrigger>
                                         <label className="form-label">
-                                            <OverlayTrigger
-                                                placement="right"
-                                                overlay={
-                                                    <Tooltip id="center-tooltip" className="wide-tooltip">
-                                                        Use with radius to search for profiles near this centerpoint, written as longitude,latitude.
-                                                    </Tooltip>
-                                                }
-                                                trigger="click"
-                                            >
-                                                <i className="fa fa-question-circle" aria-hidden="true"></i>
-                                            </OverlayTrigger>
-                                            Center:
                                             <input
                                                 type="text"
                                                 value={this.state.center}
@@ -523,19 +528,21 @@ isLocationValid = () => {
                                                 className={centerValid ? 'form-control' : 'form-control invalid'}
                                             />
                                         </label>
+                                        <br/>
+                                        <OverlayTrigger
+                                            placement="right"
+                                            overlay={
+                                                <Tooltip id="radius-tooltip" className="wide-tooltip">
+                                                    Use with center to search for profiles within this many kilometers of the centerpoint.
+                                                </Tooltip>
+                                            }
+                                            trigger="focus"
+                                        >
+                                            <span tabIndex="0" role="button" style={{ cursor: 'pointer' }}>
+                                                <i className="fa fa-question-circle" aria-hidden="true" />Radius:
+                                            </span>
+                                        </OverlayTrigger>
                                         <label className="form-label">
-                                            <OverlayTrigger
-                                                placement="right"
-                                                overlay={
-                                                    <Tooltip id="radius-tooltip" className="wide-tooltip">
-                                                        Use with center to search for profiles within this many kilometers of the centerpoint.
-                                                    </Tooltip>
-                                                }
-                                                trigger="click"
-                                            >
-                                                <i className="fa fa-question-circle" aria-hidden="true"></i>
-                                            </OverlayTrigger>
-                                            Radius:
                                             <input
                                                 type="text"
                                                 value={this.state.radius}
@@ -551,19 +558,20 @@ isLocationValid = () => {
                                     {!locationValid && <span className="validation-message">Invalid location. Please only specify one of polygon, box, or center plus radius.</span>}
                                 </div>
                                 <div>
+                                    <OverlayTrigger
+                                        placement="right"
+                                        overlay={
+                                            <Tooltip id="compression-tooltip" className="wide-tooltip">
+                                                Check this box to get back only minimal data for each matching profile: [profile ID, longitude, latitude, timestamp, argo source, metadata ID]. Good for making maps.
+                                            </Tooltip>
+                                        }
+                                        trigger="focus"
+                                    >
+                                        <span tabIndex="0" role="button" style={{ cursor: 'pointer' }}>
+                                            <i className="fa fa-question-circle" aria-hidden="true" />Compression:
+                                        </span>
+                                    </OverlayTrigger>
                                     <label className="form-label">
-                                        <OverlayTrigger
-                                            placement="right"
-                                            overlay={
-                                                <Tooltip id="compression-tooltip" className="wide-tooltip">
-                                                    Check this box to get back only minimal data for each matching profile: [profile ID, longitude, latitude, timestamp, argo source, metadata ID]. Good for making maps.
-                                                </Tooltip>
-                                            }
-                                            trigger="click"
-                                        >
-                                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                                        </OverlayTrigger>
-                                        Compression:
                                         <input
                                             type="checkbox"
                                             checked={this.state.compression}
@@ -575,20 +583,21 @@ isLocationValid = () => {
                             <div className='row form-section'>
                                 <h4>Data filters</h4>
                                 <p><i>Request per-level data, and filter for specific measurements, QC, and pressure levels.</i></p>
-                                <div className='col-4'>
+                                <div className='col-4'>   
+                                    <OverlayTrigger
+                                        placement="right"
+                                        overlay={
+                                            <Tooltip id="data-tooltip" className="wide-tooltip">
+                                                List the data variables you want to search for, for example temperature,doxy; you will get back only profiles that have these measurements, and only these measurements plus pressure. Use 'all' to get back every available measurement. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=data' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=data</a> for a list of Argo data variables. <br/>You can also enforce QC requirements: temperature,1 will return only levels that have temperature QC of 1, for example. You can also request the explicit QC levels be returned by suffixing _argoqc to a varaible name, like temperature_argoqc. <br/>Furthermore, you can also negate variables: temperature,~doxy will return the temperature measurements from profiles that do not include a doxy measurement. <br/>Finally, you can use 'except-data-values' to perform the same filtering, but then suppress the actual data values (typically for mapping applications).
+                                            </Tooltip>
+                                        }
+                                        trigger="focus"
+                                    >
+                                        <span tabIndex="0" role="button" style={{ cursor: 'pointer' }}>
+                                            <i className="fa fa-question-circle" aria-hidden="true" />Data:
+                                        </span>
+                                    </OverlayTrigger>
                                     <label className="form-label">
-                                        <OverlayTrigger
-                                            placement="right"
-                                            overlay={
-                                                <Tooltip id="data-tooltip" className="wide-tooltip">
-                                                    List the data variables you want to search for, for example temperature,doxy; you will get back only profiles that have these measurements, and only these measurements plus pressure. Use 'all' to get back every available measurement. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=data' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=data</a> for a list of Argo data variables. <br/>You can also enforce QC requirements: temperature,1 will return only levels that have temperature QC of 1, for example. You can also request the explicit QC levels be returned by suffixing _argoqc to a varaible name, like temperature_argoqc. <br/>Furthermore, you can also negate variables: temperature,~doxy will return the temperature measurements from profiles that do not include a doxy measurement. <br/>Finally, you can use 'except-data-values' to perform the same filtering, but then suppress the actual data values (typically for mapping applications).
-                                                </Tooltip>
-                                            }
-                                            trigger="click"
-                                        >
-                                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                                        </OverlayTrigger>
-                                        Data:
                                         <input
                                             type="text"
                                             name="data"
@@ -602,19 +611,20 @@ isLocationValid = () => {
                                     {!dataValid && !dataTouched && <p className="validation-message">Invalid data string. data should be a comma separated list of the measurements you want profiles for; you may also negate a parameter with ~ to get profiles that do not include this measurement. Furthermore, you can add 'all' to the list to get every measurement avaialble in the profile, or 'except-data-values' to perform the same filtering, but then suppress the actual data values (typically for mapping applications). See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=data' target="_blank" rel="noreferrer">this vocabulary</a> for a list of Argo data variables.</p>}
                                 </div>
                                 <div className='col-4'>
+                                    <OverlayTrigger
+                                        placement="right"
+                                        overlay={
+                                            <Tooltip id="verticalrange-tooltip" className="wide-tooltip">
+                                                List the vertical range you want to search for in dbar, for example 0,10; you'll only download levels in this pressure range in the profiles matching the rest of your search. <br/>Note that the vertical range is in dbar below the surface, so 0,10 would filter for levels at the surface down to 10 dbar.
+                                            </Tooltip>
+                                        }
+                                        trigger="focus"
+                                    >
+                                        <span tabIndex="0" role="button" style={{ cursor: 'pointer' }}>
+                                            <i className="fa fa-question-circle" aria-hidden="true" />Vertical Range:
+                                        </span>
+                                    </OverlayTrigger>
                                     <label className="form-label">
-                                        <OverlayTrigger
-                                            placement="right"
-                                            overlay={
-                                                <Tooltip id="verticalrange-tooltip" className="wide-tooltip">
-                                                    List the vertical range you want to search for in dbar, for example 0,10; you'll only download levels in this pressure range in the profiles matching the rest of your search. <br/>Note that the vertical range is in dbar below the surface, so 0,10 would filter for levels at the surface down to 10 dbar.
-                                                </Tooltip>
-                                            }
-                                            trigger="click"
-                                        >
-                                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                                        </OverlayTrigger>
-                                        Vertical Range:
                                         <input
                                             type="text"
                                             name="verticalRange"
@@ -632,68 +642,73 @@ isLocationValid = () => {
                                 <h4>Argo-specific filters</h4>
                                 <p><i>Filter results using Argo-specific parameters, like platforms, individual profiles, and mission.</i></p>
                                 <div className='col-4'>
+                                    <OverlayTrigger
+                                        placement="right"
+                                        overlay={
+                                            <Tooltip id="id-tooltip" className="wide-tooltip">
+                                                Use this to specify a single profile by ID. Profile IDs are constructed as &lt;platform_number&gt;_&lt;cycle_number&gt;.
+                                            </Tooltip>
+                                        }
+                                        trigger="focus"
+                                    >
+                                        <span tabIndex="0" role="button" style={{ cursor: 'pointer' }}>
+                                            <i className="fa fa-question-circle" aria-hidden="true" />Profile ID:
+                                        </span>
+                                    </OverlayTrigger>
                                     <label className="form-label">
-                                        <OverlayTrigger
-                                            placement="right"
-                                            overlay={
-                                                <Tooltip id="id-tooltip" className="wide-tooltip">
-                                                    Use this to specify a single profile by ID. Profile IDs are constructed as &lt;platform_number&gt;_&lt;cycle_number&gt;.
-                                                </Tooltip>
-                                            }
-                                            trigger="click"
-                                        >
-                                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                                        </OverlayTrigger>
-                                        Profile ID:
                                         <input type="text" name="profileId" value={profileId} onChange={this.handleChange} className="form-control" />
                                     </label>
                                 </div>
                                 <div className='col-4'>
+                                    <OverlayTrigger
+                                        placement="right"
+                                        overlay={
+                                            <Tooltip id="platform-tooltip" className="wide-tooltip">
+                                                Use this to search for all profiles from a given platform. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform</a> for a list of platform IDs.
+                                            </Tooltip>
+                                        }
+                                        trigger="focus"
+                                    >
+                                        <span tabIndex="0" role="button" style={{ cursor: 'pointer' }}>
+                                            <i className="fa fa-question-circle" aria-hidden="true" />Platform ID:
+                                        </span>
+                                    </OverlayTrigger>
                                     <label className="form-label">
-                                        <OverlayTrigger
-                                            placement="right"
-                                            overlay={
-                                                <Tooltip id="platform-tooltip" className="wide-tooltip">
-                                                    Use this to search for all profiles from a given platform. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform</a> for a list of platform IDs.
-                                                </Tooltip>
-                                            }
-                                            trigger="click"
-                                        >
-                                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                                        </OverlayTrigger>
-                                        Platform ID:
                                         <input type="text" name="platformId" value={platformId} onChange={this.handleChange} className="form-control" />
                                     </label>
+                                    <br/>
+                                    <OverlayTrigger
+                                        placement="right"
+                                        overlay={
+                                            <Tooltip id="platformtype-tooltip" className="wide-tooltip">
+                                                Use this to restrict results to profiles from a given platform type. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform_type' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform_type</a> for a list of platform types.
+                                            </Tooltip>
+                                        }
+                                        trigger="focus"
+                                    >
+                                        <span tabIndex="0" role="button" style={{ cursor: 'pointer' }}>
+                                            <i className="fa fa-question-circle" aria-hidden="true" />Platform Type:
+                                        </span>
+                                    </OverlayTrigger>
                                     <label className="form-label">
-                                        <OverlayTrigger
-                                            placement="right"
-                                            overlay={
-                                                <Tooltip id="platformtype-tooltip" className="wide-tooltip">
-                                                    Use this to restrict results to profiles from a given platform type. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform_type' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform_type</a> for a list of platform types.
-                                                </Tooltip>
-                                            }
-                                            trigger="click"
-                                        >
-                                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                                        </OverlayTrigger>
-                                        Platform Type:
                                         <input type="text" name="platformType" value={platformType} onChange={this.handleChange} className="form-control"/>
                                     </label>
                                 </div>
                                 <div className='col-4'>
+                                    <OverlayTrigger
+                                        placement="right"
+                                        overlay={
+                                            <Tooltip id="positionqc-tooltip" className="wide-tooltip">
+                                                Use this to filter profiles for any of a list of position QC flags, for example 1,2,8,9. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=position_qc' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=position_qc</a> for a list of position QC flags. See <a href='https://archimer.ifremer.fr/doc/00228/33951/' target="_blank" rel="noreferrer">https://archimer.ifremer.fr/doc/00228/33951/</a> for documentation from Argo on the meaning of these flags.
+                                            </Tooltip>
+                                        }
+                                        trigger="focus"
+                                    >
+                                        <span tabIndex="0" role="button" style={{ cursor: 'pointer' }}>
+                                            <i className="fa fa-question-circle" aria-hidden="true" />Position QC:
+                                        </span>
+                                    </OverlayTrigger>
                                     <label className="form-label">
-                                        <OverlayTrigger
-                                            placement="right"
-                                            overlay={
-                                                <Tooltip id="positionqc-tooltip" className="wide-tooltip">
-                                                    Use this to filter profiles for any of a list of position QC flags, for example 1,2,8,9. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=position_qc' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=position_qc</a> for a list of position QC flags. See <a href='https://archimer.ifremer.fr/doc/00228/33951/' target="_blank" rel="noreferrer">https://archimer.ifremer.fr/doc/00228/33951/</a> for documentation from Argo on the meaning of these flags.
-                                                </Tooltip>
-                                            }
-                                            trigger="click"
-                                        >
-                                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                                        </OverlayTrigger>
-                                        Position QC:
                                         <input
                                             type="text"
                                             value={this.state.positionQC}
@@ -704,20 +719,21 @@ isLocationValid = () => {
                                         />
                                     </label>
                                     {!positionQCValid && !positionQCTouched && <p className="validation-message">Invalid position QC value. Position QC should be a comma-separated list of integers from -1 to 9.</p>}
-                                
+                                    <br/>
+                                    <OverlayTrigger
+                                        placement="right"
+                                        overlay={
+                                            <Tooltip id="source-tooltip" className="wide-tooltip">
+                                                Use this to filter profiles by their Argo mission, any of argo_core, argo_bgc, argo_deep, possibly negated with a ~. For example, argo_core,~argo_deep filters for argo core profiles that are not also argo deep profiles.
+                                            </Tooltip>
+                                        }
+                                        trigger="focus"
+                                    >
+                                        <span tabIndex="0" role="button" style={{ cursor: 'pointer' }}>
+                                            <i className="fa fa-question-circle" aria-hidden="true" />Profile Source:
+                                        </span>
+                                    </OverlayTrigger>
                                     <label className="form-label">
-                                        <OverlayTrigger
-                                            placement="right"
-                                            overlay={
-                                                <Tooltip id="source-tooltip" className="wide-tooltip">
-                                                    Use this to filter profiles by their Argo mission, any of argo_core, argo_bgc, argo_deep, possibly negated with a ~. For example, argo_core,~argo_deep filters for argo core profiles that are not also argo deep profiles.
-                                                </Tooltip>
-                                            }
-                                            trigger="click"
-                                        >
-                                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                                        </OverlayTrigger>
-                                        Profile Source:
                                         <input
                                             type="text"
                                             name="profileSource"
@@ -735,35 +751,37 @@ isLocationValid = () => {
                                 <h4>Other filters</h4>
                                 <p><i>Some advanced options for manipulating how data of interest are returned or represented.</i></p>
                                 <div className='col-4'>
+                                    <OverlayTrigger
+                                        placement="right"
+                                        overlay={
+                                            <Tooltip id="metadata-tooltip" className="wide-tooltip">
+                                                Use this to search for all profiles that share a specific metadata ID. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=metadata' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=metadata</a> for a list of metadata IDs.
+                                            </Tooltip>
+                                        }
+                                        trigger="focus"
+                                    >
+                                        <span tabIndex="0" role="button" style={{ cursor: 'pointer' }}>
+                                            <i className="fa fa-question-circle" aria-hidden="true" />Metadata:
+                                        </span>
+                                    </OverlayTrigger>
                                     <label className="form-label">
-                                        <OverlayTrigger
-                                            placement="right"
-                                            overlay={
-                                                <Tooltip id="metadata-tooltip" className="wide-tooltip">
-                                                    Use this to search for all profiles that share a specific metadata ID. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=metadata' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=metadata</a> for a list of metadata IDs.
-                                                </Tooltip>
-                                            }
-                                            trigger="click"
-                                        >
-                                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                                        </OverlayTrigger>
-                                        Metadata:
                                         <input type="text" name="metadata" value={metadata} onChange={this.handleChange} className="form-control" />
                                     </label>
-
+                                    <br/>
+                                    <OverlayTrigger
+                                        placement="right"
+                                        overlay={
+                                            <Tooltip id="batchmeta-tooltip" className="wide-tooltip">
+                                                Return all the metadata documents that correspond to the data documents matching this search (instead of returning the data documents themsleves).
+                                            </Tooltip>
+                                        }
+                                        trigger="focus"
+                                    >
+                                        <span tabIndex="0" role="button" style={{ cursor: 'pointer' }}>
+                                            <i className="fa fa-question-circle" aria-hidden="true" />Batch Metadata:
+                                        </span>
+                                    </OverlayTrigger>
                                     <label className="form-label">
-                                        <OverlayTrigger
-                                            placement="right"
-                                            overlay={
-                                                <Tooltip id="batchmeta-tooltip" className="wide-tooltip">
-                                                    Return all the metadata documents that correspond to the data documents matching this search (instead of returning the data documents themsleves).
-                                                </Tooltip>
-                                            }
-                                            trigger="click"
-                                        >
-                                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                                        </OverlayTrigger>
-                                        Batch Metadata:
                                         <input
                                             type="checkbox"
                                             checked={this.state.batchMetadata}
@@ -791,36 +809,38 @@ isLocationValid = () => {
                             <div className='row form-section'>
                                 <h4>Metadata filters</h4>
                                 <div className='col-4'>
+                                    <OverlayTrigger
+                                        placement="right"
+                                        overlay={
+                                            <Tooltip id="metadata_id-tooltip" className="wide-tooltip">
+                                                Use this to specify a single metadata document by ID. Metadata IDs are constructed as &lt;platform_number&gt;_m&lt;metadata_number&gt;.
+                                            </Tooltip>
+                                        }
+                                        trigger="focus"
+                                    >
+                                        <span tabIndex="0" role="button" style={{ cursor: 'pointer' }}>
+                                            <i className="fa fa-question-circle" aria-hidden="true" />Metadata ID:
+                                        </span>
+                                    </OverlayTrigger>
                                     <label className="form-label">
-                                        <OverlayTrigger
-                                            placement="right"
-                                            overlay={
-                                                <Tooltip id="metadata_id-tooltip" className="wide-tooltip">
-                                                    Use this to specify a single metadata document by ID. Metadata IDs are constructed as &lt;platform_number&gt;_m&lt;metadata_number&gt;.
-                                                </Tooltip>
-                                            }
-                                            trigger="click"
-                                        >
-                                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                                        </OverlayTrigger>
-                                        Metadata ID:
                                         <input type="text" name="meta_id" value={meta_id} onChange={this.handleChange} className="form-control" />
                                     </label>
                                 </div>
                                 <div className='col-4'>
+                                    <OverlayTrigger
+                                        placement="right"
+                                        overlay={
+                                            <Tooltip id="metadata_platform-tooltip" className="wide-tooltip">
+                                                Use this to search for all metadata documents from a given platform. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform</a> for a list of platform IDs.
+                                            </Tooltip>
+                                        }
+                                        trigger="focus"
+                                    >
+                                        <span tabIndex="0" role="button" style={{ cursor: 'pointer' }}>
+                                            <i className="fa fa-question-circle" aria-hidden="true" />Platform ID:
+                                        </span>
+                                    </OverlayTrigger>
                                     <label className="form-label">
-                                        <OverlayTrigger
-                                            placement="right"
-                                            overlay={
-                                                <Tooltip id="metadata_platform-tooltip" className="wide-tooltip">
-                                                    Use this to search for all metadata documents from a given platform. See <a href='https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform' target="_blank" rel="noreferrer">https://argovis-api.colorado.edu/argo/vocabulary?parameter=platform</a> for a list of platform IDs.
-                                                </Tooltip>
-                                            }
-                                            trigger="click"
-                                        >
-                                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                                        </OverlayTrigger>
-                                        Platform ID:
                                         <input type="text" name="meta_platform" value={meta_platform} onChange={this.handleChange} className="form-control" />
                                     </label>
                                 </div>
@@ -843,20 +863,21 @@ isLocationValid = () => {
                         <form>
                             <div className='row form-section'>
                                 <h4>Vocabulary filters</h4>
-                                <div className='col-4'>
+                                <div className='col-4'>                   
+                                    <OverlayTrigger
+                                        placement="right"
+                                        overlay={
+                                            <Tooltip id="vocab-param-tooltip" className="wide-tooltip">
+                                                Use this to specify the search parameter you'd like to see valid values for. Options are enum, platform, source, data, metadata, platform_type, position_qc.
+                                            </Tooltip>
+                                        }
+                                        trigger="focus"
+                                    >
+                                        <span tabIndex="0" role="button" style={{ cursor: 'pointer' }}>
+                                            <i className="fa fa-question-circle" aria-hidden="true" />Parameter:
+                                        </span>
+                                    </OverlayTrigger>
                                     <label className="form-label">
-                                        <OverlayTrigger
-                                            placement="right"
-                                            overlay={
-                                                <Tooltip id="vocab-param-tooltip" className="wide-tooltip">
-                                                    Use this to specify the search parameter you'd like to see valid values for. Options are enum, platform, source, data, metadata, platform_type, position_qc.
-                                                </Tooltip>
-                                            }
-                                            trigger="click"
-                                        >
-                                            <i className="fa fa-question-circle" aria-hidden="true"></i>
-                                        </OverlayTrigger>
-                                        Parameter:
                                         <input type="text" name="vocab_parameter" value={vocab_parameter} onChange={this.handleChange} className="form-control" />
                                     </label>
                                 </div>
