@@ -27,7 +27,9 @@ class ArgoURLhelper extends React.Component {
       verticalRange: '',
       batchMetadata: '',
       temp_startDate: '',
+      raw_startDate: '',
       temp_endDate: '',
+      raw_endDate: '',
       datesValid: true, polygonValid: true, boxValid: true, centerValid: true, radiusValid: true, positionQCValid: true, profileSourceValid: true, dataValid: true, verticalRangeValid: true,
       polygonTouched: false, boxTouched: false, centerTouched: false, radiusTouched: false, positionQCTouched: false, profileSourceTouched: false, dataTouched: false, verticalRangeTouched: false,
 
@@ -41,7 +43,7 @@ class ArgoURLhelper extends React.Component {
   }
 
   handleTextInput = (name, raw) => {
-    this.setState({ [`${name}Raw`]: raw });
+    this.setState({ [`raw_${name}`]: raw });
   };
   
   handleDatePickerChange = (name, date) => {
@@ -49,32 +51,37 @@ class ArgoURLhelper extends React.Component {
   
     this.setState({
       [`temp_${name}`]: date,
-      [`${name}Raw`]: date.format('YYYY-MM-DD HH:mm:ss'),
+      [`raw_${name}`]: date.format('YYYY-MM-DD HH:mm:ss'),
       datesValid: true
     });
   };
   
   handleDateBlur = (name) => {
-    const raw = this.state[`${name}Raw`];
+    const raw = this.state[`raw_${name}`];
     const parsed = moment(raw, 'YYYY-MM-DD HH:mm:ss', true);
-    if (!parsed.isValid()) {
+    if (raw.length > 0 && !parsed.isValid()) {
       // Leave raw input alone, just mark invalid if desired
       this.setState({ datesValid: false });
       return;
     }
-  
-    const other = name === 'startDate' ? 'temp_endDate' : 'temp_startDate';
-    const otherDate = this.state[other];
+
+    // invalidate backwards dates
+    const other = name === 'startDate' ? 'endDate' : 'startDate';
+    const otherDate = this.state['temp_'+other];
     let valid = true;
-  
     if (name === 'startDate' && otherDate && parsed.isAfter(otherDate)) valid = false;
     if (name === 'endDate' && otherDate && parsed.isBefore(otherDate)) valid = false;
-  
-    this.setState({
-      [`temp_${name}`]: parsed,
-      [`${name}Raw`]: parsed.format('YYYY-MM-DD HH:mm:ss'),
-      datesValid: valid
-    });
+
+    if(raw === '' && this.state['raw_'+other] === '') {
+        valid = true;
+    }
+
+    if(parsed.isValid() || valid){
+        this.setState({
+        [`temp_${name}`]: parsed.isValid() ? parsed : '',
+        datesValid: valid
+        });
+    }
   };
 
   isValidPolygon = (polygon) => {
@@ -389,7 +396,7 @@ isLocationValid = () => {
                                                 placement="right"
                                                 overlay={
                                                     <Tooltip id="startDate-tooltip" className="wide-tooltip">
-                                                        The earliest timestamp to search for, GMT+0, boundary-inclusive.
+                                                        The earliest timestamp to search for, GMT+0, boundary-inclusive. Format <span style={{"fontFamily":"monospace", "whiteSpace": "nowrap"}}>YYYY-MM-DD HH:mm:ss</span>
                                                     </Tooltip>
                                                 }
                                                 trigger="click"
@@ -405,7 +412,7 @@ isLocationValid = () => {
                                                 inputProps={{
                                                     onChange: (e) => this.handleTextInput('startDate', e.target.value),
                                                     onBlur: () => this.handleDateBlur('startDate'),
-                                                    value: this.state.startDateRaw || '',
+                                                    value: this.state.raw_startDate || '',
                                                     placeholder: 'YYYY-MM-DD HH:mm:ss',
                                                 }}
                                             />
@@ -417,7 +424,7 @@ isLocationValid = () => {
                                                 placement="right"
                                                 overlay={
                                                     <Tooltip id="endDate-tooltip" className="wide-tooltip">
-                                                        The latest timestamp to search for, GMT+0, boundary-exclusive.
+                                                        The latest timestamp to search for, GMT+0, boundary-exclusive. Format <span style={{"fontFamily":"monospace", "whiteSpace": "nowrap"}}>YYYY-MM-DD HH:mm:ss</span>
                                                     </Tooltip>
                                                 }
                                                 trigger="click"
@@ -433,13 +440,13 @@ isLocationValid = () => {
                                                 inputProps={{
                                                     onChange: (e) => this.handleTextInput('endDate', e.target.value),
                                                     onBlur: () => this.handleDateBlur('endDate'),
-                                                    value: this.state.endDateRaw || '',
+                                                    value: this.state.raw_endDate || '',
                                                     placeholder: 'YYYY-MM-DD HH:mm:ss',
                                                 }}
                                             />
                                         </label>
                                     </div>
-                                    {!datesValid && <p className="validation-message">Invalid dates. Start date must be before end date, if both are defined.</p>}
+                                    {!datesValid && <p className="validation-message">Invalid dates. Format must be YYYY-MM-DD HH:mm:ss, and start date must be before end date, if both are defined.</p>}
                                 </div>
                                 <div id='space_filters' className={locationValid ? 'row' : 'row invalid'}>
                                     <p><i>Fill in at most one of polygon, box, or center and radius.</i></p>
@@ -454,7 +461,7 @@ isLocationValid = () => {
                                                 }
                                                 trigger="click"
                                             >
-                                                <i className="fa fa-question-circle" aria-hidden="true"></i>
+                                            <i className="fa fa-question-circle" aria-hidden="true"></i>  
                                             </OverlayTrigger>
                                             Polygon:
                                             <input
