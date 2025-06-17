@@ -1040,7 +1040,7 @@ helpers.prepPlotlyState = function(markerSize){
                     showscale: needsScale(helpers.showTrace.bind(this)(d._id)),
                     reversescale: this.state.reverseC,
                     colorbar: {
-                        title: helpers.generateAxisTitle.bind(this)(this.state.cKey),
+                        title: {text: helpers.generateAxisTitle.bind(this)(this.state.cKey), side: 'right'},
                         titleside: 'right',
                         tickmode: this.state.cKey === 'timestamp' ? 'array' : 'auto',
                         ticktext: colortics[0],
@@ -1063,31 +1063,31 @@ helpers.prepPlotlyState = function(markerSize){
             size: 20
         },
         xaxis: {
-            title: helpers.generateAxisTitle.bind(this)(this.state.xKey),
+            title: {text: helpers.generateAxisTitle.bind(this)(this.state.xKey)},
             range: xrange,
-            type: this.state.xKey === 'timestamp' ? 'date' : '-'
+            type: this.state.xKey === 'timestamp' ? 'date' : 'linear'
         },
         yaxis: {
-            title: helpers.generateAxisTitle.bind(this)(this.state.yKey),
+            title: {text: helpers.generateAxisTitle.bind(this)(this.state.yKey)},
             range: yrange,
-            type: this.state.yKey === 'timestamp' ? 'date' : '-',
+            type: this.state.yKey === 'timestamp' ? 'date' : 'linear',
         },
         margin: {t: 30},
         scene: {
             xaxis:{
-                title: helpers.generateAxisTitle.bind(this)(this.state.xKey),
+                title: {text: helpers.generateAxisTitle.bind(this)(this.state.xKey)},
                 range: xrange,
-                type: this.state.xKey === 'timestamp' ? 'date' : '-'
+                type: this.state.xKey === 'timestamp' ? 'date' : 'linear'
             },
             yaxis:{
-                title: helpers.generateAxisTitle.bind(this)(this.state.yKey),
+                title: {text: helpers.generateAxisTitle.bind(this)(this.state.yKey)},
                 range: yrange,
-                type: this.state.yKey === 'timestamp' ? 'date' : '-'
+                type: this.state.yKey === 'timestamp' ? 'date' : 'linear'
             },
             zaxis:{
-                title: helpers.generateAxisTitle.bind(this)(this.state.zKey),
+                title: {text: helpers.generateAxisTitle.bind(this)(this.state.zKey)},
                 range: zrange,
-                type: this.state.zKey === 'timestamp' ? 'date' : '-'
+                type: this.state.zKey === 'timestamp' ? 'date' : 'linear'
             }
         }
     }
@@ -1101,6 +1101,7 @@ helpers.prepPlotlyState = function(markerSize){
 }
 
 helpers.plotHTML = function(){
+
 	return(
 		<>
 		<div style={{'width':'100vw', 'textAlign': 'center', 'padding':'0.5em', 'fontStyle':'italic'}} className='d-lg-none'>Use the right-hand scroll bar to scroll down for plot controls</div>

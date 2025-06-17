@@ -3,6 +3,7 @@ import Datetime from 'react-datetime';
 import 'react-datetime/css/react-datetime.css';
 import Tooltip from 'react-bootstrap/Tooltip';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
+import moment from 'moment';
 
 class ArgoURLhelper extends React.Component {
   constructor(props) {
@@ -39,22 +40,42 @@ class ArgoURLhelper extends React.Component {
     };
   }
 
-  handleDateChange = (name, date) => {
-    let isValid = true;
+  handleTextInput = (name, raw) => {
+    this.setState({ [`${name}Raw`]: raw });
+  };
   
-    if(date.length === 0) {
-      isValid = true;
-    }else if (name === 'endDate' && this.state.temp_startDate && date.isBefore(this.state.temp_startDate)) {
-      isValid = false;
-    } else if (name === 'startDate' && this.state.temp_endDate && date.isAfter(this.state.temp_endDate)) {
-      isValid = false;
-    }
+  handleDatePickerChange = (name, date) => {
+    if (!date || !date.isValid?.()) return;
   
     this.setState({
       [`temp_${name}`]: date,
-      [`datesValid`]: isValid,
+      [`${name}Raw`]: date.format('YYYY-MM-DD HH:mm:ss'),
+      datesValid: true
     });
-  }
+  };
+  
+  handleDateBlur = (name) => {
+    const raw = this.state[`${name}Raw`];
+    const parsed = moment(raw, 'YYYY-MM-DD HH:mm:ss', true);
+    if (!parsed.isValid()) {
+      // Leave raw input alone, just mark invalid if desired
+      this.setState({ datesValid: false });
+      return;
+    }
+  
+    const other = name === 'startDate' ? 'temp_endDate' : 'temp_startDate';
+    const otherDate = this.state[other];
+    let valid = true;
+  
+    if (name === 'startDate' && otherDate && parsed.isAfter(otherDate)) valid = false;
+    if (name === 'endDate' && otherDate && parsed.isBefore(otherDate)) valid = false;
+  
+    this.setState({
+      [`temp_${name}`]: parsed,
+      [`${name}Raw`]: parsed.format('YYYY-MM-DD HH:mm:ss'),
+      datesValid: valid
+    });
+  };
 
   isValidPolygon = (polygon) => {
     if(polygon.length === 0) return true;
@@ -175,12 +196,6 @@ isLocationValid = () => {
             (centerAndRadiusDefined && !polygonDefined && !boxDefined) ||
             (!polygonDefined && !boxDefined && !centerAndRadiusDefined));
 }
-
-  handleDateBlur = (name) => {
-    this.setState({
-      [name]: this.state[`temp_${name}`].format('YYYY-MM-DDTHH:mm:ss'),
-    });
-  }
 
   handleChange = (event) => {
     this.setState({
@@ -353,13 +368,13 @@ isLocationValid = () => {
             <li>Once you get the hang of the URL patterns, you can make these requests directly in your programming language of choice. Don't forget to register for and use <a href='https://argovis-keygen.colorado.edu/' target="_blank" rel="noreferrer">an API token</a> in order to receive your own private resource allocation.</li>
         </ul>
         <div className="accordion" id="accordionExample">
-            <div class="accordion-item">
+            <div className="accordion-item">
                 <h2 className="accordion-header" id="headingOne">
                     <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
                     <h3>Data requests</h3>
                     </button>
                 </h2>
-                <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+                <div id="collapseOne" className="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
                     <div className="accordion-body">
                         <p>Data requests get documents corresponding to individual Argo profiles.</p>
                         <h3><a href={url} target="_blank" rel="noreferrer">{url}</a></h3>
@@ -386,8 +401,13 @@ isLocationValid = () => {
                                                 dateFormat="YYYY-MM-DD"
                                                 timeFormat="HH:mm:ss"
                                                 value={this.state.temp_startDate}
-                                                onChange={date => this.handleDateChange('startDate', date)}
-                                                onBlur={() => this.handleDateBlur('startDate')}
+                                                onChange={date => this.handleDatePickerChange('startDate', date)}
+                                                inputProps={{
+                                                    onChange: (e) => this.handleTextInput('startDate', e.target.value),
+                                                    onBlur: () => this.handleDateBlur('startDate'),
+                                                    value: this.state.startDateRaw || '',
+                                                    placeholder: 'YYYY-MM-DD HH:mm:ss',
+                                                }}
                                             />
                                         </label>
                                     </div>
@@ -409,8 +429,13 @@ isLocationValid = () => {
                                                 dateFormat="YYYY-MM-DD"
                                                 timeFormat="HH:mm:ss"
                                                 value={this.state.temp_endDate}
-                                                onChange={date => this.handleDateChange('endDate', date)}
-                                                onBlur={() => this.handleDateBlur('endDate')}
+                                                onChange={date => this.handleDatePickerChange('endDate', date)}
+                                                inputProps={{
+                                                    onChange: (e) => this.handleTextInput('endDate', e.target.value),
+                                                    onBlur: () => this.handleDateBlur('endDate'),
+                                                    value: this.state.endDateRaw || '',
+                                                    placeholder: 'YYYY-MM-DD HH:mm:ss',
+                                                }}
                                             />
                                         </label>
                                     </div>
@@ -751,7 +776,7 @@ isLocationValid = () => {
                     <h3>Metadata requests</h3>
                     </button>
                 </h2>
-                <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
+                <div id="collapseTwo" className="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
                     <div className="accordion-body">
                         <p>Metadata requests get documents that describe metadata that is roughly consistent over the life of a float.</p>
                         <h3><a href={metaUrl} target="_blank" rel="noreferrer">{metaUrl}</a></h3>
@@ -804,7 +829,7 @@ isLocationValid = () => {
                     <h3>Vocabulary requests</h3>
                     </button>
                 </h2>
-                <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
+                <div id="collapseThree" className="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
                     <div className="accordion-body">
                         <p>Vocabulary requests show the allowed values for some filters on data and metadata queries.</p>
                         <h3><a href={vocabUrl} target="_blank" rel="noreferrer">{vocabUrl}</a></h3>
