@@ -1877,8 +1877,8 @@ helpers.defineProjection = function(proj){
 
     const maxBounds = {
         'mercator':[[-90,this.state.centerlon-180],[90,this.state.centerlon+180]],
-        'arctic':[],
-        'antarctic':[]
+        'arctic': L.latLngBounds(crs.unproject(L.point(-450000, -450000)), crs.unproject(L.point(450000, 450000))),
+        'antarctic': L.latLngBounds(L.latLng(-90, -180), L.latLng(-60, 180))
     }[proj]
 
     const defaultZoom = {
@@ -1903,7 +1903,7 @@ helpers.defineProjection = function(proj){
 helpers.findLowestZoom = function(resolutions, tilesize) {
     // limit how far the user can zoom out; tiles should roughly cover the screen.
     // zooming out too far causes crashes on larger monitors - mysterious but observable.
-
+    return 0
     for (let z = 0; z < resolutions.length; z++) {
         if(window.innerWidth < tilesize*Math.pow(2,z) && window.innerHeight < tilesize*Math.pow(2,z)){
             return z
