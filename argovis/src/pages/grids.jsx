@@ -521,7 +521,19 @@ class Grids extends React.Component {
       this.vocab = {}
     
       this.state.urls = this.generateURLs(this.state)
-      this.downloadData()
+
+      Promise.all([this.apiPrefix + 'summary?id=ratelimiter'].map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
+        Promise.all(responses.map(res => res.json())).then(data => {
+            // set timesteps dynamically based on what's in the summary doc
+            this.timesteps = {
+                'rg09': this.constructDateOptions(this.getMonthly15ths(data[0][0].metadata.rg09.startDate, data[0][0].metadata.rg09.endDate)),
+                'kg21': this.constructDateOptions(this.getMonthly15ths(data[0][0].metadata.kg21.startDate, data[0][0].metadata.kg21.endDate)),
+                'glodap': this.constructDateOptions(["1000-01-01"])
+            }[this.state.lattice]
+            this.downloadData()
+        })
+    })
+
     }
 
     componentDidUpdate(prevProps, prevState, snapshot){
@@ -910,6 +922,21 @@ class Grids extends React.Component {
 
     	return state
    }
+
+   getMonthly15ths(startDate, endDate) {
+        const result = [];
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        const current = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 15));
+    
+        while (current <= end) {
+            result.push(current.toISOString().slice(0, 10)); // 'YYYY-MM-DD'
+            current.setUTCMonth(current.getUTCMonth() + 1);  // advance 1 month
+        }
+    
+        return result;
+  }
 
 	render(){
 		console.log(this.state)
