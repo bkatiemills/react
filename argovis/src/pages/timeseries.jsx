@@ -59,6 +59,18 @@ class Timeseries extends React.Component {
         'ccmpwind': [0],
         'bsose': [2.1,6.7,12.15,18.55,26.25,35.25,45,55,65,75,85,95,105,115,125,135,146.5,161.5,180,200,220,240,260,280,301,327]
       }[this.state.lattice]
+      this.state.defaultZoom  ={
+        'noaasst': 2,
+        'copernicussla': 4,
+        'ccmpwind': 4,
+        'bsose': 4
+      }[this.state.lattice]
+      this.state.minZoom = {
+        'noaasst': 1,
+        'copernicussla': 3,
+        'ccmpwind': 3,
+        'bsose': 3
+     }[this.state.lattice]
       this.state.centerlat = this.state.lattice === 'bsose' ? -75 : -40;
       this.state.centerlon = this.state.lattice === 'bsose' ? -45 : -60;
       this.levels = this.constructLevelOptions(this.rawLevels)
@@ -651,7 +663,7 @@ class Timeseries extends React.Component {
 
 					{/*leaflet map*/}
 					<div className='col-lg-9'>
-						<MapContainer center={[this.state.centerlat, this.state.centerlon]} maxBounds={[[-90,this.state.centerlon-180],[90,this.state.centerlon+180]]} zoomSnap={0.01} zoomDelta={1} zoom={2.05} minZoom={1} scrollWheelZoom={true}>
+						<MapContainer center={[this.state.centerlat, this.state.centerlon]} maxBounds={[[-90,this.state.centerlon-180],[90,this.state.centerlon+180]]} zoomSnap={0.01} zoomDelta={1}  zoom={this.state.defaultZoom} minZoom={this.state.minZoom} scrollWheelZoom={true}>
 						  <TileLayer
 						    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 						    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
