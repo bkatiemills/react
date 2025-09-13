@@ -512,7 +512,7 @@ class EasyoceanPlots extends React.Component {
                     cmin: cmin,
                     cmax: cmax,
                     colorbar: {
-                        title: (this.state.subtractionIndex === -1 ? '':'Δ ') + this.state.variable + (this.eo_units[this.state.variable].length > 0 ? ' [' + this.eo_units[this.state.variable] + ']' : ""),
+                        title: {text: (this.state.subtractionIndex === -1 ? '':'Δ ') + this.state.variable + (this.eo_units[this.state.variable].length > 0 ? ' [' + this.eo_units[this.state.variable] + ']' : ""), side:'right'},
                         titleside: 'right',
                         tickmode: 'auto',
                         nticks: 10
@@ -551,31 +551,19 @@ class EasyoceanPlots extends React.Component {
                 size: 20
             },
             xaxis: {
-                title: traversal === 0 ? 'Longitude' : 'Latitude',
+                title: {text: traversal === 0 ? 'Longitude' : 'Latitude'},
                 //range: xrange,
-                //type: this.state.xKey === 'timestamp' ? 'date' : '-'
+                type: 'linear'
             },
             yaxis: {
-                title: 'Pressure [dbar]',
+                title: {text: 'Pressure [dbar]'},
                 autorange: 'reversed',
                 automargin: true,
                 //range: yrange,
-                //type: this.state.yKey === 'timestamp' ? 'date' : '-',
+                type: 'linear',
             },
 
             margin: {t: 30},
-            scene: {
-                xaxis:{
-                    title: 'TBD',
-                    //range: xrange,
-                    //type: this.state.xKey === 'timestamp' ? 'date' : '-'
-                },
-                yaxis:{
-                    title: 'TBD',
-                    //range: yrange,
-                    //type: this.state.yKey === 'timestamp' ? 'date' : '-'
-                }
-            }
         }
 
         this.setState({
