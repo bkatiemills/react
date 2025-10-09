@@ -247,86 +247,6 @@ helpers.phaseManager = function(prevProps, prevState, snapshot){
     helpers.setQueryString.bind(this)()
 }
 
-helpers.componentDidUpdate = function(){
-	// generic logic to bind into each explore page's componentDidUpdate
-
-	let s = {...this.state}  // transform a copy of state until we're happy with it, and write it back
-
-	if(this.reautofocus){
-		// keep focus on autofocus where appropriate
-		this.reautofocus.current.input.focus()
-	}
-
-	if(this.state.refreshData){
-		this.formRef.current.setAttribute('disabled', 'true')
-		if(this.statusReporting.current){
-			helpers.manageStatus.bind(this)('downloading')
-		}
-
-		// handle backing out of an object selection
-		if(!this.lookingForEntity(s) && this.state.observingEntity){
-			s.observingEntity = false
-			s.startDate = this.earlier
-			s.endDate = this.today
-			if(this.defaultPolygon){
-				s.polygon = this.defaultPolygon
-			}
-		}
-
-		// reformualte all URLs
-		let urls = this.generateURLs(s).sort()
-		//compare new URLs to old URLs; if any have changed, flag data for refetching.
-		let refetch = false
-		for(let i=0; i<urls.length; i++){
-			if(JSON.stringify(urls[i])!==JSON.stringify(s.urls[i])){
-				refetch = true
-			}
-		}
-		if(urls.length === 0){
-			s.points = []
-			refetch = true			
-		}
-
-		if(!refetch){
-			helpers.manageStatus.bind(this)('ready')
-			if(s.points.length>0){
-				this.refreshMap.bind(this)(s)
-			}
-		} else {
-			//promise all across a `fetch` for all new URLs, and update CircleMarkers for all new fetches
-			Promise.all(urls.map(x => fetch(x, {headers:{'x-argokey': this.state.apiKey}}))).then(responses => {
-				Promise.all(responses.map(res => res.json())).then(data => {
-					let newPoints = []
-					let timestamps = []
-					for(let i=0; i<data.length; i++){
-						let bail = helpers.handleHTTPcodes.bind(this)(data[i].code)
-						if(bail){
-							return
-						}
-						if(data[i].length>0){
-							timestamps = timestamps.concat(data[i].map(x => x[3]))
-							newPoints = newPoints.concat(data[i])
-						}
-					}
-					if(this.lookingForEntity(s)){
-						timestamps = timestamps.map(x => { let d = new Date(x); return d.getTime()})
-						let start = new Date(Math.min(...timestamps))
-						let end = new Date(Math.max(...timestamps))
-						s.startDate = start.toISOString().slice(0,10)
-						s.endDate = end.toISOString().slice(0,10)
-						s.polygon = []
-						s.observingEntity = true
-					}
-					s.data = data
-					s.points = this.mapmarkers.bind(this)(newPoints, s)
-					helpers.manageStatus.bind(this)('rendering')
-					this.refreshMap.bind(this)(s)
-				})
-			})
-		}
-	}
-}
-
 helpers.changeAPIkey = function(event){
     localStorage.setItem('apiKey', event.target.value)
 
@@ -480,6 +400,7 @@ helpers.manageStatus = function(newStatus, messageArg){
 helpers.refreshMap = function(state){
 	// generic map refresh logic; expects state.points to be populated with whatever should
 	// be on the map this time around; triggers redraw with a setState and calls back some post-render logic
+
 	helpers.manageStatus.bind(this)('rendering')
 
 	if(JSON.stringify(state.polygon) === '[]'){
@@ -873,7 +794,7 @@ helpers.toggleTrace = function(id){
 		s.counterTraces.push(id)
 	}
 
-	s.refreshData = true
+	s.phase = 'remapData'
 	this.setState(s)
 }
 
@@ -889,7 +810,7 @@ helpers.toggleAll = function(){
 	let s = {...this.state}
 	s.showAll = !s.showAll
 	s.counterTraces = []
-	s.refreshData = true
+	s.phase = 'remapData'
 	this.setState(s)
 }
 
@@ -1092,12 +1013,25 @@ helpers.prepPlotlyState = function(markerSize){
         }
     }
 
-    this.setState({
+    let s = {
         phase: 'idle',
         suppressBlur: false
-    })
+    }
 
-		
+    if(!Array.isArray(this.state.data[0]._id)){ // ie if data is not merged, since we don't need to toggle points on and off in this case.
+        let mappoints = this.state.data.map(point => {
+            if((this.state.counterTraces.indexOf(point._id) === -1 && this.state.showAll) || (this.state.counterTraces.indexOf(point._id) > -1 && !this.state.showAll) ){
+                return(
+                    <CircleMarker key={point._id+Math.random()} center={[point.latitude[0], helpers.mutateLongitude(point.longitude[0], parseFloat(this.state.centerlon)) ]} radius={1} color={'red'}/>
+                )
+            } else {
+                return null
+            }
+        })
+        s.points = mappoints
+    }
+
+    this.setState(s)
 }
 
 helpers.plotHTML = function(){
