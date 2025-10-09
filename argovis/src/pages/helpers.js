@@ -400,6 +400,7 @@ helpers.manageStatus = function(newStatus, messageArg){
 helpers.refreshMap = function(state){
 	// generic map refresh logic; expects state.points to be populated with whatever should
 	// be on the map this time around; triggers redraw with a setState and calls back some post-render logic
+
 	helpers.manageStatus.bind(this)('rendering')
 
 	if(JSON.stringify(state.polygon) === '[]'){
@@ -1012,12 +1013,25 @@ helpers.prepPlotlyState = function(markerSize){
         }
     }
 
-    this.setState({
+    let s = {
         phase: 'idle',
         suppressBlur: false
-    })
+    }
 
-		
+    if(!Array.isArray(this.state.data[0]._id)){ // ie if data is not merged, since we don't need to toggle points on and off in this case.
+        let mappoints = this.state.data.map(point => {
+            if((this.state.counterTraces.indexOf(point._id) === -1 && this.state.showAll) || (this.state.counterTraces.indexOf(point._id) > -1 && !this.state.showAll) ){
+                return(
+                    <CircleMarker key={point._id+Math.random()} center={[point.latitude[0], helpers.mutateLongitude(point.longitude[0], parseFloat(this.state.centerlon)) ]} radius={1} color={'red'}/>
+                )
+            } else {
+                return null
+            }
+        })
+        s.points = mappoints
+    }
+
+    this.setState(s)
 }
 
 helpers.plotHTML = function(){
