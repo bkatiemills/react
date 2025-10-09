@@ -15,12 +15,10 @@ class ArgoPlots extends React.Component {
 			this.state.reverseY = true
 		}
 
-		if(this.state.argoPlatform && !this.state.counterTraces){
-			this.state.title = 'Argo platform ' + this.state.argoPlatform
-		} else if (this.state.polygon && this.state.startDate && this.state.endDate){
+		if (this.state.polygon && this.state.startDate && this.state.endDate){
 			this.state.title = 'Argo regional search, ' + this.state.startDate.slice(0,10) + ' to ' + this.state.endDate.slice(0,10)
-		} else if (this.state.counterTraces){
-			this.state.title = 'Argo profile ' + this.state.counterTraces.slice(1,-1)
+		} else {
+			this.state.title = 'Argo platform ' + this.state.argoPlatform
 		}
 
 		helpers.downloadData.bind(this)('temperature', 'pressure', '[2D plot]', 'timestamp')
