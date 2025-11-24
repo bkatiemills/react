@@ -478,7 +478,11 @@ class Grids extends React.Component {
 		'kg21': "2005-01-15",
 	  	'glodap': "1000-01-01"
 	  }[this.state.lattice]
-      this.state.subtimestep = q.has('subtimestep') ? q.get('subtimestep') : ''
+      this.state.subtimestep = q.has('subtimestep') ? q.get('subtimestep') : {
+		'rg09': "2004-01-15",
+		'kg21': "2005-01-15",
+	  	'glodap': "1000-01-01"
+	  }[this.state.lattice]
       this.state.units = this.chooseUnits(this.state.grid)
       this.state.levelunits = {
       	'rg09': 'dbar',
@@ -636,7 +640,6 @@ class Grids extends React.Component {
         let subgrid = params.hasOwnProperty('subgrid') ? params.subgrid : this.state
 
         let urls = []
-
         let url    = this.apiPrefix + 'grids/' + lattice+'?data='+grid+'&startDate='+timestep+'T00:00:00Z&endDate='+timestep+'T00:00:01Z&verticalRange='+(this.rawLevels[levelindex]-0.1)+','+(this.rawLevels[levelindex]+0.1)
         let suburl = this.apiPrefix + 'grids/' + lattice+'?data='+grid+'&startDate='+subtimestep+'T00:00:00Z&endDate='+subtimestep+'T00:00:01Z&verticalRange='+(this.rawLevels[sublevelindex]-0.1)+','+(this.rawLevels[sublevelindex]+0.1)
         if(polygon.length > 0){
