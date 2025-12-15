@@ -20,6 +20,7 @@ import APIintro from "./pages/api_intro"
 import Hackathon from "./pages/hackathon2024"
 import ArgoURLhelper from "./pages/argoURLhelper"
 import Forecast from "./pages/forecast"
+import Localgp from './pages/localgp'
 
 export default function App() {
   useEffect(() => {    
@@ -54,6 +55,7 @@ export default function App() {
           <Route path="apiintro" element={<APIintro />} />
           <Route path="hackathon" element={<Hackathon />} />
           <Route path="argourlhelper" element={<ArgoURLhelper />} />
+          <Route path="localgp" element={<Localgp />} />
         </Route>
       </Routes>
     </BrowserRouter>
