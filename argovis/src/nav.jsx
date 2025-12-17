@@ -26,7 +26,7 @@ class ArgovisNav extends React.Component {
 					        <h6 className="dropdown-header">Gridded Products</h6>
 					        <Dropdown.Item className="dropdown-item" href="/grids?lattice=rg09&grid=rg09_temperature">RG Temperature</Dropdown.Item>
 					        <Dropdown.Item className="dropdown-item" href="/grids?lattice=rg09&grid=rg09_salinity">RG Salinity</Dropdown.Item>
-					        <Dropdown.Item className="dropdown-item" href="/grids?lattice=localGPspace&grid=localGPspace_ohc15to300">localGPspace ocean heat content</Dropdown.Item>
+					        <Dropdown.Item className="dropdown-item" href="/grids?lattice=localGPintegral&grid=potential_temperature">LocalGP integrated fields</Dropdown.Item>
 							<Dropdown.Item className="dropdown-item" href="/grids?lattice=glodap&grid=Cant">GLODAPv2.2016b</Dropdown.Item>
 							<Dropdown.Item className="dropdown-item" href="/forecast">ARGONE float location forecasts</Dropdown.Item>
                             <Dropdown.Item className="dropdown-item" href="/plots/easyocean">Easy Ocean</Dropdown.Item>
@@ -52,9 +52,6 @@ class ArgovisNav extends React.Component {
 					</li>
 			        <li className="nav-item">
 			          <a className="nav-link" href="https://github.com/argovis/demo_notebooks">Jupyter Notebooks</a>
-			        </li>
-			        <li className="nav-item">
-			          <a className="nav-link" href="https://github.com/argovis">Publications</a>
 			        </li>
 			        <li className="nav-item">
 			          <a className="nav-link" href="/about">About</a>
