@@ -55,7 +55,7 @@ class APIintro extends React.Component {
 							<li>several gridded products:</li>
 							<ul>
 								<li>Roemmich-Gilson total temperature and salinity grids, <pre style={{'display':'inline'}}>/grids/rg09</pre></li>
-								<li>ocean heat content, <pre style={{'display':'inline'}}>/grids/localGPspace</pre></li>
+								<li>LocalGP grids, <pre style={{'display':'inline'}}>/grids/localGPintegral</pre></li>
 								<li>GLODAP, <pre style={{'display':'inline'}}>/grids/glodap</pre></li>
 							</ul>
 							<li>Argone float location forecasts, <pre style={{'display':'inline'}}>/argone</pre></li>

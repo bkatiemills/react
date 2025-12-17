@@ -472,52 +472,44 @@ class Grids extends React.Component {
         phase: 'refreshData', // refreshData, remapData, awaitingUserInput, or idle
         suppressBlur: false,
       }
-      // dont break kg21 links
-      if (this.state.grid === 'kg21_ohc15to300') {
-        this.state.grid = 'localGPspace_ohc15to300'
-      }
-      if (this.state.lattice === 'kg21') {
-        this.state.lattice = 'localGPspace'
-      }
-      console.log(this.state.lattice)
 
 	  this.state.timestep = q.has('timestep') ? q.get('timestep') : {
 		'rg09': "2004-01-15",
-		'localGPspace': "2005-01-15",
-	  	'glodap': "1000-01-01"
+	  	'glodap': "1000-01-01",
+        'localGPintegral': "2004-01-15"
 	  }[this.state.lattice]
       this.state.subtimestep = q.has('subtimestep') ? q.get('subtimestep') : {
 		'rg09': "2004-01-15",
-		'localGPspace': "2005-01-15",
-	  	'glodap': "1000-01-01"
+	  	'glodap': "1000-01-01",
+        'localGPintegral': "2004-01-15"
 	  }[this.state.lattice]
-      this.state.units = this.chooseUnits(this.state.grid)
+      this.state.units = this.chooseUnits(this.state.lattice, this.state.grid)
       this.state.levelunits = {
       	'rg09': 'dbar',
-      	'localGPspace': 'integral, 15-300 dbar',
-		'glodap': 'm'
+		'glodap': 'm',
+        'localGPintegral': 'dbar'
       }[this.state.lattice]
       this.rawLevels = {
       	'rg09': [2.5,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,182.5,200,220,240,260,280,300,320,340,360,380,400,420,440,462.5,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1412.5,1500,1600,1700,1800,1900,1975],
-      	'localGPspace': [15],
-		'glodap': [0,10,20,30,50,75,100,125,150,200,250,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1750,2000,2500,3000,3500,4000,4500,5000,5500]
+		'glodap': [0,10,20,30,50,75,100,125,150,200,250,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1750,2000,2500,3000,3500,4000,4500,5000,5500],
+        'localGPintegral': ['15_50']
       }[this.state.lattice]
       this.levels = this.constructLevelOptions(this.rawLevels)
       this.timesteps = {
       	'rg09': this.constructDateOptions(["2004-01-15","2004-02-15","2004-03-15","2004-04-15","2004-05-15","2004-06-15","2004-07-15","2004-08-15","2004-09-15","2004-10-15","2004-11-15","2004-12-15","2005-01-15","2005-02-15","2005-03-15","2005-04-15","2005-05-15","2005-06-15","2005-07-15","2005-08-15","2005-09-15","2005-10-15","2005-11-15","2005-12-15","2006-01-15","2006-02-15","2006-03-15","2006-04-15","2006-05-15","2006-06-15","2006-07-15","2006-08-15","2006-09-15","2006-10-15","2006-11-15","2006-12-15","2007-01-15","2007-02-15","2007-03-15","2007-04-15","2007-05-15","2007-06-15","2007-07-15","2007-08-15","2007-09-15","2007-10-15","2007-11-15","2007-12-15","2008-01-15","2008-02-15","2008-03-15","2008-04-15","2008-05-15","2008-06-15","2008-07-15","2008-08-15","2008-09-15","2008-10-15","2008-11-15","2008-12-15","2009-01-15","2009-02-15","2009-03-15","2009-04-15","2009-05-15","2009-06-15","2009-07-15","2009-08-15","2009-09-15","2009-10-15","2009-11-15","2009-12-15","2010-01-15","2010-02-15","2010-03-15","2010-04-15","2010-05-15","2010-06-15","2010-07-15","2010-08-15","2010-09-15","2010-10-15","2010-11-15","2010-12-15","2011-01-15","2011-02-15","2011-03-15","2011-04-15","2011-05-15","2011-06-15","2011-07-15","2011-08-15","2011-09-15","2011-10-15","2011-11-15","2011-12-15","2012-01-15","2012-02-15","2012-03-15","2012-04-15","2012-05-15","2012-06-15","2012-07-15","2012-08-15","2012-09-15","2012-10-15","2012-11-15","2012-12-15","2013-01-15","2013-02-15","2013-03-15","2013-04-15","2013-05-15","2013-06-15","2013-07-15","2013-08-15","2013-09-15","2013-10-15","2013-11-15","2013-12-15","2014-01-15","2014-02-15","2014-03-15","2014-04-15","2014-05-15","2014-06-15","2014-07-15","2014-08-15","2014-09-15","2014-10-15","2014-11-15","2014-12-15","2015-01-15","2015-02-15","2015-03-15","2015-04-15","2015-05-15","2015-06-15","2015-07-15","2015-08-15","2015-09-15","2015-10-15","2015-11-15","2015-12-15","2016-01-15","2016-02-15","2016-03-15","2016-04-15","2016-05-15","2016-06-15","2016-07-15","2016-08-15","2016-09-15","2016-10-15","2016-11-15","2016-12-15","2017-01-15","2017-02-15","2017-03-15","2017-04-15","2017-05-15","2017-06-15","2017-07-15","2017-08-15","2017-09-15","2017-10-15","2017-11-15","2017-12-15","2018-01-15","2018-02-15","2018-03-15","2018-04-15","2018-05-15","2018-06-15","2018-07-15","2018-08-15","2018-09-15","2018-10-15","2018-11-15","2018-12-15","2019-01-15","2019-02-15","2019-03-15","2019-04-15","2019-05-15","2019-06-15","2019-07-15","2019-08-15","2019-09-15","2019-10-15","2019-11-15","2019-12-15","2020-01-15","2020-02-15","2020-03-15","2020-04-15","2020-05-15","2020-06-15","2020-07-15","2020-08-15","2020-09-15","2020-10-15","2020-11-15","2020-12-15","2021-01-15","2021-02-15","2021-03-15","2021-04-15","2021-05-15","2021-06-15","2021-07-15","2021-08-15","2021-09-15","2021-10-15","2021-11-15","2021-12-15","2022-01-15","2022-02-15","2022-03-15","2022-04-15","2022-05-15","2022-06-15","2022-07-15","2022-08-15","2022-09-15","2022-10-15","2022-11-15","2022-12-15","2023-01-15","2023-02-15","2023-03-15","2023-04-15","2023-05-15","2023-06-15","2023-07-15","2023-08-15","2023-09-15","2023-10-15","2023-11-15","2023-12-15","2024-01-15","2024-02-15","2024-03-15","2024-04-15","2024-05-15","2024-06-15","2024-07-15","2024-08-15","2024-09-15","2024-10-15"]),
-      	'localGPspace': this.constructDateOptions(["2005-01-15","2005-02-15","2005-03-15","2005-04-15","2005-05-15","2005-06-15","2005-07-15","2005-08-15","2005-09-15","2005-10-15","2005-11-15","2005-12-15","2006-01-15","2006-02-15","2006-03-15","2006-04-15","2006-05-15","2006-06-15","2006-07-15","2006-08-15","2006-09-15","2006-10-15","2006-11-15","2006-12-15","2007-01-15","2007-02-15","2007-03-15","2007-04-15","2007-05-15","2007-06-15","2007-07-15","2007-08-15","2007-09-15","2007-10-15","2007-11-15","2007-12-15","2008-01-15","2008-02-15","2008-03-15","2008-04-15","2008-05-15","2008-06-15","2008-07-15","2008-08-15","2008-09-15","2008-10-15","2008-11-15","2008-12-15","2009-01-15","2009-02-15","2009-03-15","2009-04-15","2009-05-15","2009-06-15","2009-07-15","2009-08-15","2009-09-15","2009-10-15","2009-11-15","2009-12-15","2010-01-15","2010-02-15","2010-03-15","2010-04-15","2010-05-15","2010-06-15","2010-07-15","2010-08-15","2010-09-15","2010-10-15","2010-11-15","2010-12-15","2011-01-15","2011-02-15","2011-03-15","2011-04-15","2011-05-15","2011-06-15","2011-07-15","2011-08-15","2011-09-15","2011-10-15","2011-11-15","2011-12-15","2012-01-15","2012-02-15","2012-03-15","2012-04-15","2012-05-15","2012-06-15","2012-07-15","2012-08-15","2012-09-15","2012-10-15","2012-11-15","2012-12-15","2013-01-15","2013-02-15","2013-03-15","2013-04-15","2013-05-15","2013-06-15","2013-07-15","2013-08-15","2013-09-15","2013-10-15","2013-11-15","2013-12-15","2014-01-15","2014-02-15","2014-03-15","2014-04-15","2014-05-15","2014-06-15","2014-07-15","2014-08-15","2014-09-15","2014-10-15","2014-11-15","2014-12-15","2015-01-15","2015-02-15","2015-03-15","2015-04-15","2015-05-15","2015-06-15","2015-07-15","2015-08-15","2015-09-15","2015-10-15","2015-11-15","2015-12-15","2016-01-15","2016-02-15","2016-03-15","2016-04-15","2016-05-15","2016-06-15","2016-07-15","2016-08-15","2016-09-15","2016-10-15","2016-11-15","2016-12-15","2017-01-15","2017-02-15","2017-03-15","2017-04-15","2017-05-15","2017-06-15","2017-07-15","2017-08-15","2017-09-15","2017-10-15","2017-11-15","2017-12-15","2018-01-15","2018-02-15","2018-03-15","2018-04-15","2018-05-15","2018-06-15","2018-07-15","2018-08-15","2018-09-15","2018-10-15","2018-11-15","2018-12-15","2019-01-15","2019-02-15","2019-03-15","2019-04-15","2019-05-15","2019-06-15","2019-07-15","2019-08-15","2019-09-15","2019-10-15","2019-11-15","2019-12-15","2020-01-15","2020-02-15","2020-03-15","2020-04-15","2020-05-15","2020-06-15","2020-07-15","2020-08-15","2020-09-15","2020-10-15","2020-11-15","2020-12-15"]),
-		'glodap': this.constructDateOptions(["1000-01-01"])
+		'glodap': this.constructDateOptions(["1000-01-01"]),
+        'localGPintegral': this.constructDateOptions(["2004-01-15","2004-02-15","2004-03-15","2004-04-15","2004-05-15","2004-06-15","2004-07-15","2004-08-15","2004-09-15","2004-10-15","2004-11-15","2004-12-15","2005-01-15","2005-02-15","2005-03-15","2005-04-15","2005-05-15","2005-06-15","2005-07-15","2005-08-15","2005-09-15","2005-10-15","2005-11-15","2005-12-15","2006-01-15","2006-02-15","2006-03-15","2006-04-15","2006-05-15","2006-06-15","2006-07-15","2006-08-15","2006-09-15","2006-10-15","2006-11-15","2006-12-15","2007-01-15","2007-02-15","2007-03-15","2007-04-15","2007-05-15","2007-06-15","2007-07-15","2007-08-15","2007-09-15","2007-10-15","2007-11-15","2007-12-15","2008-01-15","2008-02-15","2008-03-15","2008-04-15","2008-05-15","2008-06-15","2008-07-15","2008-08-15","2008-09-15","2008-10-15","2008-11-15","2008-12-15","2009-01-15","2009-02-15","2009-03-15","2009-04-15","2009-05-15","2009-06-15","2009-07-15","2009-08-15","2009-09-15","2009-10-15","2009-11-15","2009-12-15","2010-01-15","2010-02-15","2010-03-15","2010-04-15","2010-05-15","2010-06-15","2010-07-15","2010-08-15","2010-09-15","2010-10-15","2010-11-15","2010-12-15","2011-01-15","2011-02-15","2011-03-15","2011-04-15","2011-05-15","2011-06-15","2011-07-15","2011-08-15","2011-09-15","2011-10-15","2011-11-15","2011-12-15","2012-01-15","2012-02-15","2012-03-15","2012-04-15","2012-05-15","2012-06-15","2012-07-15","2012-08-15","2012-09-15","2012-10-15","2012-11-15","2012-12-15","2013-01-15","2013-02-15","2013-03-15","2013-04-15","2013-05-15","2013-06-15","2013-07-15","2013-08-15","2013-09-15","2013-10-15","2013-11-15","2013-12-15","2014-01-15","2014-02-15","2014-03-15","2014-04-15","2014-05-15","2014-06-15","2014-07-15","2014-08-15","2014-09-15","2014-10-15","2014-11-15","2014-12-15","2015-01-15","2015-02-15","2015-03-15","2015-04-15","2015-05-15","2015-06-15","2015-07-15","2015-08-15","2015-09-15","2015-10-15","2015-11-15","2015-12-15","2016-01-15","2016-02-15","2016-03-15","2016-04-15","2016-05-15","2016-06-15","2016-07-15","2016-08-15","2016-09-15","2016-10-15","2016-11-15","2016-12-15","2017-01-15","2017-02-15","2017-03-15","2017-04-15","2017-05-15","2017-06-15","2017-07-15","2017-08-15","2017-09-15","2017-10-15","2017-11-15","2017-12-15","2018-01-15","2018-02-15","2018-03-15","2018-04-15","2018-05-15","2018-06-15","2018-07-15","2018-08-15","2018-09-15","2018-10-15","2018-11-15","2018-12-15","2019-01-15","2019-02-15","2019-03-15","2019-04-15","2019-05-15","2019-06-15","2019-07-15","2019-08-15","2019-09-15","2019-10-15","2019-11-15","2019-12-15","2020-01-15","2020-02-15","2020-03-15","2020-04-15","2020-05-15","2020-06-15","2020-07-15","2020-08-15","2020-09-15","2020-10-15","2020-11-15","2020-12-15","2021-01-15","2021-02-15","2021-03-15","2021-04-15","2021-05-15","2021-06-15","2021-07-15","2021-08-15","2021-09-15","2021-10-15","2021-11-15","2021-12-15","2022-01-15","2022-02-15","2022-03-15","2022-04-15","2022-05-15","2022-06-15","2022-07-15","2022-08-15","2022-09-15","2022-10-15","2022-11-15","2022-12-15"]),
       }[this.state.lattice]
       this.reflink = {
       	'rg09': 'https://sio-argo.ucsd.edu/RG_Climatology.html',
-      	'localGPspace': 'https://zenodo.org/record/6131625#.Y3P5FILMKWA',
-		'glodap': 'TBD'
+		'glodap': 'TBD',
+        'localGPintegral': '/localgp'
       }[this.state.lattice]
-      this.state.title = this.chooseTitle(this.state.grid)
+      this.state.title = this.chooseTitle(this.state.lattice, this.state.grid)
 	  this.variables = {
 		'rg09': this.constructVarOptions(['rg09_temperature', 'rg09_salinity'], x=>x), // not used... yet.
-		'localGPspace': this.constructVarOptions(['localGPspace_ohc15to300'], x=>x), // not used... yet.
-		'glodap': this.constructVarOptions(this.glodapDataInfo[0], this.glodapHumanName)
+		'glodap': this.constructVarOptions(this.glodapDataInfo[0], this.glodapHumanName),
+        'localGPintegral': this.constructVarOptions(['potential_temperature'], x=>x),
 	  }[this.state.lattice]
 
       this.fgRef = React.createRef()
@@ -525,8 +517,8 @@ class Grids extends React.Component {
       this.formRef = React.createRef()
       this.scales = {
       	'rg09': '',
-      	'localGPspace': 'G',
-		'glodap': ''
+		'glodap': '',
+        'localGPintegral': ''
       }[this.state.lattice]
       this.apiPrefix = 'https://argovis-api.colorado.edu/'
       this.customQueryParams = ['polygon', 'grid', 'levelindex', 'sublevelindex', 'timestep', 'subtimestep', 'subgrid']
@@ -539,8 +531,8 @@ class Grids extends React.Component {
             // set timesteps dynamically based on what's in the summary doc
             this.timesteps = {
                 'rg09': this.constructDateOptions(this.getMonthly15ths(data[0][0].metadata.rg09.startDate, data[0][0].metadata.rg09.endDate)),
-                'localGPspace': this.constructDateOptions(this.getMonthly15ths(data[0][0].metadata.localGPspace.startDate, data[0][0].metadata.localGPspace.endDate)),
-                'glodap': this.constructDateOptions(["1000-01-01"])
+                'glodap': this.constructDateOptions(["1000-01-01"]),
+                'localGPintegral': this.constructDateOptions(this.getMonthly15ths(data[0][0].metadata.localGPintegral.startDate, data[0][0].metadata.localGPintegral.endDate))
             }[this.state.lattice]
             this.downloadData()
         })
@@ -607,6 +599,7 @@ class Grids extends React.Component {
         } 
 
         // determining colorscale min and max
+        console.log(s.data)
         let values = s.data[0].map(x=>x.data[0][0]).filter(x=>x!==null)
         if(!s.user_defined_min){
             s.display_min = this.unitTransform(Math.min(...values), this.scales)
@@ -648,11 +641,16 @@ class Grids extends React.Component {
         let subgrid = params.hasOwnProperty('subgrid') ? params.subgrid : this.state
 
         let urls = []
-        let url    = this.apiPrefix + 'grids/' + lattice+'?data='+grid+'&startDate='+timestep+'T00:00:00Z&endDate='+timestep+'T00:00:01Z&verticalRange='+(this.rawLevels[levelindex]-0.1)+','+(this.rawLevels[levelindex]+0.1)
-        let suburl = this.apiPrefix + 'grids/' + lattice+'?data='+grid+'&startDate='+subtimestep+'T00:00:00Z&endDate='+subtimestep+'T00:00:01Z&verticalRange='+(this.rawLevels[sublevelindex]-0.1)+','+(this.rawLevels[sublevelindex]+0.1)
+        let url    = this.apiPrefix + 'grids/' + lattice+'?data='+grid+'&startDate='+timestep+'T00:00:00Z&endDate='+timestep+'T00:00:01Z'
+        let suburl = this.apiPrefix + 'grids/' + lattice+'?data='+grid+'&startDate='+subtimestep+'T00:00:00Z&endDate='+subtimestep+'T00:00:01Z'
         if(polygon.length > 0){
             url += '&polygon='+JSON.stringify(helpers.tidypoly(polygon))
             suburl += '&polygon='+JSON.stringify(helpers.tidypoly(polygon))
+        }
+        if(this.state.lattice !== 'localGPintegral'){
+            // levels are a bit weird for integrals, just don't for now
+            url += '&verticalRange='+(this.rawLevels[levelindex]-0.1)+','+(this.rawLevels[levelindex]+0.1)
+            suburl += '&verticalRange='+(this.rawLevels[sublevelindex]-0.1)+','+(this.rawLevels[sublevelindex]+0.1)
         }
 
         urls.push(url)
@@ -663,26 +661,28 @@ class Grids extends React.Component {
         return urls
     }
 
-	chooseTitle(grid){
+	chooseTitle(lattice, grid){
 		if(grid === 'rg09_temperature'){
 			return 'RG Temperature'
 		} else if(grid === 'rg09_salinity'){
 			return 'RG Salinity'
-		} else if(grid === 'localGPspace_ohc15to300'){
-			return 'localGPspace Ocean Heat Content'
-		} else {
+		} else if(lattice === 'localGPintegral'){
+            if(grid === 'potential_temperature')
+            return 'localGP potential temperature integral'
+        } else {
 			return 'GLODAP ' + this.glodapHumanName(grid)
 		}
 	}
 
-	chooseUnits(grid){
+	chooseUnits(lattice, grid){
 		if(grid === 'rg09_temperature'){
 			return 'degree celcius (ITS-90)'
 		} else if(grid === 'rg09_salinity'){
 			return 'psu'
-		} else if(grid === 'localGPspace_ohc15to300'){
-			return 'J/m^2'
-		} else {
+		} else if(lattice === 'localGPintegral'){
+            if(grid === 'potential_temperature')
+            return 'degC*m'
+        } else {
 			let i = this.glodapDataInfo[0].indexOf(grid)
 			return this.glodapDataInfo[2][i][0]
 		}
@@ -770,7 +770,7 @@ class Grids extends React.Component {
     	let s = {...this.state}
 
     	s.grid = target.target.value
-		s.title = this.chooseTitle(target.target.value)
+		s.title = this.chooseTitle(s.lattice, target.target.value)
     	s.phase = 'refreshData'
 		s.user_defined_min = false
 		s.user_defined_max = false
@@ -972,14 +972,12 @@ class Grids extends React.Component {
 									>
 										<i style={{'float':'right'}} className="fa fa-question-circle" aria-hidden="true"></i>
                                     </OverlayTrigger>
-									{'Explore ' + this.state.title}
-                                    {this.state.lattice === 'localGPspace' &&
-                                        <div>
-                                            <span style={{'fontSize':'0.6em', 'fontStyle':'italic'}}> (Formerly labeled 'KG Ocean Heat Content')</span>
-                                        </div>
-                                    }	
+									{'Explore ' + this.state.title}	
 								</h5>
-								<small><a target="_blank" rel="noreferrer" href={this.reflink}>Original Data Reference</a></small>
+                                {this.state.lattice === 'localGPintegral' &&
+								<small><a target="_blank" rel="noreferrer" href={this.reflink}>About localGP</a></small>}
+                                {this.state.lattice !== 'localGPintegral' &&
+								<small><a target="_blank" rel="noreferrer" href={this.reflink}>Original Data Reference</a></small>}
 								<div className="form-floating mb-3" style={{'marginTop': '0.5em'}}>
 										<input 
                                             type="password" 
@@ -1023,13 +1021,14 @@ class Grids extends React.Component {
 									</div>}
 								</div>
 
+                                {this.state.lattice !== 'localGPintegral' &&
 								<div className="form-check" style={{'marginTop': '1em'}}>
 									<input className="form-check-input" checked={this.state.subgrid} onChange={this.toggleSubgrid.bind(this)} type="checkbox" id='subgrid'></input>
 									{this.state.lattice !== 'glodap' &&
 									<label className="form-check-label" htmlFor='subgrid'>Subtract another level or date</label>}
 									{this.state.lattice === 'glodap' &&
 									<label className="form-check-label" htmlFor='subgrid'>Subtract another level</label>}
-								</div>
+								</div>}
 
 								<div style={{'display': this.state.subgrid ? 'block' : 'none'}}>
 									<div className='row'>
